@@ -376,6 +376,7 @@ class VeriDeposu {
       KonuDetay("Bölgeler ve Ülkeler", 1),
       KonuDetay("Çevre ve Toplum", 1),
     ],
+  };
 
   // VERİTABANI YÜKLEME (INIT)
   static Future<void> init() async {
@@ -525,13 +526,7 @@ class VeriDeposu {
     kaydet();
   }
 
-  static void kullaniciSil(String id, bool isOgrenci) {
-    if (isOgrenci)
-      ogrenciler.removeWhere((e) => e.id == id);
-    else
-      ogretmenler.removeWhere((e) => e.id == id);
-    kaydet();
-  }
+
 
   static void denemeEkle(DenemeSonucu d) {
     denemeListesi.add(d);

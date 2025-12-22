@@ -1,3 +1,5 @@
+import 'dart:convert';
+import 'package:flutter/foundation.dart'; // kIsWeb için
 import 'package:flutter/material.dart';
 import 'dart:io';
 import 'dart:math';
@@ -855,26 +857,34 @@ class SoruCozumEkrani extends StatefulWidget {
   State<SoruCozumEkrani> createState() => _SCEState();
 }
 class _SCEState extends State<SoruCozumEkrani> {
-  File? _image;
+  XFile? _image; // File yerine XFile (Web uyumlu)
   String _cozum = "";
   bool _loading = false;
   final ImagePicker _picker = ImagePicker();
+
   Future<void> _foto(ImageSource s) async {
     final f = await _picker.pickImage(source: s);
-    if (f != null) setState(() => _image = File(f.path));
+    if (f != null) setState(() => _image = f);
   }
+
   Future<void> _coz() async {
     if (_image == null) return;
     setState(() => _loading = true);
+    // GravityAI artık XFile kabul ediyor
     String c = await GravityAI.soruCoz(_image!);
     setState(() { _cozum = c; _loading = false; });
   }
+
   @override
   Widget build(BuildContext context) {
     return Scaffold(
         appBar: AppBar(title: const Text("AI Soru Çöz")),
         body: SingleChildScrollView(child: Column(children: [
-          if(_image != null) Image.file(_image!, height: 200),
+          if(_image != null) 
+             kIsWeb 
+                ? Image.network(_image!.path, height: 200) // Web için
+                : Image.file(File(_image!.path), height: 200), // Mobil için (import dart:io gerekir ama screens.dart'ta var mı?)
+
           Row(mainAxisAlignment: MainAxisAlignment.center, children: [
              ElevatedButton(onPressed: () => _foto(ImageSource.camera), child: const Text("Kamera")),
              const SizedBox(width: 10),

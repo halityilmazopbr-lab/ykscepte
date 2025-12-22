@@ -211,15 +211,34 @@ class _AcilisEkraniState extends State<AcilisEkrani> {
 class OgrenciPaneli extends StatelessWidget {
   final Ogrenci aktifOgrenci;
   const OgrenciPaneli({super.key, required this.aktifOgrenci});
+
   @override
   Widget build(BuildContext context) {
     return Scaffold(
+      backgroundColor: Colors.grey.shade100,
       appBar: AppBar(
-          title: Text("Hoşgeldin ${aktifOgrenci.ad}",
-              style: const TextStyle(fontWeight: FontWeight.bold)),
-          backgroundColor: Colors.deepPurple.withAlpha(26),
+          title: Row(
+            children: [
+              CircleAvatar(
+                backgroundColor: Colors.white,
+                child: Text(aktifOgrenci.ad[0],
+                    style: TextStyle(color: Colors.deepPurple, fontWeight: FontWeight.bold)),
+              ),
+              const SizedBox(width: 10),
+              Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Text("Merhaba, ${aktifOgrenci.ad}",
+                      style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 16)),
+                  Text("Bugün harika işler başaracaksın!",
+                      style: const TextStyle(fontWeight: FontWeight.normal, fontSize: 12)),
+                ],
+              ),
+            ],
+          ),
+          backgroundColor: Colors.deepPurple,
+          foregroundColor: Colors.white,
           elevation: 0,
-          foregroundColor: Colors.deepPurple,
           actions: [
             IconButton(
                 icon: const Icon(Icons.logout),
@@ -229,175 +248,175 @@ class OgrenciPaneli extends StatelessWidget {
                       MaterialPageRoute(builder: (c) => const LoginPage()));
                 })
           ]),
-      body: Column(children: [
-        Container(
-            margin: const EdgeInsets.all(12),
-            padding: const EdgeInsets.all(16),
-            decoration: BoxDecoration(
-                gradient: const LinearGradient(
-                    colors: [Colors.deepPurple, Colors.indigoAccent]),
-                borderRadius: BorderRadius.circular(16),
-                boxShadow: [
-                  BoxShadow(
-                      color: Colors.grey.withOpacity(0.5),
-                      blurRadius: 10,
-                      offset: const Offset(0, 5))
-                ]),
-            child: Row(
-                mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                children: [
-                  Column(
-                      crossAxisAlignment: CrossAxisAlignment.start,
-                      children: [
-                        Text("Seviye ${VeriDeposu.seviye}",
-                            style: const TextStyle(
-                                color: Colors.white,
-                                fontWeight: FontWeight.bold,
-                                fontSize: 18)),
-                        const SizedBox(height: 5),
-                        SizedBox(
-                            width: 150,
-                            child: LinearProgressIndicator(
-                                value: VeriDeposu.seviyeYuzdesi,
-                                backgroundColor: Colors.white24,
-                                color: Colors.amberAccent)),
-                        const SizedBox(height: 5),
-                        Text("${aktifOgrenci.puan} XP",
-                            style: const TextStyle(
-                                color: Colors.white70, fontSize: 12))
-                      ]),
-                  Column(children: [
-                    const Icon(Icons.local_fire_department,
-                        color: Colors.orange, size: 30),
-                    Text("${aktifOgrenci.gunlukSeri} Gün Seri",
-                        style: const TextStyle(
-                            color: Colors.white, fontWeight: FontWeight.bold))
-                  ])
-                ])),
-        Expanded(
-            child: GridView.count(
-                crossAxisCount: 2,
-                padding: const EdgeInsets.symmetric(horizontal: 12.0),
-                mainAxisSpacing: 12,
-                crossAxisSpacing: 12,
-                children: [
-              _buildMenuCard(
-                  context,
-                  "Programım",
-                  Icons.schedule,
-                  const TumProgramEkrani(),
-                  Colors.blueAccent,
-                  Colors.lightBlueAccent),
-              _buildMenuCard(
-                  context,
-                  "Soru Üreteci",
-                  Icons.psychology,
-                  const SoruUretecEkrani(),
-                  Colors.deepOrange,
-                  Colors.orangeAccent),
-              _buildMenuCard(
-                  context,
-                  "Sihirbaz (Manuel/AI)",
-                  Icons.auto_awesome,
-                  const ProgramSecimEkrani(),
-                  Colors.orangeAccent,
-                  Colors.yellowAccent),
-              _buildMenuCard(
-                  context,
-                  "Deneme Ekle",
-                  Icons.add_chart,
-                  DenemeEkleEkrani(ogrenciId: aktifOgrenci.id),
-                  Colors.green,
-                  Colors.lightGreenAccent),
-              _buildMenuCard(
-                  context,
-                  "Denemelerim",
-                  Icons.assessment,
-                  DenemeListesiEkrani(ogrenciId: aktifOgrenci.id),
-                  Colors.redAccent,
-                  Colors.pinkAccent),
-              _buildMenuCard(
-                  context,
-                  "Grafik",
-                  Icons.show_chart,
-                  BasariGrafigiEkrani(ogrenciId: aktifOgrenci.id),
-                  Colors.purpleAccent,
-                  Colors.deepPurpleAccent),
-              _buildMenuCard(
-                  context,
-                  "Konu Takip",
-                  Icons.check_circle_outline,
-                  const KonuTakipEkrani(),
-                  Colors.teal,
-                  Colors.cyanAccent),
-              _buildMenuCard(
-                  context,
-                  "Soru Takip",
-                  Icons.format_list_numbered,
-                  SoruTakipEkrani(ogrenciId: aktifOgrenci.id),
-                  Colors.indigo,
-                  Colors.blue),
-              _buildMenuCard(
-                  context,
-                  "AI Asistan",
-                  Icons.chat,
-                  const YapayZekaSohbetEkrani(),
-                  Colors.cyan,
-                  Colors.lightBlue),
-              _buildMenuCard(context, "Notlarım", Icons.notes,
-                  const OkulSinavlariEkrani(), Colors.brown, Colors.orange),
-              _buildMenuCard(context, "Ödevlerim", Icons.assignment,
-                  const OdevlerEkrani(), Colors.pink, Colors.red),
-              _buildMenuCard(context, "Soru Çöz (Vision)", Icons.camera_alt,
-                  const SoruCozumEkrani(), Colors.amber, Colors.yellow),
-              _buildMenuCard(context, "Kronometre", Icons.timer,
-                  const KronometreEkrani(), Colors.lightBlue, Colors.cyan),
-              _buildMenuCard(
-                  context,
-                  "Rozetlerim",
-                  Icons.emoji_events,
-                  RozetlerEkrani(ogrenci: aktifOgrenci),
-                  Colors.yellow.shade700,
-                  Colors.amberAccent),
-              _buildMenuCard(
-                  context,
-                  "Günlük Takip",
-                  Icons.today,
-                  const GunlukTakipEkrani(),
-                  Colors.teal,
-                  Colors.greenAccent),
-            ]))
-      ]),
+      body: SingleChildScrollView(
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            // --- STATS CARD (SABİT) ---
+            Container(
+                margin: const EdgeInsets.fromLTRB(16, 16, 16, 8),
+                padding: const EdgeInsets.all(20),
+                decoration: BoxDecoration(
+                    gradient: const LinearGradient(
+                        colors: [Colors.deepPurple, Colors.indigoAccent]),
+                    borderRadius: BorderRadius.circular(20),
+                    boxShadow: [
+                      BoxShadow(
+                          color: Colors.deepPurple.withOpacity(0.3),
+                          blurRadius: 15,
+                          offset: const Offset(0, 8))
+                    ]),
+                child: Row(
+                    mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                    children: [
+                      Column(
+                          crossAxisAlignment: CrossAxisAlignment.start,
+                          children: [
+                            Text("Seviye ${VeriDeposu.seviye}",
+                                style: const TextStyle(
+                                    color: Colors.white,
+                                    fontWeight: FontWeight.bold,
+                                    fontSize: 22)),
+                            const SizedBox(height: 8),
+                            SizedBox(
+                                width: 160,
+                                child: ClipRRect(
+                                  borderRadius: BorderRadius.circular(10),
+                                  child: LinearProgressIndicator(
+                                      value: VeriDeposu.seviyeYuzdesi,
+                                      minHeight: 8,
+                                      backgroundColor: Colors.white24,
+                                      color: Colors.amberAccent),
+                                )),
+                            const SizedBox(height: 8),
+                            Text("${aktifOgrenci.puan} XP",
+                                style: const TextStyle(
+                                    color: Colors.white70, fontSize: 14))
+                          ]),
+                      Container(
+                        padding: const EdgeInsets.all(12),
+                        decoration: BoxDecoration(
+                          color: Colors.white.withOpacity(0.15),
+                          borderRadius: BorderRadius.circular(15)
+                        ),
+                        child: Column(children: [
+                          const Icon(Icons.local_fire_department,
+                              color: Colors.orange, size: 32),
+                          Text("${aktifOgrenci.gunlukSeri} Gün",
+                              style: const TextStyle(
+                                  color: Colors.white, fontWeight: FontWeight.bold, fontSize: 16))
+                        ]),
+                      )
+                    ])),
+
+            const SizedBox(height: 10),
+
+            // --- 1. BOLUM: DERSLER & TAKIP ---
+            _buildSectionHeader("📘 DERSLER & TAKİP", "Planlı çalış, başarıyı yakala!"),
+            _buildHorizontalList([
+               _buildMenuCard(context, "Programım", Icons.schedule, const TumProgramEkrani(), Colors.blueAccent, Colors.lightBlueAccent),
+               _buildMenuCard(context, "Konu Takip", Icons.check_circle_outline, const KonuTakipEkrani(), Colors.teal, Colors.cyanAccent),
+               _buildMenuCard(context, "Soru Takip", Icons.format_list_numbered, SoruTakipEkrani(ogrenciId: aktifOgrenci.id), Colors.indigo, Colors.blue),
+               _buildMenuCard(context, "Notlarım", Icons.notes, const OkulSinavlariEkrani(), Colors.brown, Colors.orange),
+               _buildMenuCard(context, "Ödevlerim", Icons.assignment, const OdevlerEkrani(), Colors.pink, Colors.red),
+            ]),
+
+            // --- 2. BOLUM: SINAV & ANALIZ ---
+            _buildSectionHeader("📊 SINAV & ANALİZ", "Verilerle gelişimini gör."),
+            _buildHorizontalList([
+               _buildMenuCard(context, "Deneme Ekle", Icons.add_chart, DenemeEkleEkrani(ogrenciId: aktifOgrenci.id), Colors.green, Colors.lightGreenAccent),
+               _buildMenuCard(context, "Denemelerim", Icons.assessment, DenemeListesiEkrani(ogrenciId: aktifOgrenci.id), Colors.redAccent, Colors.pinkAccent),
+               _buildMenuCard(context, "Grafik", Icons.show_chart, BasariGrafigiEkrani(ogrenciId: aktifOgrenci.id), Colors.purpleAccent, Colors.deepPurpleAccent),
+               _buildMenuCard(context, "Rozetlerim", Icons.emoji_events, RozetlerEkrani(ogrenci: aktifOgrenci), Colors.yellow.shade700, Colors.amberAccent),
+               _buildMenuCard(context, "Günlük Takip", Icons.today, const GunlukTakipEkrani(), Colors.teal, Colors.greenAccent),
+            ]),
+
+            // --- 3. BOLUM: AI & ARACLAR ---
+            _buildSectionHeader("🧠 AI & ARAÇLAR", "Teknolojinin gücünü kullan."),
+            _buildHorizontalList([
+               _buildMenuCard(context, "Soru Üreteci", Icons.psychology, const SoruUretecEkrani(), Colors.deepOrange, Colors.orangeAccent),
+               _buildMenuCard(context, "Sihirbaz", Icons.auto_awesome, const ProgramSecimEkrani(), Colors.orangeAccent, Colors.yellowAccent),
+               _buildMenuCard(context, "AI Asistan", Icons.chat, const YapayZekaSohbetEkrani(), Colors.cyan, Colors.lightBlue),
+               _buildMenuCard(context, "Soru Çöz", Icons.camera_alt, const SoruCozumEkrani(), Colors.amber, Colors.yellow),
+               _buildMenuCard(context, "Kronometre", Icons.timer, const KronometreEkrani(), Colors.lightBlue, Colors.cyan),
+            ]),
+            
+            const SizedBox(height: 30), // Alt bosluk
+          ],
+        ),
+      ),
+    );
+  }
+
+  Widget _buildSectionHeader(String title, String subtitle) {
+    return Padding(
+      padding: const EdgeInsets.fromLTRB(20, 20, 20, 10),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Text(title, style: const TextStyle(fontSize: 18, fontWeight: FontWeight.w900, letterSpacing: 1.0, color: Colors.black87)),
+          Text(subtitle, style: TextStyle(fontSize: 12, color: Colors.grey.shade600)),
+        ],
+      ),
+    );
+  }
+
+  Widget _buildHorizontalList(List<Widget> children) {
+    return SizedBox(
+      height: 160, // KART YUKSEKLIGI
+      child: ListView(
+        scrollDirection: Axis.horizontal,
+        padding: const EdgeInsets.symmetric(horizontal: 16),
+        children: children,
+      ),
     );
   }
 
   Widget _buildMenuCard(BuildContext context, String title, IconData icon,
       Widget page, Color startColor, Color endColor) {
-    return Card(
+    return Container(
+      width: 130, // KART GENISLIGI
+      margin: const EdgeInsets.only(right: 12),
+      child: Card(
         elevation: 6,
-        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
+        shadowColor: startColor.withOpacity(0.4),
+        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(20)),
         child: InkWell(
             onTap: () => Navigator.push(
                 context, MaterialPageRoute(builder: (c) => page)),
-            borderRadius: BorderRadius.circular(16),
+            borderRadius: BorderRadius.circular(20),
             child: Container(
                 decoration: BoxDecoration(
-                    borderRadius: BorderRadius.circular(16),
+                    borderRadius: BorderRadius.circular(20),
                     gradient: LinearGradient(
-                        colors: [startColor.withAlpha(204), endColor.withAlpha(204)],
+                        colors: [startColor, endColor],
                         begin: Alignment.topLeft,
                         end: Alignment.bottomRight)),
-                child: Column(
-                    mainAxisAlignment: MainAxisAlignment.center,
-                    children: [
-                      Icon(icon, size: 40, color: Colors.white),
-                      const SizedBox(height: 8),
-                      Text(title,
-                          textAlign: TextAlign.center,
-                          style: const TextStyle(
-                              fontSize: 14,
-                              color: Colors.white,
-                              fontWeight: FontWeight.bold))
-                    ]))));
+                child: Padding(
+                  padding: const EdgeInsets.all(12.0),
+                  child: Column(
+                      mainAxisAlignment: MainAxisAlignment.center,
+                      children: [
+                        Container(
+                          padding: const EdgeInsets.all(10),
+                          decoration: BoxDecoration(
+                            color: Colors.white.withOpacity(0.2),
+                            shape: BoxShape.circle,
+                          ),
+                          child: Icon(icon, size: 32, color: Colors.white),
+                        ),
+                        const SizedBox(height: 12),
+                        Text(title,
+                            textAlign: TextAlign.center,
+                            maxLines: 2,
+                            overflow: TextOverflow.clip,
+                            style: const TextStyle(
+                                fontSize: 13,
+                                color: Colors.white,
+                                fontWeight: FontWeight.bold))
+                      ]),
+                ))),
+      ),
+    );
   }
 }

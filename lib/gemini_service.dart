@@ -2,6 +2,8 @@ import 'dart:convert';
 import 'dart:io';
 import 'package:http/http.dart' as http;
 import 'package:google_mlkit_text_recognition/google_mlkit_text_recognition.dart';
+import 'package:image_picker/image_picker.dart'; // Added for XFile
+import 'package:flutter/foundation.dart'; // Added for kIsWeb
 import 'models.dart';
 
 // 🔹 2. ADIM: GEMINI VİZYON İÇİN ANAHTAR (Sadece Görsel Sorularda Kullanılır)
@@ -28,8 +30,9 @@ class GravityAI {
     }
   }
 
-  // 🟠 2. PLAN: Görsel Soru Çözümü (Hibrit Sistem)
-  static Future<String> soruCoz(File image) async {
+
+  // 🟠 2. PLAN: Görsel Soru Çözümü (Hibrit Sistem - Web Uyumlu)
+  static Future<String> soruCoz(XFile image) async {
     // A. ÖNCE GEMINI İLE DENEYELİM (Görüntü İşleme / Geometri için)
     try {
       String geminiResponse = await _geminiVisionCall(image);
@@ -46,7 +49,7 @@ class GravityAI {
   }
 
   // Gemini API Çağrısı (Private)
-  static Future<String> _geminiVisionCall(File image) async {
+  static Future<String> _geminiVisionCall(XFile image) async {
     if (_geminiKey.isEmpty) return "API Key Yok";
     
     // Gemini 2.0 Flash Modelini Kullan
@@ -82,10 +85,15 @@ class GravityAI {
   }
 
   // Yedek Plan: OCR + Metin Zekası (Private)
-  static Future<String> _fallbackVisionCall(File image) async {
+  static Future<String> _fallbackVisionCall(XFile image) async {
+    // WEB KONTROLU: ML Kit Web'de çalışmaz.
+    if (kIsWeb) {
+      return "Üzgünüm, yedek sistem (OCR) şu an tarayıcıda çalışmıyor. Lütfen Gemini API kotasının dolmasını bekleyin veya mobil uygulamayı kullanın.";
+    }
+
     try {
       // 1. Resimdeki yazıyı oku (OCR) - Çevrimdışı ve ücretsiz
-      final inputImage = InputImage.fromFile(image);
+      final inputImage = InputImage.fromFilePath(image.path);
       final textRecognizer = TextRecognizer(script: TextRecognitionScript.latin);
       final RecognizedText recognizedText = await textRecognizer.processImage(inputImage);
       String sorununMetni = recognizedText.text;
