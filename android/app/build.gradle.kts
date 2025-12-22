@@ -7,7 +7,7 @@ plugins {
 
 android {
     namespace = "com.example.yks_cepte"
-    compileSdk = 35
+    compileSdk = 34
     ndkVersion = flutter.ndkVersion
 
     compileOptions {
@@ -21,8 +21,8 @@ android {
 
     defaultConfig {
         applicationId = "com.example.yks_cepte"
-        minSdk = 24
-        targetSdk = 35
+        minSdk = 23
+        targetSdk = 34
         versionCode = flutter.versionCode
         versionName = flutter.versionName
         multiDexEnabled = true
