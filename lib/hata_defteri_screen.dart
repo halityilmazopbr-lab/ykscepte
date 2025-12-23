@@ -148,20 +148,26 @@ class _HDEState extends State<HataDefteriEkrani> {
       child: Column(
         mainAxisAlignment: MainAxisAlignment.center,
         children: [
-          Container(
-            padding: const EdgeInsets.all(30),
-            decoration: BoxDecoration(
-              color: Colors.purple.withAlpha(30),
-              shape: BoxShape.circle,
+          // Silik logo
+          Opacity(
+            opacity: 0.3,
+            child: Image.asset(
+              'assets/logo.png',
+              height: 120,
+              width: 120,
             ),
-            child: const Icon(Icons.menu_book, size: 80, color: Colors.purple),
           ),
           const SizedBox(height: 24),
           const Text(
-            "Hata Defteri Boş",
-            style: TextStyle(color: Colors.white, fontSize: 20, fontWeight: FontWeight.bold),
+            "Henüz hiç hatan yok",
+            style: TextStyle(color: Colors.white, fontSize: 22, fontWeight: FontWeight.bold),
           ),
           const SizedBox(height: 8),
+          const Text(
+            "Harikasın! 🎉",
+            style: TextStyle(color: Colors.amber, fontSize: 18, fontWeight: FontWeight.w500),
+          ),
+          const SizedBox(height: 16),
           Text(
             "Yapamadığın soruları buraya ekle,\nsonra \"Beni Sına\" ile tekrar et!",
             textAlign: TextAlign.center,

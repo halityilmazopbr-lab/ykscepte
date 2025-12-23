@@ -10,6 +10,16 @@ class Ogrenci {
   bool isPro;
   int gunlukSoruHakki;
   DateTime? sonSoruTarihi;
+  
+  // YENİ: Profil Alanları
+  int avatarId; // 1-15 arası hazır avatar
+  String alan; // SAYISAL, EA, SOZEL, DIL
+  int sinifSeviyesi; // 9, 10, 11, 12, 0=Mezun
+  String akademikSeviye; // BASLANGIC, ORTA, ILERI
+  String? okulNo; // Kurumsal takip için
+  String? kurumKodu; // Hangi okula bağlı
+  String? email;
+  String? telefon;
 
   Ogrenci({
     required this.id,
@@ -28,7 +38,47 @@ class Ogrenci {
     this.isPro = false,
     this.gunlukSoruHakki = 3,
     this.sonSoruTarihi,
+    // Yeni alanlar
+    this.avatarId = 1,
+    this.alan = "SAYISAL",
+    this.sinifSeviyesi = 12,
+    this.akademikSeviye = "ORTA",
+    this.okulNo,
+    this.kurumKodu,
+    this.email,
+    this.telefon,
   });
+  
+  // Unvan hesaplama (XP bazlı)
+  String get unvan {
+    if (puan >= 10000) return "YKS Efsanesi";
+    if (puan >= 5000) return "Üstat";
+    if (puan >= 2500) return "Usta";
+    if (puan >= 1000) return "Deneme Canavarı";
+    if (puan >= 500) return "Azimli";
+    if (puan >= 100) return "Meraklı";
+    return "Çaylak";
+  }
+  
+  // Seviye hesaplama
+  String get seviye {
+    if (puan >= 10000) return "Elmas";
+    if (puan >= 5000) return "Platin";
+    if (puan >= 2500) return "Altın";
+    if (puan >= 1000) return "Gümüş";
+    return "Bronz";
+  }
+  
+  // Seviye rengi
+  Color get seviyeRenk {
+    switch (seviye) {
+      case "Elmas": return Colors.cyanAccent;
+      case "Platin": return Colors.purple;
+      case "Altın": return Colors.amber;
+      case "Gümüş": return Colors.grey;
+      default: return Colors.brown;
+    }
+  }
 
   Map<String, dynamic> toJson() => {
         'id': id,
@@ -46,6 +96,15 @@ class Ogrenci {
         'isPro': isPro,
         'gunlukSoruHakki': gunlukSoruHakki,
         'sonSoruTarihi': sonSoruTarihi?.toIso8601String(),
+        // Yeni alanlar
+        'avatarId': avatarId,
+        'alan': alan,
+        'sinifSeviyesi': sinifSeviyesi,
+        'akademikSeviye': akademikSeviye,
+        'okulNo': okulNo,
+        'kurumKodu': kurumKodu,
+        'email': email,
+        'telefon': telefon,
       };
 
   factory Ogrenci.fromJson(Map<String, dynamic> json) => Ogrenci(
@@ -64,6 +123,15 @@ class Ogrenci {
         isPro: json['isPro'] ?? false,
         gunlukSoruHakki: json['gunlukSoruHakki'] ?? 3,
         sonSoruTarihi: json['sonSoruTarihi'] != null ? DateTime.parse(json['sonSoruTarihi']) : null,
+        // Yeni alanlar
+        avatarId: json['avatarId'] ?? 1,
+        alan: json['alan'] ?? "SAYISAL",
+        sinifSeviyesi: json['sinifSeviyesi'] ?? 12,
+        akademikSeviye: json['akademikSeviye'] ?? "ORTA",
+        okulNo: json['okulNo'],
+        kurumKodu: json['kurumKodu'],
+        email: json['email'],
+        telefon: json['telefon'],
       );
 }
 

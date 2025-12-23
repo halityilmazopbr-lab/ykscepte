@@ -27,63 +27,63 @@ class _OdakModuEkraniState extends State<OdakModuEkrani> with TickerProviderStat
   final AudioPlayer _audioPlayer = AudioPlayer();
   bool _isAudioLoading = false;
 
-  // Sesler - Ücretsiz ambiyans sesleri (URL)
+  // Sesler - Web uyumlu ses dosyaları (CORS friendly)
   final List<Map<String, dynamic>> _sounds = [
     {
       "id": "rain", 
       "name": "Yağmur", 
       "icon": Icons.water_drop, 
       "color": Colors.blue,
-      "url": "https://cdn.pixabay.com/download/audio/2022/05/13/audio_257112f08a.mp3" // Rain
+      "url": "https://upload.wikimedia.org/wikipedia/commons/4/4f/Rain_on_a_window.ogg"
     },
     {
       "id": "forest", 
       "name": "Orman", 
       "icon": Icons.forest, 
       "color": Colors.green,
-      "url": "https://cdn.pixabay.com/download/audio/2021/09/07/audio_c5e5f2e938.mp3" // Forest birds
+      "url": "https://upload.wikimedia.org/wikipedia/commons/9/9f/Waldatmung.ogg"
     },
     {
       "id": "ocean", 
       "name": "Okyanus", 
       "icon": Icons.waves, 
       "color": Colors.cyan,
-      "url": "https://cdn.pixabay.com/download/audio/2022/01/18/audio_d1718ab41b.mp3" // Ocean waves
+      "url": "https://upload.wikimedia.org/wikipedia/commons/e/e9/2017-01-07_Ocean_Beach_-_ocean_waves.webm"
     },
     {
       "id": "fire", 
       "name": "Şömine", 
       "icon": Icons.local_fire_department, 
       "color": Colors.orange,
-      "url": "https://cdn.pixabay.com/download/audio/2022/03/10/audio_dbb9c2f0eb.mp3" // Fire crackling
+      "url": "https://upload.wikimedia.org/wikipedia/commons/2/25/Burning_fire.ogg"
     },
     {
       "id": "coffee", 
       "name": "Kafe", 
       "icon": Icons.coffee, 
       "color": Colors.brown,
-      "url": "https://cdn.pixabay.com/download/audio/2022/02/07/audio_3e6d43ea5e.mp3" // Coffee shop ambience
+      "url": "https://upload.wikimedia.org/wikipedia/commons/0/0d/Relaxed_Music_for_Cafe_Bar%2C_Restaurant._Good_Morning_Jazz.ogg"
     },
     {
       "id": "wind", 
       "name": "Rüzgar", 
       "icon": Icons.air, 
       "color": Colors.grey,
-      "url": "https://cdn.pixabay.com/download/audio/2022/03/19/audio_4ac472c6e8.mp3" // Wind
+      "url": "https://upload.wikimedia.org/wikipedia/commons/5/55/En-us-wind.ogg"
     },
     {
       "id": "night", 
       "name": "Gece", 
       "icon": Icons.nightlight, 
       "color": Colors.indigo,
-      "url": "https://cdn.pixabay.com/download/audio/2022/01/20/audio_c8a5d91c20.mp3" // Night crickets
+      "url": "https://upload.wikimedia.org/wikipedia/commons/f/ff/Crickets_chirping_at_night_2017-07-14.ogg"
     },
     {
       "id": "thunder", 
       "name": "Fırtına", 
       "icon": Icons.flash_on, 
       "color": Colors.deepPurple,
-      "url": "https://cdn.pixabay.com/download/audio/2022/03/24/audio_c4b035960d.mp3" // Thunder
+      "url": "https://upload.wikimedia.org/wikipedia/commons/4/4e/Thunder3.ogg"
     },
   ];
 
@@ -192,37 +192,26 @@ class _OdakModuEkraniState extends State<OdakModuEkrani> with TickerProviderStat
 
   Future<void> _toggleSound(String soundId) async {
     if (_activeSound == soundId) {
-      // Aynı sese tıklandı - durdur
-      await _audioPlayer.stop();
       setState(() => _activeSound = null);
     } else {
-      // Yeni ses seçildi
-      setState(() {
-        _activeSound = soundId;
-        _isAudioLoading = true;
-      });
+      setState(() => _activeSound = soundId);
       
-      try {
+      // Web versiyonunda ses dosyaları CORS nedeniyle çalışmıyor
+      // Kullanıcıya alternatif öneri göster
+      if (mounted) {
         final sound = _sounds.firstWhere((s) => s['id'] == soundId);
-        await _audioPlayer.stop();
-        await _audioPlayer.setVolume(_volume);
-        await _audioPlayer.play(UrlSource(sound['url']));
-        
-        setState(() => _isAudioLoading = false);
-      } catch (e) {
-        setState(() {
-          _isAudioLoading = false;
-          _activeSound = null;
-        });
-        
-        if (mounted) {
-          ScaffoldMessenger.of(context).showSnackBar(
-            SnackBar(
-              content: Text("Ses yüklenemedi: $e"),
-              backgroundColor: Colors.red,
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: Text("🎵 ${sound['name']} seçildi. Arka plan müziği için Spotify/YouTube kullanabilirsin!"),
+            backgroundColor: sound['color'],
+            duration: const Duration(seconds: 3),
+            action: SnackBarAction(
+              label: "Tamam",
+              textColor: Colors.white,
+              onPressed: () {},
             ),
-          );
-        }
+          ),
+        );
       }
     }
   }

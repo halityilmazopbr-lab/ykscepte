@@ -12,6 +12,7 @@ import 'odak_modu_screen.dart';
 import 'flashcards_screen.dart';
 import 'rapor_screen.dart';
 import 'program_wizard_screen.dart';
+import 'profil_ekrani.dart';
 
 Future<void> main() async {
   WidgetsFlutterBinding.ensureInitialized();
@@ -120,14 +121,12 @@ class _LoginPageState extends State<LoginPage>
                     child: Padding(
                         padding: const EdgeInsets.all(24),
                         child:
-                            Column(mainAxisSize: MainAxisSize.min, children: [
-                          const Icon(Icons.school,
-                              size: 80, color: Colors.deepPurple),
-                          const Text("Eğitim Asistanı",
-                              style: TextStyle(
-                                  fontSize: 28,
-                                  color: Colors.deepPurple,
-                                  fontWeight: FontWeight.bold)),
+                          Column(mainAxisSize: MainAxisSize.min, children: [
+                          Image.asset(
+                            'assets/logo.png',
+                            height: 140,
+                            width: 140,
+                          ),
                           const SizedBox(height: 20),
                           TabBar(
                               controller: _tc,
@@ -170,15 +169,36 @@ class AcilisEkrani extends StatefulWidget {
   State<AcilisEkrani> createState() => _AcilisEkraniState();
 }
 
-class _AcilisEkraniState extends State<AcilisEkrani> {
+class _AcilisEkraniState extends State<AcilisEkrani>
+    with SingleTickerProviderStateMixin {
+  late AnimationController _animController;
+  late Animation<double> _pulseAnimation;
+
   @override
   void initState() {
     super.initState();
+    
+    // Pulse animasyonu (nefes alma efekti)
+    _animController = AnimationController(
+      vsync: this,
+      duration: const Duration(milliseconds: 1500),
+    )..repeat(reverse: true);
+    
+    _pulseAnimation = Tween<double>(begin: 0.95, end: 1.05).animate(
+      CurvedAnimation(parent: _animController, curve: Curves.easeInOut),
+    );
+    
     _oturumKontrol();
   }
 
+  @override
+  void dispose() {
+    _animController.dispose();
+    super.dispose();
+  }
+
   void _oturumKontrol() async {
-    await Future.delayed(const Duration(seconds: 2));
+    await Future.delayed(const Duration(seconds: 3));
     String? kayitliId = VeriDeposu.aktifKullaniciId;
     String? kayitliRol = VeriDeposu.aktifKullaniciRol;
     if (kayitliId != null && kayitliRol != null) {
@@ -204,16 +224,64 @@ class _AcilisEkraniState extends State<AcilisEkrani> {
 
   @override
   Widget build(BuildContext context) {
-    return const Scaffold(
-        backgroundColor: Colors.deepPurple,
-        body: Center(
-            child: Column(
-                mainAxisAlignment: MainAxisAlignment.center,
-                children: [
-              Icon(Icons.school, size: 100, color: Colors.white),
-              SizedBox(height: 20),
-              CircularProgressIndicator(color: Colors.white)
-            ])));
+    return Scaffold(
+      body: Container(
+        decoration: BoxDecoration(
+          gradient: LinearGradient(
+            colors: [Colors.grey.shade100, Colors.grey.shade300],
+            begin: Alignment.topCenter,
+            end: Alignment.bottomCenter,
+          ),
+        ),
+        child: Center(
+          child: Column(
+            mainAxisAlignment: MainAxisAlignment.center,
+            children: [
+              // Animasyonlu Logo
+              ScaleTransition(
+                scale: _pulseAnimation,
+                child: Image.asset(
+                  'assets/logo.png',
+                  height: 180,
+                  width: 180,
+                ),
+              ),
+              const SizedBox(height: 24),
+              // Slogan
+              const Text(
+                "YKS Cepte",
+                style: TextStyle(
+                  color: Colors.deepPurple,
+                  fontSize: 32,
+                  fontWeight: FontWeight.bold,
+                  letterSpacing: 2,
+                ),
+              ),
+              const SizedBox(height: 8),
+              Text(
+                "Dijital Koçunuz",
+                style: TextStyle(
+                  color: Colors.deepPurple.withOpacity(0.7),
+                  fontSize: 18,
+                  fontWeight: FontWeight.w300,
+                  letterSpacing: 1.5,
+                ),
+              ),
+              const SizedBox(height: 40),
+              // Yükleme göstergesi
+              const SizedBox(
+                width: 40,
+                height: 40,
+                child: CircularProgressIndicator(
+                  color: Colors.deepPurple,
+                  strokeWidth: 3,
+                ),
+              ),
+            ],
+          ),
+        ),
+      ),
+    );
   }
 }
 
@@ -229,20 +297,47 @@ class OgrenciPaneli extends StatelessWidget {
       appBar: AppBar(
           title: Row(
             children: [
+              // Küçük logo
+              ClipRRect(
+                borderRadius: BorderRadius.circular(8),
+                child: Image.asset(
+                  'assets/logo.png',
+                  height: 36,
+                  width: 36,
+                ),
+              ),
+              const SizedBox(width: 12),
               CircleAvatar(
                 backgroundColor: Colors.white,
+                radius: 18,
                 child: Text(aktifOgrenci.ad[0],
-                    style: TextStyle(color: Colors.deepPurple, fontWeight: FontWeight.bold)),
+                    style: const TextStyle(color: Colors.deepPurple, fontWeight: FontWeight.bold, fontSize: 14)),
               ),
               const SizedBox(width: 10),
-              Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  Text("Merhaba, ${aktifOgrenci.ad}",
-                      style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 16)),
-                  Text("Bugün harika işler başaracaksın!",
-                      style: const TextStyle(fontWeight: FontWeight.normal, fontSize: 12)),
-                ],
+              GestureDetector(
+                onTap: () => Navigator.push(context, MaterialPageRoute(builder: (c) => ProfilEkrani(ogrenci: aktifOgrenci))),
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Row(
+                      children: [
+                        Text(aktifOgrenci.ad,
+                            style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 16)),
+                        const SizedBox(width: 6),
+                        Container(
+                          padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 2),
+                          decoration: BoxDecoration(
+                            color: aktifOgrenci.seviyeRenk.withOpacity(0.3),
+                            borderRadius: BorderRadius.circular(8),
+                          ),
+                          child: Text(aktifOgrenci.unvan, style: TextStyle(color: aktifOgrenci.seviyeRenk, fontSize: 10, fontWeight: FontWeight.bold)),
+                        ),
+                      ],
+                    ),
+                    Text("Profil için dokun",
+                        style: TextStyle(fontWeight: FontWeight.normal, fontSize: 11, color: Colors.white.withOpacity(0.7))),
+                  ],
+                ),
               ),
             ],
           ),
@@ -322,7 +417,7 @@ class OgrenciPaneli extends StatelessWidget {
             const SizedBox(height: 10),
 
             // --- YKS SAYACI ---
-            _buildYksSayaci(),
+            _buildYksSayaci(context),
 
             // --- 1. BOLUM: DERSLER & TAKIP ---
             _buildSectionHeader("📘 DERSLER & TAKİP", "Planlı çalış, başarıyı yakala!"),
@@ -512,72 +607,89 @@ class OgrenciPaneli extends StatelessWidget {
     );
   }
 
-  /// YKS Sınav Sayacı Widget
-  Widget _buildYksSayaci() {
-    // TYT 2025 tarihi (tahmini - Haziran 2025 ortası)
-    final tytTarihi = DateTime(2025, 6, 14, 10, 0);
-    final aytTarihi = DateTime(2025, 6, 15, 10, 0);
+  /// YKS Sınav Sayacı Widget (Daraltılabilir)
+  Widget _buildYksSayaci(BuildContext context) {
+    // YKS 2026 tarihi
+    final yksTarihi = DateTime(2026, 6, 20, 10, 0);
     
     final simdi = DateTime.now();
-    final tytFark = tytTarihi.difference(simdi);
+    final fark = yksTarihi.difference(simdi);
     
-    final gun = tytFark.inDays;
-    final saat = tytFark.inHours % 24;
-    final dakika = tytFark.inMinutes % 60;
+    final gun = fark.inDays;
+    final saat = fark.inHours % 24;
+    final dakika = fark.inMinutes % 60;
 
-    return Container(
-      margin: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
-      padding: const EdgeInsets.all(20),
-      decoration: BoxDecoration(
-        gradient: LinearGradient(
-          colors: [Colors.red.shade900, Colors.orange.shade800],
-          begin: Alignment.topLeft,
-          end: Alignment.bottomRight,
-        ),
-        borderRadius: BorderRadius.circular(20),
-        boxShadow: [
-          BoxShadow(
-            color: Colors.red.withAlpha(60),
-            blurRadius: 20,
-            offset: const Offset(0, 10),
-          ),
-        ],
-      ),
-      child: Column(
-        children: [
-          // Başlık
-          Row(
-            mainAxisAlignment: MainAxisAlignment.center,
-            children: [
-              const Icon(Icons.alarm, color: Colors.white, size: 24),
-              const SizedBox(width: 8),
-              const Text(
-                "TYT'ye Kalan Süre",
-                style: TextStyle(color: Colors.white, fontSize: 16, fontWeight: FontWeight.bold),
+    return GestureDetector(
+      onTap: () {
+        // Tıklandığında detaylı görünüm göster
+        showModalBottomSheet(
+          context: context,
+          backgroundColor: Colors.transparent,
+          builder: (context) => Container(
+            padding: const EdgeInsets.all(24),
+            decoration: BoxDecoration(
+              gradient: LinearGradient(
+                colors: [Colors.red.shade900, Colors.orange.shade800],
+                begin: Alignment.topLeft,
+                end: Alignment.bottomRight,
               ),
-            ],
+              borderRadius: const BorderRadius.vertical(top: Radius.circular(24)),
+            ),
+            child: Column(
+              mainAxisSize: MainAxisSize.min,
+              children: [
+                const Text("🎯 YKS 2026", style: TextStyle(color: Colors.white, fontSize: 24, fontWeight: FontWeight.bold)),
+                const SizedBox(height: 8),
+                const Text("20 Haziran 2026 Cumartesi", style: TextStyle(color: Colors.white70)),
+                const SizedBox(height: 24),
+                Row(
+                  mainAxisAlignment: MainAxisAlignment.spaceEvenly,
+                  children: [
+                    _buildSayacKutu(gun.toString(), "GÜN"),
+                    _buildSayacKutu(saat.toString().padLeft(2, '0'), "SAAT"),
+                    _buildSayacKutu(dakika.toString().padLeft(2, '0'), "DAKİKA"),
+                  ],
+                ),
+                const SizedBox(height: 16),
+                Text("Her saniye değerli! ⚡", style: TextStyle(color: Colors.white.withAlpha(180))),
+                const SizedBox(height: 24),
+              ],
+            ),
           ),
-          
-          const SizedBox(height: 16),
-          
-          // Sayaçlar
-          Row(
-            mainAxisAlignment: MainAxisAlignment.spaceEvenly,
-            children: [
-              _buildSayacKutu(gun.toString(), "GÜN"),
-              _buildSayacKutu(saat.toString().padLeft(2, '0'), "SAAT"),
-              _buildSayacKutu(dakika.toString().padLeft(2, '0'), "DAKİKA"),
-            ],
+        );
+      },
+      child: Container(
+        margin: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
+        padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
+        decoration: BoxDecoration(
+          gradient: LinearGradient(
+            colors: [Colors.red.shade900, Colors.orange.shade800],
           ),
-          
-          const SizedBox(height: 12),
-          
-          // Alt bilgi
-          Text(
-            "14 Haziran 2025 • Her saniye değerli! ⚡",
-            style: TextStyle(color: Colors.white.withAlpha(180), fontSize: 12),
-          ),
-        ],
+          borderRadius: BorderRadius.circular(16),
+        ),
+        child: Row(
+          mainAxisAlignment: MainAxisAlignment.spaceBetween,
+          children: [
+            Row(
+              children: [
+                const Icon(Icons.alarm, color: Colors.white, size: 20),
+                const SizedBox(width: 8),
+                const Text("YKS 2026", style: TextStyle(color: Colors.white, fontWeight: FontWeight.bold)),
+              ],
+            ),
+            Container(
+              padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 4),
+              decoration: BoxDecoration(
+                color: Colors.white.withAlpha(30),
+                borderRadius: BorderRadius.circular(12),
+              ),
+              child: Text(
+                "$gun gün",
+                style: const TextStyle(color: Colors.white, fontWeight: FontWeight.bold),
+              ),
+            ),
+          ],
+        ),
       ),
     );
   }
