@@ -2,26 +2,54 @@ import 'dart:convert';
 import 'dart:io';
 import 'package:http/http.dart' as http;
 import 'package:google_mlkit_text_recognition/google_mlkit_text_recognition.dart';
-import 'package:image_picker/image_picker.dart'; // Added for XFile
-import 'package:flutter/foundation.dart'; // Added for kIsWeb
+import 'package:image_picker/image_picker.dart';
+import 'package:flutter/foundation.dart';
 import 'models.dart';
+import 'cache_service.dart';
 
-// 🔹 2. ADIM: GEMINI VİZYON İÇİN ANAHTAR (Sadece Görsel Sorularda Kullanılır)
-const String _geminiKey = "AIzaSyBI6JuUxYPZ24valrMHrRvRx4Jge-tVvJg"; // En son verdiğiniz anahtar
+// 🔹 GEMINI API KEY
+const String _geminiKey = "AIzaSyBI6JuUxYPZ24valrMHrRvRx4Jge-tVvJg";
+
+// 🔹 OPTİMİZE EDİLMİŞ PROMPTLAR
+class _Prompts {
+  // Kısa ve etkili sistem talimatları
+  static const String soruCozum = "YKS sorusu. Türkçe çöz. Kısa ve net maddeler halinde.";
+  static const String sohbet = "YKS rehber öğretmenisin. Kısa, net cevaplar ver. Gereksiz giriş yapma.";
+  static const String program = "YKS program oluştur. SADECE JSON döndür, başka metin yazma.";
+}
+
+// 🔹 API AYARLARI
+class _ApiConfig {
+  static const int maxOutputTokens = 500;  // Cevap token sınırı
+  static const double temperature = 0.7;   // Yaratıcılık seviyesi
+}
 
 class GravityAI {
-  // 🟢 1. PLAN: Sınırsız Sohbet & Metin (Pollinations.ai)
+  
+  // ═══════════════════════════════════════════════════════════════
+  // 🟢 1. METİN ÜRETME (Ücretsiz - Pollinations.ai + Cache)
+  // ═══════════════════════════════════════════════════════════════
   static Future<String> generateText(String prompt) async {
+    // 1. Önce cache'e bak
+    final cachedResponse = CacheService.get(prompt);
+    if (cachedResponse != null) {
+      return cachedResponse; // 💰 Maliyet: 0 TL
+    }
+
+    // 2. Cache'de yoksa API'ye sor
     try {
-      // Pollinations.ai API Yapısı: https://text.pollinations.ai/{prompt}
-      // Boşlukları %20 ile doldurarak URL oluşturuyoruz
       String encodedPrompt = Uri.encodeComponent(prompt);
       final url = Uri.parse('https://text.pollinations.ai/$encodedPrompt');
       
       final response = await http.get(url);
 
       if (response.statusCode == 200) {
-        return response.body; 
+        final result = response.body;
+        
+        // 3. Cevabı cache'e kaydet
+        await CacheService.set(prompt, result);
+        
+        return result;
       } else {
         return "Bağlantı Hatası: ${response.statusCode}";
       }
@@ -30,29 +58,41 @@ class GravityAI {
     }
   }
 
-
-  // 🟠 2. PLAN: Görsel Soru Çözümü (Hibrit Sistem - Web Uyumlu)
-  static Future<String> soruCoz(XFile image) async {
-    // A. ÖNCE GEMINI İLE DENEYELİM (Görüntü İşleme / Geometri için)
-    try {
-      String geminiResponse = await _geminiVisionCall(image);
-      if (!geminiResponse.contains("429")) { // Eğer kota hatası yoksa
-        return geminiResponse; // Gemini cevabını döndür
+  // ═══════════════════════════════════════════════════════════════
+  // 🟠 2. GÖRSEL SORU ÇÖZÜMÜ (Akıllı Hibrit Sistem)
+  // ═══════════════════════════════════════════════════════════════
+  /// [soruTipi]: "sozel", "sayisal" veya "auto"
+  /// Sözel sorular OCR ile çözülür (ücretsiz), sayısal Gemini ile
+  static Future<String> soruCoz(XFile image, {String soruTipi = "auto"}) async {
+    
+    // Sözel soru ise önce OCR dene (ücretsiz yol)
+    if (soruTipi == "sozel") {
+      final ocrResult = await _ocrThenText(image);
+      if (!ocrResult.contains("okunamadı")) {
+        return ocrResult; // 💰 Maliyet: 0 TL
       }
-    } catch (e) {
-      // Gemini hatası olursa devam et...
-      print("Gemini Hatası: $e");
     }
 
-    // B. GEMINI KOTASI DOLUYSA -> YEDEK PLAN (ML Kit + Pollinations)
-    return await _fallbackVisionCall(image);
+    // Sayısal veya OCR başarısız → Gemini Vision
+    try {
+      String geminiResponse = await _geminiVisionCall(image);
+      if (!geminiResponse.contains("429") && !geminiResponse.contains("Hata:")) {
+        return geminiResponse;
+      }
+    } catch (e) {
+      debugPrint("Gemini Hatası: $e");
+    }
+
+    // Yedek plan: OCR + Metin
+    return await _ocrThenText(image);
   }
 
-  // Gemini API Çağrısı (Private)
+  // ═══════════════════════════════════════════════════════════════
+  // 🔵 3. GEMİNİ VİZYON (Optimize Edilmiş)
+  // ═══════════════════════════════════════════════════════════════
   static Future<String> _geminiVisionCall(XFile image) async {
     if (_geminiKey.isEmpty) return "API Key Yok";
     
-    // Gemini 2.0 Flash Modelini Kullan
     final url = Uri.parse(
         'https://generativelanguage.googleapis.com/v1beta/models/gemini-2.0-flash:generateContent?key=$_geminiKey');
     
@@ -65,7 +105,7 @@ class GravityAI {
           "contents": [
             {
               "parts": [
-                {"text": "Bu soruyu detaylıca çöz ve anlat. Cevabı Türkçe ver."},
+                {"text": _Prompts.soruCozum}, // ✅ Optimize prompt
                 {
                   "inline_data": {
                     "mime_type": "image/jpeg",
@@ -74,64 +114,104 @@ class GravityAI {
                 }
               ]
             }
-          ]
+          ],
+          // ✅ Token sınırlaması
+          "generationConfig": {
+            "maxOutputTokens": _ApiConfig.maxOutputTokens,
+            "temperature": _ApiConfig.temperature
+          }
         }));
 
     if (response.statusCode == 200) {
       return jsonDecode(response.body)['candidates'][0]['content']['parts'][0]['text'];
     }
-    // Hata durumunda kodu döndür ki yakalayabilelim
     return "Hata: ${response.statusCode} - ${response.body}";
   }
 
-  // Yedek Plan: OCR + Metin Zekası (Private)
-  static Future<String> _fallbackVisionCall(XFile image) async {
-    // WEB KONTROLU: ML Kit Web'de çalışmaz.
+  // ═══════════════════════════════════════════════════════════════
+  // 🟣 4. OCR + METİN (Ücretsiz Yol)
+  // ═══════════════════════════════════════════════════════════════
+  static Future<String> _ocrThenText(XFile image) async {
     if (kIsWeb) {
-      return "Üzgünüm, yedek sistem (OCR) şu an tarayıcıda çalışmıyor. Lütfen Gemini API kotasının dolmasını bekleyin veya mobil uygulamayı kullanın.";
+      return "OCR tarayıcıda çalışmaz. Mobil uygulamayı kullanın.";
     }
 
     try {
-      // 1. Resimdeki yazıyı oku (OCR) - Çevrimdışı ve ücretsiz
+      // 1. Resimdeki yazıyı oku (OCR - Ücretsiz, Offline)
       final inputImage = InputImage.fromFilePath(image.path);
       final textRecognizer = TextRecognizer(script: TextRecognitionScript.latin);
       final RecognizedText recognizedText = await textRecognizer.processImage(inputImage);
       String sorununMetni = recognizedText.text;
-      textRecognizer.close(); // Temizlik
+      textRecognizer.close();
 
-      if (sorununMetni.length < 5) {
-        return "Resimden yeterli yazı okunamadı. Lütfen fotoğrafı daha net çekin.";
+      if (sorununMetni.length < 10) {
+        return "Resimden yeterli yazı okunamadı. Fotoğrafı daha net çekin.";
       }
 
-      // 2. Okunan metni Pollinations'a sor
-      String prompt = "Bu soruyu çöz: $sorununMetni";
-      return await generateText(prompt); // Yukarıdaki fonksiyonu tekrar kullanıyoruz
+      // 2. Cache kontrolü
+      final cacheKey = "ocr:$sorununMetni";
+      final cachedResponse = CacheService.get(cacheKey);
+      if (cachedResponse != null) {
+        return cachedResponse; // 💰 Maliyet: 0 TL
+      }
+
+      // 3. Pollinations'a sor (ücretsiz)
+      String prompt = "${_Prompts.soruCozum}\n\nSoru: $sorununMetni";
+      final result = await generateText(prompt);
+      
+      // 4. Cache'e kaydet
+      await CacheService.set(cacheKey, result);
+      
+      return result;
 
     } catch (e) {
-      return "Yedek sistem hatası: $e";
+      return "OCR hatası: $e";
     }
   }
 
-  // Eski kodlarınızla uyumluluk için (Program Oluşturma vs)
-  // 🟠 3. PLAN: AI Program Oluşturma (Structured)
+  // ═══════════════════════════════════════════════════════════════
+  // 🟡 5. AI PROGRAM OLUŞTURMA (Optimize)
+  // ═══════════════════════════════════════════════════════════════
   static Future<List<Gorev>> programOlustur(String sinif, String alan, String stil, int gunlukSaat, String zayifDers) async {
-    String prompt = "Bana YKS hazırlık için $sinif. sınıf, $alan öğrencisi için bir haftalık ders programı yap. "
-        "Günde $gunlukSaat saat çalışacak. Zayıf olduğu ders: $zayifDers. "
-        "Çıktıyı SADECE şu JSON formatında ver: "
-        "[{\"hafta\":1, \"gun\":\"Pazartesi\", \"saat\":\"09:00\", \"ders\":\"Matematik\", \"konu\":\"Türev\", \"aciklama\":\"Video izle\"}] "
-        "Başka hiçbir metin yazma.";
+    // Cache key
+    final cacheKey = "program:$sinif-$alan-$gunlukSaat-$zayifDers";
+    
+    // Cache kontrolü
+    final cachedResponse = CacheService.get(cacheKey);
+    if (cachedResponse != null) {
+      try {
+        List<dynamic> data = jsonDecode(cachedResponse);
+        return data.map((e) => Gorev.fromJson(e)).toList();
+      } catch (e) {
+        // Cache bozuksa devam et
+      }
+    }
+
+    // Optimize prompt
+    String prompt = "${_Prompts.program} "
+        "$sinif. sınıf $alan, günde $gunlukSaat saat, zayıf: $zayifDers. "
+        "Format: [{\"hafta\":1,\"gun\":\"Pazartesi\",\"saat\":\"09:00\",\"ders\":\"Matematik\",\"konu\":\"Türev\",\"aciklama\":\"Video\"}]";
 
     try {
       String jsonStr = await generateText(prompt);
-      // Temizlik (Bazen AI markdown ```json ... ``` ekler)
       jsonStr = jsonStr.replaceAll("```json", "").replaceAll("```", "").trim();
+      
+      // Cache'e kaydet
+      await CacheService.set(cacheKey, jsonStr);
       
       List<dynamic> data = jsonDecode(jsonStr);
       return data.map((e) => Gorev.fromJson(e)).toList();
     } catch (e) {
-      print("Program Oluşturma Hatası: $e");
-      // Hata durumunda boş liste veya varsayılan bir program dönebiliriz
+      debugPrint("Program Oluşturma Hatası: $e");
       return [];
     }
+  }
+
+  // ═══════════════════════════════════════════════════════════════
+  // 🔴 6. AI SOHBET (Cache Destekli)
+  // ═══════════════════════════════════════════════════════════════
+  static Future<String> sohbetEt(String mesaj) async {
+    final prompt = "${_Prompts.sohbet}\n\nÖğrenci: $mesaj";
+    return await generateText(prompt);
   }
 }

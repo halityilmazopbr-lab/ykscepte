@@ -6,7 +6,7 @@ plugins {
 }
 
 android {
-    namespace = "com.example.yks_cepte"
+    namespace = "com.ykscepte.app"
     compileSdk = 34
     ndkVersion = flutter.ndkVersion
 
@@ -20,7 +20,7 @@ android {
     }
 
     defaultConfig {
-        applicationId = "com.example.yks_cepte"
+        applicationId = "com.ykscepte.app"
         minSdk = 23
         targetSdk = 34
         versionCode = flutter.versionCode

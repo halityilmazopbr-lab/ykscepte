@@ -3,10 +3,19 @@ import 'package:shared_preferences/shared_preferences.dart';
 import 'data.dart';
 import 'models.dart';
 import 'screens.dart';
+import 'paywall_service.dart';
+import 'ad_service.dart';
+import 'pro_screen.dart';
+import 'cache_service.dart';
+import 'hata_defteri_screen.dart';
+import 'odak_modu_screen.dart';
+import 'flashcards_screen.dart';
+import 'rapor_screen.dart';
 
 Future<void> main() async {
   WidgetsFlutterBinding.ensureInitialized();
-  await VeriDeposu.init(); // Veritabanını ve Oturumu başlat
+  await VeriDeposu.init(); // Veritabanını başlat
+  await CacheService.init(); // AI cache'i başlat
   runApp(const MainApp());
 }
 
@@ -17,7 +26,7 @@ class MainApp extends StatelessWidget {
   Widget build(BuildContext context) {
     return MaterialApp(
       debugShowCheckedModeBanner: false,
-      title: 'Bayburt YKS Cepte',
+      title: 'YKS Cepte',
       theme: ThemeData(
         colorScheme: ColorScheme.fromSeed(seedColor: Colors.deepPurple),
         useMaterial3: true,
@@ -311,6 +320,9 @@ class OgrenciPaneli extends StatelessWidget {
 
             const SizedBox(height: 10),
 
+            // --- YKS SAYACI ---
+            _buildYksSayaci(),
+
             // --- 1. BOLUM: DERSLER & TAKIP ---
             _buildSectionHeader("📘 DERSLER & TAKİP", "Planlı çalış, başarıyı yakala!"),
             _buildHorizontalList([
@@ -327,6 +339,7 @@ class OgrenciPaneli extends StatelessWidget {
                _buildMenuCard(context, "Deneme Ekle", Icons.add_chart, DenemeEkleEkrani(ogrenciId: aktifOgrenci.id), Colors.green, Colors.lightGreenAccent),
                _buildMenuCard(context, "Denemelerim", Icons.assessment, DenemeListesiEkrani(ogrenciId: aktifOgrenci.id), Colors.redAccent, Colors.pinkAccent),
                _buildMenuCard(context, "Grafik", Icons.show_chart, BasariGrafigiEkrani(ogrenciId: aktifOgrenci.id), Colors.purpleAccent, Colors.deepPurpleAccent),
+               _buildMenuCard(context, "Rapor & Sıralama", Icons.leaderboard, RaporEkrani(ogrenci: aktifOgrenci), Colors.indigo, Colors.indigoAccent),
                _buildMenuCard(context, "Rozetlerim", Icons.emoji_events, RozetlerEkrani(ogrenci: aktifOgrenci), Colors.yellow.shade700, Colors.amberAccent),
                _buildMenuCard(context, "Günlük Takip", Icons.today, const GunlukTakipEkrani(), Colors.teal, Colors.greenAccent),
             ]),
@@ -334,12 +347,23 @@ class OgrenciPaneli extends StatelessWidget {
             // --- 3. BOLUM: AI & ARACLAR ---
             _buildSectionHeader("🧠 AI & ARAÇLAR", "Teknolojinin gücünü kullan."),
             _buildHorizontalList([
-               _buildMenuCard(context, "Soru Üreteci", Icons.psychology, const SoruUretecEkrani(), Colors.deepOrange, Colors.orangeAccent),
+               _buildMenuCard(context, "Hata Defteri", Icons.menu_book, HataDefteriEkrani(ogrenciId: aktifOgrenci.id), Colors.red, Colors.redAccent),
+               _buildMenuCard(context, "Odak Modu", Icons.headphones, const OdakModuEkrani(), Colors.purple, Colors.purpleAccent),
+               _buildMenuCard(context, "Flashcards", Icons.style, const FlashcardsEkrani(), Colors.pink, Colors.pinkAccent),
+               _buildMenuCard(context, "Soru Üreteci", Icons.psychology, SoruUretecEkrani(ogrenci: aktifOgrenci), Colors.deepOrange, Colors.orangeAccent),
                _buildMenuCard(context, "Sihirbaz", Icons.auto_awesome, const ProgramSecimEkrani(), Colors.orangeAccent, Colors.yellowAccent),
-               _buildMenuCard(context, "AI Asistan", Icons.chat, const YapayZekaSohbetEkrani(), Colors.cyan, Colors.lightBlue),
-               _buildMenuCard(context, "Soru Çöz", Icons.camera_alt, const SoruCozumEkrani(), Colors.amber, Colors.yellow),
+               _buildMenuCard(context, "AI Asistan", Icons.chat, YapayZekaSohbetEkrani(ogrenci: aktifOgrenci), Colors.cyan, Colors.lightBlue),
+               _buildMenuCard(context, "Soru Çöz", Icons.camera_alt, SoruCozumEkrani(ogrenci: aktifOgrenci), Colors.amber, Colors.yellow),
                _buildMenuCard(context, "Kronometre", Icons.timer, const KronometreEkrani(), Colors.lightBlue, Colors.cyan),
             ]),
+            
+            // --- PRO KARTI ---
+            if (!aktifOgrenci.isPro) ...[
+              _buildSectionHeader("⭐ PRO ÜYELİK", "Sınırsız erişim için Pro'ya geç!"),
+              _buildHorizontalList([
+                _buildProCard(context),
+              ]),
+            ],
             
             const SizedBox(height: 30), // Alt bosluk
           ],
@@ -416,6 +440,172 @@ class OgrenciPaneli extends StatelessWidget {
                                 fontWeight: FontWeight.bold))
                       ]),
                 ))),
+      ),
+    );
+  }
+
+  Widget _buildProCard(BuildContext context) {
+    return Container(
+      width: 280,
+      margin: const EdgeInsets.only(right: 12),
+      child: Card(
+        elevation: 8,
+        shadowColor: Colors.amber.withOpacity(0.4),
+        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(20)),
+        child: InkWell(
+            onTap: () => Navigator.push(
+                context, MaterialPageRoute(builder: (c) => const ProScreen())),
+            borderRadius: BorderRadius.circular(20),
+            child: Container(
+                decoration: BoxDecoration(
+                    borderRadius: BorderRadius.circular(20),
+                    gradient: const LinearGradient(
+                        colors: [Color(0xFF1A1A2E), Color(0xFF16213E)],
+                        begin: Alignment.topLeft,
+                        end: Alignment.bottomRight)),
+                child: Padding(
+                  padding: const EdgeInsets.all(16.0),
+                  child: Row(
+                    children: [
+                      Container(
+                        padding: const EdgeInsets.all(12),
+                        decoration: BoxDecoration(
+                          gradient: LinearGradient(
+                            colors: [Colors.amber.shade400, Colors.orange.shade600],
+                          ),
+                          shape: BoxShape.circle,
+                        ),
+                        child: const Icon(Icons.workspace_premium, size: 28, color: Colors.white),
+                      ),
+                      const SizedBox(width: 16),
+                      Expanded(
+                        child: Column(
+                          crossAxisAlignment: CrossAxisAlignment.start,
+                          mainAxisAlignment: MainAxisAlignment.center,
+                          children: [
+                            const Text("PRO'YA GEÇ",
+                                style: TextStyle(
+                                    fontSize: 16,
+                                    color: Colors.amber,
+                                    fontWeight: FontWeight.bold)),
+                            const SizedBox(height: 4),
+                            Text("Sınırsız soru, reklamsız!",
+                                style: TextStyle(
+                                    fontSize: 12,
+                                    color: Colors.white.withOpacity(0.8))),
+                            const SizedBox(height: 6),
+                            Text("Kalan hak: ${aktifOgrenci.gunlukSoruHakki}/3",
+                                style: TextStyle(
+                                    fontSize: 11,
+                                    color: aktifOgrenci.gunlukSoruHakki > 0 
+                                      ? Colors.green 
+                                      : Colors.red)),
+                          ],
+                        ),
+                      ),
+                      const Icon(Icons.arrow_forward_ios, color: Colors.amber, size: 16),
+                    ],
+                  ),
+                ))),
+      ),
+    );
+  }
+
+  /// YKS Sınav Sayacı Widget
+  Widget _buildYksSayaci() {
+    // TYT 2025 tarihi (tahmini - Haziran 2025 ortası)
+    final tytTarihi = DateTime(2025, 6, 14, 10, 0);
+    final aytTarihi = DateTime(2025, 6, 15, 10, 0);
+    
+    final simdi = DateTime.now();
+    final tytFark = tytTarihi.difference(simdi);
+    
+    final gun = tytFark.inDays;
+    final saat = tytFark.inHours % 24;
+    final dakika = tytFark.inMinutes % 60;
+
+    return Container(
+      margin: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
+      padding: const EdgeInsets.all(20),
+      decoration: BoxDecoration(
+        gradient: LinearGradient(
+          colors: [Colors.red.shade900, Colors.orange.shade800],
+          begin: Alignment.topLeft,
+          end: Alignment.bottomRight,
+        ),
+        borderRadius: BorderRadius.circular(20),
+        boxShadow: [
+          BoxShadow(
+            color: Colors.red.withAlpha(60),
+            blurRadius: 20,
+            offset: const Offset(0, 10),
+          ),
+        ],
+      ),
+      child: Column(
+        children: [
+          // Başlık
+          Row(
+            mainAxisAlignment: MainAxisAlignment.center,
+            children: [
+              const Icon(Icons.alarm, color: Colors.white, size: 24),
+              const SizedBox(width: 8),
+              const Text(
+                "TYT'ye Kalan Süre",
+                style: TextStyle(color: Colors.white, fontSize: 16, fontWeight: FontWeight.bold),
+              ),
+            ],
+          ),
+          
+          const SizedBox(height: 16),
+          
+          // Sayaçlar
+          Row(
+            mainAxisAlignment: MainAxisAlignment.spaceEvenly,
+            children: [
+              _buildSayacKutu(gun.toString(), "GÜN"),
+              _buildSayacKutu(saat.toString().padLeft(2, '0'), "SAAT"),
+              _buildSayacKutu(dakika.toString().padLeft(2, '0'), "DAKİKA"),
+            ],
+          ),
+          
+          const SizedBox(height: 12),
+          
+          // Alt bilgi
+          Text(
+            "14 Haziran 2025 • Her saniye değerli! ⚡",
+            style: TextStyle(color: Colors.white.withAlpha(180), fontSize: 12),
+          ),
+        ],
+      ),
+    );
+  }
+
+  Widget _buildSayacKutu(String deger, String etiket) {
+    return Container(
+      padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
+      decoration: BoxDecoration(
+        color: Colors.white.withAlpha(25),
+        borderRadius: BorderRadius.circular(12),
+      ),
+      child: Column(
+        children: [
+          Text(
+            deger,
+            style: const TextStyle(
+              color: Colors.white,
+              fontSize: 32,
+              fontWeight: FontWeight.bold,
+            ),
+          ),
+          Text(
+            etiket,
+            style: TextStyle(
+              color: Colors.white.withAlpha(180),
+              fontSize: 11,
+            ),
+          ),
+        ],
       ),
     );
   }

@@ -5,6 +5,11 @@ class Ogrenci {
   int puan, girisSayisi, hedefPuan;
   String? atananOgretmenId;
   int gunlukSeri;
+  
+  // Pro/Monetization fields
+  bool isPro;
+  int gunlukSoruHakki;
+  DateTime? sonSoruTarihi;
 
   Ogrenci({
     required this.id,
@@ -20,6 +25,9 @@ class Ogrenci {
     this.hedefBolum = "",
     this.hedefPuan = 0,
     this.gunlukSeri = 0,
+    this.isPro = false,
+    this.gunlukSoruHakki = 3,
+    this.sonSoruTarihi,
   });
 
   Map<String, dynamic> toJson() => {
@@ -34,7 +42,10 @@ class Ogrenci {
         'fotoUrl': fotoUrl,
         'hedefUniversite': hedefUniversite,
         'hedefBolum': hedefBolum,
-        'gunlukSeri': gunlukSeri
+        'gunlukSeri': gunlukSeri,
+        'isPro': isPro,
+        'gunlukSoruHakki': gunlukSoruHakki,
+        'sonSoruTarihi': sonSoruTarihi?.toIso8601String(),
       };
 
   factory Ogrenci.fromJson(Map<String, dynamic> json) => Ogrenci(
@@ -50,6 +61,9 @@ class Ogrenci {
         hedefUniversite: json['hedefUniversite'],
         hedefBolum: json['hedefBolum'],
         gunlukSeri: json['gunlukSeri'] ?? 0,
+        isPro: json['isPro'] ?? false,
+        gunlukSoruHakki: json['gunlukSoruHakki'] ?? 3,
+        sonSoruTarihi: json['sonSoruTarihi'] != null ? DateTime.parse(json['sonSoruTarihi']) : null,
       );
 }
 
@@ -251,4 +265,50 @@ class Mesaj {
   String text;
   bool isUser;
   Mesaj({required this.text, required this.isUser});
+}
+
+/// Hata Defteri Soru Modeli
+/// Öğrencinin yapamadığı soruları kaydetmesi için
+class HataDefteriSoru {
+  String id;
+  String ogrenciId;
+  String imageBase64;     // Base64 encoded resim
+  String ders;            // Matematik, Fizik, vb.
+  String konu;            // Türev, Olasılık, vb.
+  String? aciklama;       // "İşlem hatası yaptım"
+  bool cozuldu;           // Çözüldü mü?
+  DateTime tarih;
+
+  HataDefteriSoru({
+    required this.id,
+    required this.ogrenciId,
+    required this.imageBase64,
+    required this.ders,
+    required this.konu,
+    this.aciklama,
+    this.cozuldu = false,
+    required this.tarih,
+  });
+
+  Map<String, dynamic> toJson() => {
+    'id': id,
+    'ogrenciId': ogrenciId,
+    'imageBase64': imageBase64,
+    'ders': ders,
+    'konu': konu,
+    'aciklama': aciklama,
+    'cozuldu': cozuldu,
+    'tarih': tarih.toIso8601String(),
+  };
+
+  factory HataDefteriSoru.fromJson(Map<String, dynamic> json) => HataDefteriSoru(
+    id: json['id'],
+    ogrenciId: json['ogrenciId'],
+    imageBase64: json['imageBase64'],
+    ders: json['ders'],
+    konu: json['konu'],
+    aciklama: json['aciklama'],
+    cozuldu: json['cozuldu'] ?? false,
+    tarih: DateTime.parse(json['tarih']),
+  );
 }

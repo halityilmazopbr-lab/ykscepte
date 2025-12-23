@@ -4,10 +4,14 @@ import 'package:flutter/material.dart';
 import 'dart:io';
 import 'dart:math';
 import 'package:image_picker/image_picker.dart';
+import 'package:fl_chart/fl_chart.dart';
 import 'models.dart';
 import 'data.dart';
 import 'gemini_service.dart';
-import 'main.dart'; // Circular dependency possible if screens refer back to main components? Usually not needed if we design well.
+import 'main.dart';
+import 'paywall_service.dart';
+import 'ad_service.dart';
+import 'pro_screen.dart';
 // Actually TumProgramEkrani refers to nothing special.
 // ProgramSihirbaziEkrani refers to TumProgramEkrani.
 
@@ -66,7 +70,8 @@ class ProgramSecimEkrani extends StatelessWidget {
 }
 
 class SoruUretecEkrani extends StatefulWidget {
-  const SoruUretecEkrani({super.key});
+  final Ogrenci ogrenci;
+  const SoruUretecEkrani({super.key, required this.ogrenci});
   @override
   State<SoruUretecEkrani> createState() => _SUEState();
 }
@@ -75,8 +80,46 @@ class _SUEState extends State<SoruUretecEkrani> {
   String? ders, konu, zorluk;
   String soru = "";
   bool loading = false;
+  
+  void _showPaywall() {
+    PaywallService.showPaywall(
+      context,
+      onWatchAd: () async {
+        // Reklam izle ve hak kazan
+        await AdService.showRewardedAd(
+          onRewarded: (amount) {
+            setState(() {
+              PaywallService.addBonusCredit(widget.ogrenci);
+              VeriDeposu.kaydet();
+            });
+            ScaffoldMessenger.of(context).showSnackBar(
+              const SnackBar(content: Text("🎉 +1 Soru hakkı kazandın!"), backgroundColor: Colors.green),
+            );
+          },
+        );
+      },
+      onGoPro: () {
+        Navigator.push(context, MaterialPageRoute(builder: (c) => const ProScreen()));
+      },
+    );
+  }
+  
   Future<void> _uret() async {
     if (ders == null || konu == null) return;
+    
+    // Paywall kontrolü
+    if (PaywallService.shouldShowPaywall(widget.ogrenci, "SoruUretec")) {
+      _showPaywall();
+      return;
+    }
+    
+    // Soru hakkı kullan
+    if (!PaywallService.useQuestionCredit(widget.ogrenci)) {
+      _showPaywall();
+      return;
+    }
+    VeriDeposu.kaydet();
+    
     setState(() => loading = true);
     String s = await GravityAI.generateText(
         "$ders dersi $konu konusunda ${zorluk ?? 'orta'} seviye bir adet çoktan seçmeli YKS sorusu yaz.");
@@ -89,7 +132,20 @@ class _SUEState extends State<SoruUretecEkrani> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-        appBar: AppBar(title: const Text("Soru Üreteci")),
+        appBar: AppBar(
+          title: const Text("Soru Üreteci"),
+          actions: [
+            if (!widget.ogrenci.isPro)
+              Padding(
+                padding: const EdgeInsets.only(right: 8),
+                child: Chip(
+                  label: Text("${widget.ogrenci.gunlukSoruHakki}/3"),
+                  backgroundColor: widget.ogrenci.gunlukSoruHakki > 0 ? Colors.green : Colors.red,
+                  labelStyle: const TextStyle(color: Colors.white),
+                ),
+              ),
+          ],
+        ),
         body: Padding(
             padding: const EdgeInsets.all(16),
             child: Column(children: [
@@ -152,15 +208,53 @@ class OdevlerEkrani extends StatelessWidget {
 }
 
 class YapayZekaSohbetEkrani extends StatefulWidget {
-  const YapayZekaSohbetEkrani({super.key});
+  final Ogrenci ogrenci;
+  const YapayZekaSohbetEkrani({super.key, required this.ogrenci});
   @override
   State<YapayZekaSohbetEkrani> createState() => _YZSEState();
 }
 
 class _YZSEState extends State<YapayZekaSohbetEkrani> {
   final TextEditingController _c = TextEditingController();
+  
+  void _showPaywall() {
+    PaywallService.showPaywall(
+      context,
+      onWatchAd: () async {
+        await AdService.showRewardedAd(
+          onRewarded: (amount) {
+            setState(() {
+              PaywallService.addBonusCredit(widget.ogrenci);
+              VeriDeposu.kaydet();
+            });
+            ScaffoldMessenger.of(context).showSnackBar(
+              const SnackBar(content: Text("🎉 +1 Soru hakkı kazandın!"), backgroundColor: Colors.green),
+            );
+          },
+        );
+      },
+      onGoPro: () {
+        Navigator.push(context, MaterialPageRoute(builder: (c) => const ProScreen()));
+      },
+    );
+  }
+  
   void _send() async {
     if (_c.text.isEmpty) return;
+    
+    // Paywall kontrolü
+    if (PaywallService.shouldShowPaywall(widget.ogrenci, "AIAsistan")) {
+      _showPaywall();
+      return;
+    }
+    
+    // Soru hakkı kullan
+    if (!PaywallService.useQuestionCredit(widget.ogrenci)) {
+      _showPaywall();
+      return;
+    }
+    VeriDeposu.kaydet();
+    
     String t = _c.text;
     setState(() {
       VeriDeposu.mesajlar.add(Mesaj(text: t, isUser: true));
@@ -174,7 +268,20 @@ class _YZSEState extends State<YapayZekaSohbetEkrani> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-        appBar: AppBar(title: const Text("AI Asistan")),
+        appBar: AppBar(
+          title: const Text("AI Asistan"),
+          actions: [
+            if (!widget.ogrenci.isPro)
+              Padding(
+                padding: const EdgeInsets.only(right: 8),
+                child: Chip(
+                  label: Text("${widget.ogrenci.gunlukSoruHakki}/3"),
+                  backgroundColor: widget.ogrenci.gunlukSoruHakki > 0 ? Colors.green : Colors.red,
+                  labelStyle: const TextStyle(color: Colors.white),
+                ),
+              ),
+          ],
+        ),
         body: Column(children: [
           Expanded(
               child: ListView.builder(
@@ -576,12 +683,346 @@ class DenemeEkleEkrani extends StatefulWidget {
   State<DenemeEkleEkrani> createState() => _DEEState();
 }
 
-class _DEEState extends State<DenemeEkleEkrani> {
+class _DEEState extends State<DenemeEkleEkrani> with SingleTickerProviderStateMixin {
+  late TabController _tabController;
+  String _denemeTuru = "TYT";
+  
+  // TYT Ders Bilgileri (Ders Adı, Soru Sayısı)
+  final List<_DersGiris> _tytDersler = [
+    _DersGiris("Türkçe", 40),
+    _DersGiris("Matematik", 40),
+    _DersGiris("Geometri", 10),
+    _DersGiris("Fizik", 7),
+    _DersGiris("Kimya", 7),
+    _DersGiris("Biyoloji", 6),
+    _DersGiris("Tarih", 5),
+    _DersGiris("Coğrafya", 5),
+    _DersGiris("Felsefe", 5),
+    _DersGiris("Din Kültürü", 5),
+  ];
+  
+  // AYT Ders Bilgileri (Sayısal)
+  final List<_DersGiris> _aytSayisalDersler = [
+    _DersGiris("Matematik", 40),
+    _DersGiris("Geometri", 10),
+    _DersGiris("Fizik", 14),
+    _DersGiris("Kimya", 13),
+    _DersGiris("Biyoloji", 13),
+  ];
+  
+  // AYT Eşit Ağırlık
+  final List<_DersGiris> _aytEaDersler = [
+    _DersGiris("Edebiyat", 24),
+    _DersGiris("Tarih-1", 10),
+    _DersGiris("Coğrafya-1", 6),
+    _DersGiris("Matematik", 40),
+    _DersGiris("Geometri", 10),
+  ];
+  
+  // AYT Sözel
+  final List<_DersGiris> _aytSozelDersler = [
+    _DersGiris("Edebiyat", 24),
+    _DersGiris("Tarih-1", 10),
+    _DersGiris("Coğrafya-1", 6),
+    _DersGiris("Tarih-2", 11),
+    _DersGiris("Coğrafya-2", 11),
+    _DersGiris("Felsefe Grubu", 12),
+    _DersGiris("Din Kültürü", 6),
+  ];
+
+  @override
+  void initState() {
+    super.initState();
+    _tabController = TabController(length: 4, vsync: this);
+  }
+
+  @override
+  void dispose() {
+    _tabController.dispose();
+    for (var d in _tytDersler) { d.dispose(); }
+    for (var d in _aytSayisalDersler) { d.dispose(); }
+    for (var d in _aytEaDersler) { d.dispose(); }
+    for (var d in _aytSozelDersler) { d.dispose(); }
+    super.dispose();
+  }
+
+  double _hesaplaNet(List<_DersGiris> dersler) {
+    double toplam = 0;
+    for (var d in dersler) {
+      toplam += d.net;
+    }
+    return toplam;
+  }
+
+  void _kaydet() {
+    List<_DersGiris> aktifDersler;
+    String tur;
+    
+    switch (_tabController.index) {
+      case 0:
+        aktifDersler = _tytDersler;
+        tur = "TYT";
+        break;
+      case 1:
+        aktifDersler = _aytSayisalDersler;
+        tur = "AYT Sayısal";
+        break;
+      case 2:
+        aktifDersler = _aytEaDersler;
+        tur = "AYT Eşit Ağırlık";
+        break;
+      case 3:
+        aktifDersler = _aytSozelDersler;
+        tur = "AYT Sözel";
+        break;
+      default:
+        aktifDersler = _tytDersler;
+        tur = "TYT";
+    }
+
+    // Net hesapla
+    Map<String, double> dersNetleri = {};
+    double toplamNet = 0;
+    
+    for (var d in aktifDersler) {
+      dersNetleri[d.dersAdi] = d.net;
+      toplamNet += d.net;
+    }
+
+    // Kaydet
+    VeriDeposu.denemeEkle(DenemeSonucu(
+      ogrenciId: widget.ogrenciId,
+      tur: tur,
+      tarih: DateTime.now(),
+      toplamNet: toplamNet,
+      dersNetleri: dersNetleri,
+    ));
+
+    ScaffoldMessenger.of(context).showSnackBar(
+      SnackBar(
+        content: Text("✅ $tur denemesi kaydedildi! Toplam: ${toplamNet.toStringAsFixed(2)} Net"),
+        backgroundColor: Colors.green,
+      ),
+    );
+    
+    Navigator.pop(context);
+  }
+
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-        appBar: AppBar(title: const Text("Deneme Ekle")),
-        body: const Center(child: Text("Deneme Ekleme Formu")));
+      appBar: AppBar(
+        title: const Text("Deneme Ekle"),
+        bottom: TabBar(
+          controller: _tabController,
+          isScrollable: true,
+          tabs: const [
+            Tab(text: "TYT"),
+            Tab(text: "AYT Sayısal"),
+            Tab(text: "AYT EA"),
+            Tab(text: "AYT Sözel"),
+          ],
+        ),
+      ),
+      floatingActionButton: FloatingActionButton.extended(
+        onPressed: _kaydet,
+        icon: const Icon(Icons.save),
+        label: const Text("KAYDET"),
+        backgroundColor: Colors.green,
+      ),
+      body: TabBarView(
+        controller: _tabController,
+        children: [
+          _buildDersListesi(_tytDersler, "TYT"),
+          _buildDersListesi(_aytSayisalDersler, "AYT Sayısal"),
+          _buildDersListesi(_aytEaDersler, "AYT Eşit Ağırlık"),
+          _buildDersListesi(_aytSozelDersler, "AYT Sözel"),
+        ],
+      ),
+    );
+  }
+
+  Widget _buildDersListesi(List<_DersGiris> dersler, String tur) {
+    return Column(
+      children: [
+        // Toplam Net Kartı
+        Container(
+          margin: const EdgeInsets.all(16),
+          padding: const EdgeInsets.all(20),
+          decoration: BoxDecoration(
+            gradient: LinearGradient(
+              colors: [Colors.deepPurple, Colors.purple.shade400],
+            ),
+            borderRadius: BorderRadius.circular(16),
+          ),
+          child: Row(
+            mainAxisAlignment: MainAxisAlignment.spaceBetween,
+            children: [
+              Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Text(tur, style: const TextStyle(color: Colors.white70, fontSize: 14)),
+                  const Text("TOPLAM NET", style: TextStyle(color: Colors.white, fontSize: 18, fontWeight: FontWeight.bold)),
+                ],
+              ),
+              Text(
+                _hesaplaNet(dersler).toStringAsFixed(2),
+                style: const TextStyle(color: Colors.white, fontSize: 32, fontWeight: FontWeight.bold),
+              ),
+            ],
+          ),
+        ),
+        
+        // Ders Listesi
+        Expanded(
+          child: ListView.builder(
+            padding: const EdgeInsets.symmetric(horizontal: 16),
+            itemCount: dersler.length,
+            itemBuilder: (context, index) => _buildDersKarti(dersler[index]),
+          ),
+        ),
+      ],
+    );
+  }
+
+  Widget _buildDersKarti(_DersGiris ders) {
+    return Card(
+      margin: const EdgeInsets.only(bottom: 12),
+      elevation: 2,
+      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+      child: Padding(
+        padding: const EdgeInsets.all(16),
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            // Ders Başlığı ve Net
+            Row(
+              mainAxisAlignment: MainAxisAlignment.spaceBetween,
+              children: [
+                Text(
+                  ders.dersAdi,
+                  style: const TextStyle(fontSize: 16, fontWeight: FontWeight.bold),
+                ),
+                Container(
+                  padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 4),
+                  decoration: BoxDecoration(
+                    color: ders.net >= 0 ? Colors.green.shade100 : Colors.red.shade100,
+                    borderRadius: BorderRadius.circular(20),
+                  ),
+                  child: Text(
+                    "${ders.net.toStringAsFixed(2)} Net",
+                    style: TextStyle(
+                      color: ders.net >= 0 ? Colors.green.shade800 : Colors.red.shade800,
+                      fontWeight: FontWeight.bold,
+                    ),
+                  ),
+                ),
+              ],
+            ),
+            
+            const SizedBox(height: 8),
+            
+            // Soru sayısı bilgisi
+            Text(
+              "Toplam: ${ders.soruSayisi} soru",
+              style: TextStyle(color: Colors.grey.shade600, fontSize: 12),
+            ),
+            
+            const SizedBox(height: 12),
+            
+            // Doğru - Yanlış inputları
+            Row(
+              children: [
+                // Doğru
+                Expanded(
+                  child: TextField(
+                    controller: ders.dogruController,
+                    keyboardType: TextInputType.number,
+                    decoration: InputDecoration(
+                      labelText: "Doğru",
+                      prefixIcon: const Icon(Icons.check_circle, color: Colors.green),
+                      border: OutlineInputBorder(borderRadius: BorderRadius.circular(10)),
+                      contentPadding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
+                    ),
+                    onChanged: (v) {
+                      // Validasyon
+                      int dogru = int.tryParse(v) ?? 0;
+                      int yanlis = int.tryParse(ders.yanlisController.text) ?? 0;
+                      
+                      if (dogru + yanlis > ders.soruSayisi) {
+                        ders.dogruController.text = (ders.soruSayisi - yanlis).toString();
+                      }
+                      setState(() {});
+                    },
+                  ),
+                ),
+                
+                const SizedBox(width: 12),
+                
+                // Yanlış
+                Expanded(
+                  child: TextField(
+                    controller: ders.yanlisController,
+                    keyboardType: TextInputType.number,
+                    decoration: InputDecoration(
+                      labelText: "Yanlış",
+                      prefixIcon: const Icon(Icons.cancel, color: Colors.red),
+                      border: OutlineInputBorder(borderRadius: BorderRadius.circular(10)),
+                      contentPadding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
+                    ),
+                    onChanged: (v) {
+                      // Validasyon
+                      int yanlis = int.tryParse(v) ?? 0;
+                      int dogru = int.tryParse(ders.dogruController.text) ?? 0;
+                      
+                      if (dogru + yanlis > ders.soruSayisi) {
+                        ders.yanlisController.text = (ders.soruSayisi - dogru).toString();
+                      }
+                      setState(() {});
+                    },
+                  ),
+                ),
+                
+                const SizedBox(width: 12),
+                
+                // Boş (otomatik)
+                Container(
+                  padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 12),
+                  decoration: BoxDecoration(
+                    color: Colors.grey.shade200,
+                    borderRadius: BorderRadius.circular(10),
+                  ),
+                  child: Text(
+                    "Boş: ${ders.bos}",
+                    style: TextStyle(color: Colors.grey.shade700),
+                  ),
+                ),
+              ],
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+}
+
+/// Ders giriş modeli
+class _DersGiris {
+  final String dersAdi;
+  final int soruSayisi;
+  final TextEditingController dogruController = TextEditingController(text: "0");
+  final TextEditingController yanlisController = TextEditingController(text: "0");
+
+  _DersGiris(this.dersAdi, this.soruSayisi);
+
+  int get dogru => int.tryParse(dogruController.text) ?? 0;
+  int get yanlis => int.tryParse(yanlisController.text) ?? 0;
+  int get bos => soruSayisi - dogru - yanlis;
+  double get net => dogru - (yanlis / 4);
+
+  void dispose() {
+    dogruController.dispose();
+    yanlisController.dispose();
   }
 }
 
@@ -691,17 +1132,492 @@ class _KREState extends State<KronometreEkrani> {
   }
 }
 
-class BasariGrafigiEkrani extends StatelessWidget {
+class BasariGrafigiEkrani extends StatefulWidget {
   final String ogrenciId;
   const BasariGrafigiEkrani({super.key, required this.ogrenciId});
   @override
+  State<BasariGrafigiEkrani> createState() => _BGEState();
+}
+
+class _BGEState extends State<BasariGrafigiEkrani> with SingleTickerProviderStateMixin {
+  String _selectedFilter = "Toplam";
+  late AnimationController _animController;
+  late Animation<double> _animation;
+
+  final List<String> _filterOptions = [
+    "Toplam",
+    "Türkçe",
+    "Matematik",
+    "Geometri",
+    "Fizik",
+    "Kimya",
+    "Biyoloji",
+  ];
+
+  @override
+  void initState() {
+    super.initState();
+    _animController = AnimationController(
+      duration: const Duration(milliseconds: 1500),
+      vsync: this,
+    );
+    _animation = CurvedAnimation(parent: _animController, curve: Curves.easeInOut);
+    _animController.forward();
+  }
+
+  @override
+  void dispose() {
+    _animController.dispose();
+    super.dispose();
+  }
+
+  List<Map<String, dynamic>> _getChartData() {
+    List<DenemeSonucu> denemeler = VeriDeposu.denemeListesi
+        .where((d) => d.ogrenciId == widget.ogrenciId)
+        .toList();
+    
+    denemeler.sort((a, b) => a.tarih.compareTo(b.tarih));
+
+    return denemeler.map((d) {
+      double value;
+      if (_selectedFilter == "Toplam") {
+        value = d.toplamNet;
+      } else {
+        value = d.dersNetleri[_selectedFilter] ?? 0;
+      }
+      return {
+        'tarih': d.tarih,
+        'tur': d.tur,
+        'net': value,
+        'dersNetleri': d.dersNetleri,
+      };
+    }).toList();
+  }
+
+  @override
   Widget build(BuildContext context) {
+    final data = _getChartData();
+    
     return Scaffold(
-        appBar: AppBar(title: const Text("Grafik")),
-        body: Center(child: Column(mainAxisAlignment: MainAxisAlignment.center, children: [
-           Icon(Icons.show_chart, size: 100, color: Colors.grey[300]),
-           const Text("Grafikler Veri Toplandıkça Açılacak", style: TextStyle(color: Colors.grey))
-        ])));
+      backgroundColor: const Color(0xFF0D1117),
+      appBar: AppBar(
+        backgroundColor: const Color(0xFF161B22),
+        title: const Text("📊 Gelişim Analizi", style: TextStyle(color: Colors.white)),
+        iconTheme: const IconThemeData(color: Colors.white),
+      ),
+      body: data.isEmpty
+          ? _buildEmptyState()
+          : SingleChildScrollView(
+              padding: const EdgeInsets.all(16),
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  // Özet Kartları
+                  _buildSummaryCards(data),
+                  
+                  const SizedBox(height: 24),
+                  
+                  // Filtre Chips
+                  _buildFilterChips(),
+                  
+                  const SizedBox(height: 24),
+                  
+                  // Ana Grafik
+                  _buildMainChart(data),
+                  
+                  const SizedBox(height: 24),
+                  
+                  // Son Deneme Detay
+                  if (data.isNotEmpty) _buildLastExamDetails(data.last),
+                  
+                  const SizedBox(height: 24),
+                  
+                  // Ders Bazlı Bar Chart
+                  if (data.isNotEmpty) _buildSubjectBarChart(data.last),
+                ],
+              ),
+            ),
+    );
+  }
+
+  Widget _buildEmptyState() {
+    return Center(
+      child: Column(
+        mainAxisAlignment: MainAxisAlignment.center,
+        children: [
+          Container(
+            padding: const EdgeInsets.all(30),
+            decoration: BoxDecoration(
+              color: Colors.purple.withAlpha(30),
+              shape: BoxShape.circle,
+            ),
+            child: const Icon(Icons.analytics, size: 80, color: Colors.purple),
+          ),
+          const SizedBox(height: 24),
+          const Text(
+            "Henüz Deneme Eklenmedi",
+            style: TextStyle(color: Colors.white, fontSize: 20, fontWeight: FontWeight.bold),
+          ),
+          const SizedBox(height: 8),
+          Text(
+            "Deneme ekledikçe gelişim grafiğin burada görünecek",
+            style: TextStyle(color: Colors.grey.shade500),
+          ),
+        ],
+      ),
+    );
+  }
+
+  Widget _buildSummaryCards(List<Map<String, dynamic>> data) {
+    double avgNet = data.fold(0.0, (sum, d) => sum + (d['net'] as double)) / data.length;
+    double maxNet = data.map((d) => d['net'] as double).reduce((a, b) => a > b ? a : b);
+    double trend = data.length >= 2 
+        ? (data.last['net'] as double) - (data[data.length - 2]['net'] as double)
+        : 0;
+
+    return Row(
+      children: [
+        Expanded(child: _buildSummaryCard("Ortalama", avgNet.toStringAsFixed(1), Colors.blue, Icons.show_chart)),
+        const SizedBox(width: 12),
+        Expanded(child: _buildSummaryCard("En Yüksek", maxNet.toStringAsFixed(1), Colors.green, Icons.emoji_events)),
+        const SizedBox(width: 12),
+        Expanded(child: _buildSummaryCard(
+          "Trend", 
+          "${trend >= 0 ? '+' : ''}${trend.toStringAsFixed(1)}", 
+          trend >= 0 ? Colors.green : Colors.red, 
+          trend >= 0 ? Icons.trending_up : Icons.trending_down
+        )),
+      ],
+    );
+  }
+
+  Widget _buildSummaryCard(String title, String value, Color color, IconData icon) {
+    return AnimatedBuilder(
+      animation: _animation,
+      builder: (context, child) => Transform.scale(
+        scale: 0.8 + (_animation.value * 0.2),
+        child: Opacity(
+          opacity: _animation.value,
+          child: Container(
+            padding: const EdgeInsets.all(16),
+            decoration: BoxDecoration(
+              gradient: LinearGradient(
+                colors: [color.withAlpha(40), color.withAlpha(20)],
+                begin: Alignment.topLeft,
+                end: Alignment.bottomRight,
+              ),
+              borderRadius: BorderRadius.circular(16),
+              border: Border.all(color: color.withAlpha(50)),
+            ),
+            child: Column(
+              children: [
+                Icon(icon, color: color, size: 24),
+                const SizedBox(height: 8),
+                Text(value, style: TextStyle(color: color, fontSize: 22, fontWeight: FontWeight.bold)),
+                Text(title, style: TextStyle(color: Colors.grey.shade500, fontSize: 12)),
+              ],
+            ),
+          ),
+        ),
+      ),
+    );
+  }
+
+  Widget _buildFilterChips() {
+    return SingleChildScrollView(
+      scrollDirection: Axis.horizontal,
+      child: Row(
+        children: _filterOptions.map((filter) {
+          bool isSelected = _selectedFilter == filter;
+          return Padding(
+            padding: const EdgeInsets.only(right: 8),
+            child: FilterChip(
+              label: Text(filter),
+              selected: isSelected,
+              onSelected: (selected) => setState(() => _selectedFilter = filter),
+              backgroundColor: const Color(0xFF21262D),
+              selectedColor: Colors.purple,
+              labelStyle: TextStyle(
+                color: isSelected ? Colors.white : Colors.grey.shade400,
+                fontWeight: isSelected ? FontWeight.bold : FontWeight.normal,
+              ),
+              checkmarkColor: Colors.white,
+            ),
+          );
+        }).toList(),
+      ),
+    );
+  }
+
+  Widget _buildMainChart(List<Map<String, dynamic>> data) {
+    return Container(
+      height: 280,
+      padding: const EdgeInsets.all(20),
+      decoration: BoxDecoration(
+        gradient: LinearGradient(
+          colors: [const Color(0xFF21262D), const Color(0xFF161B22)],
+          begin: Alignment.topCenter,
+          end: Alignment.bottomCenter,
+        ),
+        borderRadius: BorderRadius.circular(20),
+        boxShadow: [
+          BoxShadow(
+            color: Colors.purple.withAlpha(20),
+            blurRadius: 20,
+            offset: const Offset(0, 10),
+          ),
+        ],
+      ),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Row(
+            mainAxisAlignment: MainAxisAlignment.spaceBetween,
+            children: [
+              Text(
+                "$_selectedFilter Net Gelişimi",
+                style: const TextStyle(color: Colors.white, fontSize: 16, fontWeight: FontWeight.bold),
+              ),
+              Container(
+                padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
+                decoration: BoxDecoration(
+                  color: Colors.purple.withAlpha(30),
+                  borderRadius: BorderRadius.circular(20),
+                ),
+                child: Text(
+                  "${data.length} Deneme",
+                  style: const TextStyle(color: Colors.purple, fontSize: 12),
+                ),
+              ),
+            ],
+          ),
+          const SizedBox(height: 20),
+          Expanded(
+            child: LineChart(
+              LineChartData(
+                gridData: FlGridData(
+                  show: true,
+                  drawVerticalLine: false,
+                  horizontalInterval: 20,
+                  getDrawingHorizontalLine: (value) => FlLine(
+                    color: Colors.grey.withAlpha(20),
+                    strokeWidth: 1,
+                  ),
+                ),
+                titlesData: FlTitlesData(
+                  leftTitles: AxisTitles(
+                    sideTitles: SideTitles(
+                      showTitles: true,
+                      reservedSize: 40,
+                      getTitlesWidget: (value, meta) => Text(
+                        value.toInt().toString(),
+                        style: TextStyle(color: Colors.grey.shade600, fontSize: 12),
+                      ),
+                    ),
+                  ),
+                  bottomTitles: AxisTitles(
+                    sideTitles: SideTitles(
+                      showTitles: true,
+                      getTitlesWidget: (value, meta) {
+                        if (value.toInt() >= 0 && value.toInt() < data.length) {
+                          return Padding(
+                            padding: const EdgeInsets.only(top: 8),
+                            child: Text(
+                              "D${value.toInt() + 1}",
+                              style: TextStyle(color: Colors.grey.shade600, fontSize: 10),
+                            ),
+                          );
+                        }
+                        return const SizedBox();
+                      },
+                    ),
+                  ),
+                  topTitles: const AxisTitles(sideTitles: SideTitles(showTitles: false)),
+                  rightTitles: const AxisTitles(sideTitles: SideTitles(showTitles: false)),
+                ),
+                borderData: FlBorderData(show: false),
+                lineBarsData: [
+                  LineChartBarData(
+                    spots: List.generate(data.length, (i) => FlSpot(i.toDouble(), data[i]['net'] as double)),
+                    isCurved: true,
+                    curveSmoothness: 0.35,
+                    gradient: const LinearGradient(colors: [Colors.purple, Colors.blue]),
+                    barWidth: 4,
+                    isStrokeCapRound: true,
+                    dotData: FlDotData(
+                      show: true,
+                      getDotPainter: (spot, percent, bar, index) => FlDotCirclePainter(
+                        radius: 6,
+                        color: Colors.white,
+                        strokeWidth: 3,
+                        strokeColor: Colors.purple,
+                      ),
+                    ),
+                    belowBarData: BarAreaData(
+                      show: true,
+                      gradient: LinearGradient(
+                        colors: [Colors.purple.withAlpha(50), Colors.transparent],
+                        begin: Alignment.topCenter,
+                        end: Alignment.bottomCenter,
+                      ),
+                    ),
+                  ),
+                ],
+                lineTouchData: LineTouchData(
+                  touchTooltipData: LineTouchTooltipData(
+                    getTooltipItems: (spots) => spots.map((spot) => LineTooltipItem(
+                      "${spot.y.toStringAsFixed(1)} Net\n${data[spot.x.toInt()]['tur']}",
+                      const TextStyle(color: Colors.white, fontWeight: FontWeight.bold),
+                    )).toList(),
+                  ),
+                ),
+              ),
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+
+  Widget _buildLastExamDetails(Map<String, dynamic> lastExam) {
+    return Container(
+      padding: const EdgeInsets.all(20),
+      decoration: BoxDecoration(
+        color: const Color(0xFF21262D),
+        borderRadius: BorderRadius.circular(16),
+      ),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Row(
+            children: [
+              const Icon(Icons.access_time, color: Colors.grey, size: 16),
+              const SizedBox(width: 8),
+              Text(
+                "Son Deneme: ${lastExam['tur']}",
+                style: const TextStyle(color: Colors.white, fontWeight: FontWeight.bold),
+              ),
+              const Spacer(),
+              Text(
+                "${(lastExam['tarih'] as DateTime).day}/${(lastExam['tarih'] as DateTime).month}/${(lastExam['tarih'] as DateTime).year}",
+                style: TextStyle(color: Colors.grey.shade500, fontSize: 12),
+              ),
+            ],
+          ),
+          const SizedBox(height: 16),
+          Row(
+            mainAxisAlignment: MainAxisAlignment.center,
+            children: [
+              _buildNetBadge("Toplam Net", lastExam['net'], Colors.purple),
+            ],
+          ),
+        ],
+      ),
+    );
+  }
+
+  Widget _buildNetBadge(String label, double net, Color color) {
+    return Container(
+      padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 12),
+      decoration: BoxDecoration(
+        gradient: LinearGradient(colors: [color, color.withAlpha(180)]),
+        borderRadius: BorderRadius.circular(30),
+      ),
+      child: Row(
+        children: [
+          Text(net.toStringAsFixed(1), style: const TextStyle(color: Colors.white, fontSize: 24, fontWeight: FontWeight.bold)),
+          const SizedBox(width: 8),
+          Text(label, style: const TextStyle(color: Colors.white70)),
+        ],
+      ),
+    );
+  }
+
+  Widget _buildSubjectBarChart(Map<String, dynamic> lastExam) {
+    Map<String, double> dersNetleri = Map<String, double>.from(lastExam['dersNetleri']);
+    List<MapEntry<String, double>> entries = dersNetleri.entries.toList();
+
+    return Container(
+      padding: const EdgeInsets.all(20),
+      decoration: BoxDecoration(
+        color: const Color(0xFF21262D),
+        borderRadius: BorderRadius.circular(16),
+      ),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          const Text(
+            "Son Deneme Ders Bazlı",
+            style: TextStyle(color: Colors.white, fontWeight: FontWeight.bold, fontSize: 16),
+          ),
+          const SizedBox(height: 16),
+          ...entries.map((e) => _buildBarItem(e.key, e.value, _getColorForSubject(e.key))),
+        ],
+      ),
+    );
+  }
+
+  Widget _buildBarItem(String ders, double net, Color color) {
+    double maxNet = 40; // Max possible
+    double percentage = (net / maxNet).clamp(0, 1);
+    
+    return Padding(
+      padding: const EdgeInsets.only(bottom: 12),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Row(
+            mainAxisAlignment: MainAxisAlignment.spaceBetween,
+            children: [
+              Text(ders, style: TextStyle(color: Colors.grey.shade400, fontSize: 13)),
+              Text("${net.toStringAsFixed(1)} Net", style: TextStyle(color: color, fontWeight: FontWeight.bold)),
+            ],
+          ),
+          const SizedBox(height: 6),
+          AnimatedBuilder(
+            animation: _animation,
+            builder: (context, child) => Stack(
+              children: [
+                Container(
+                  height: 8,
+                  decoration: BoxDecoration(
+                    color: Colors.grey.withAlpha(30),
+                    borderRadius: BorderRadius.circular(4),
+                  ),
+                ),
+                FractionallySizedBox(
+                  widthFactor: percentage * _animation.value,
+                  child: Container(
+                    height: 8,
+                    decoration: BoxDecoration(
+                      gradient: LinearGradient(colors: [color, color.withAlpha(180)]),
+                      borderRadius: BorderRadius.circular(4),
+                    ),
+                  ),
+                ),
+              ],
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+
+  Color _getColorForSubject(String ders) {
+    switch (ders) {
+      case "Türkçe": return Colors.orange;
+      case "Matematik": return Colors.blue;
+      case "Geometri": return Colors.cyan;
+      case "Fizik": return Colors.purple;
+      case "Kimya": return Colors.green;
+      case "Biyoloji": return Colors.teal;
+      case "Tarih": return Colors.red;
+      case "Coğrafya": return Colors.brown;
+      case "Felsefe": return Colors.pink;
+      case "Din Kültürü": return Colors.amber;
+      case "Edebiyat": return Colors.deepOrange;
+      default: return Colors.grey;
+    }
   }
 }
 
@@ -852,15 +1768,38 @@ class _STE extends State<SoruTakipEkrani> {
 }
 
 class SoruCozumEkrani extends StatefulWidget {
-  const SoruCozumEkrani({super.key});
+  final Ogrenci ogrenci;
+  const SoruCozumEkrani({super.key, required this.ogrenci});
   @override
   State<SoruCozumEkrani> createState() => _SCEState();
 }
 class _SCEState extends State<SoruCozumEkrani> {
-  XFile? _image; // File yerine XFile (Web uyumlu)
+  XFile? _image;
   String _cozum = "";
   bool _loading = false;
   final ImagePicker _picker = ImagePicker();
+
+  void _showPaywall() {
+    PaywallService.showPaywall(
+      context,
+      onWatchAd: () async {
+        await AdService.showRewardedAd(
+          onRewarded: (amount) {
+            setState(() {
+              PaywallService.addBonusCredit(widget.ogrenci);
+              VeriDeposu.kaydet();
+            });
+            ScaffoldMessenger.of(context).showSnackBar(
+              const SnackBar(content: Text("🎉 +1 Soru hakkı kazandın!"), backgroundColor: Colors.green),
+            );
+          },
+        );
+      },
+      onGoPro: () {
+        Navigator.push(context, MaterialPageRoute(builder: (c) => const ProScreen()));
+      },
+    );
+  }
 
   Future<void> _foto(ImageSource s) async {
     final f = await _picker.pickImage(source: s);
@@ -869,8 +1808,21 @@ class _SCEState extends State<SoruCozumEkrani> {
 
   Future<void> _coz() async {
     if (_image == null) return;
+    
+    // Paywall kontrolü
+    if (PaywallService.shouldShowPaywall(widget.ogrenci, "SoruCozum")) {
+      _showPaywall();
+      return;
+    }
+    
+    // Soru hakkı kullan
+    if (!PaywallService.useQuestionCredit(widget.ogrenci)) {
+      _showPaywall();
+      return;
+    }
+    VeriDeposu.kaydet();
+    
     setState(() => _loading = true);
-    // GravityAI artık XFile kabul ediyor
     String c = await GravityAI.soruCoz(_image!);
     setState(() { _cozum = c; _loading = false; });
   }
@@ -878,12 +1830,25 @@ class _SCEState extends State<SoruCozumEkrani> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-        appBar: AppBar(title: const Text("AI Soru Çöz")),
+        appBar: AppBar(
+          title: const Text("AI Soru Çöz"),
+          actions: [
+            if (!widget.ogrenci.isPro)
+              Padding(
+                padding: const EdgeInsets.only(right: 8),
+                child: Chip(
+                  label: Text("${widget.ogrenci.gunlukSoruHakki}/3"),
+                  backgroundColor: widget.ogrenci.gunlukSoruHakki > 0 ? Colors.green : Colors.red,
+                  labelStyle: const TextStyle(color: Colors.white),
+                ),
+              ),
+          ],
+        ),
         body: SingleChildScrollView(child: Column(children: [
           if(_image != null) 
              kIsWeb 
-                ? Image.network(_image!.path, height: 200) // Web için
-                : Image.file(File(_image!.path), height: 200), // Mobil için (import dart:io gerekir ama screens.dart'ta var mı?)
+                ? Image.network(_image!.path, height: 200)
+                : Image.file(File(_image!.path), height: 200),
 
           Row(mainAxisAlignment: MainAxisAlignment.center, children: [
              ElevatedButton(onPressed: () => _foto(ImageSource.camera), child: const Text("Kamera")),

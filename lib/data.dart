@@ -13,6 +13,7 @@ class VeriDeposu {
   static Map<String, bool> tamamlananKonular = {};
   static List<Rozet> tumRozetler = [];
   static List<Mesaj> mesajlar = [];
+  static List<HataDefteriSoru> hataDefteriListesi = [];
 
   static const List<String> aktiviteler = [
     "Konu Çalışma",
@@ -415,6 +416,11 @@ class VeriDeposu {
         } catch (e) {}
       }
     }
+    if (_prefs.containsKey('hataDefteriListesi')) {
+      var list = jsonDecode(_prefs.getString('hataDefteriListesi')!);
+      hataDefteriListesi =
+          (list as List).map((e) => HataDefteriSoru.fromJson(e)).toList();
+    }
   }
 
   // OTURUM YÖNETİMİ
@@ -444,6 +450,8 @@ class VeriDeposu {
     await _prefs.setString('bitenKonular', jsonEncode(tamamlananKonular));
     await _prefs.setString('rozetler',
         jsonEncode(tumRozetler.map((e) => e.toStateJson()).toList()));
+    await _prefs.setString('hataDefteriListesi',
+        jsonEncode(hataDefteriListesi.map((e) => e.toJson()).toList()));
   }
 
   static void baslat() {

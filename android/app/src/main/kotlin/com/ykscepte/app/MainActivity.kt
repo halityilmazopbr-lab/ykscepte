@@ -1,4 +1,4 @@
-package com.example.yks_cepte
+package com.ykscepte.app
 
 import io.flutter.embedding.android.FlutterActivity
 

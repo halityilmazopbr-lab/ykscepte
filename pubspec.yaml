@@ -13,6 +13,13 @@ dependencies:
   http: ^1.2.10
   shared_preferences: ^2.2.2
   image_picker: ^1.0.7
+  fl_chart: ^0.68.0
+  audioplayers: ^6.1.0
+  appinio_swiper: ^2.1.1
+  flip_card: ^0.7.0
+  pdf: ^3.11.1
+  path_provider: ^2.1.5
+  share_plus: ^10.1.4
 
 dev_dependencies:
   flutter_test:
