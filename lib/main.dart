@@ -11,6 +11,7 @@ import 'hata_defteri_screen.dart';
 import 'odak_modu_screen.dart';
 import 'flashcards_screen.dart';
 import 'rapor_screen.dart';
+import 'program_wizard_screen.dart';
 
 Future<void> main() async {
   WidgetsFlutterBinding.ensureInitialized();
@@ -351,7 +352,7 @@ class OgrenciPaneli extends StatelessWidget {
                _buildMenuCard(context, "Odak Modu", Icons.headphones, const OdakModuEkrani(), Colors.purple, Colors.purpleAccent),
                _buildMenuCard(context, "Flashcards", Icons.style, const FlashcardsEkrani(), Colors.pink, Colors.pinkAccent),
                _buildMenuCard(context, "Soru Üreteci", Icons.psychology, SoruUretecEkrani(ogrenci: aktifOgrenci), Colors.deepOrange, Colors.orangeAccent),
-               _buildMenuCard(context, "Sihirbaz", Icons.auto_awesome, const ProgramSecimEkrani(), Colors.orangeAccent, Colors.yellowAccent),
+               _buildMenuCard(context, "Program Sihirbazı", Icons.auto_awesome, const YeniProgramSihirbaziEkrani(), Colors.orangeAccent, Colors.yellowAccent),
                _buildMenuCard(context, "AI Asistan", Icons.chat, YapayZekaSohbetEkrani(ogrenci: aktifOgrenci), Colors.cyan, Colors.lightBlue),
                _buildMenuCard(context, "Soru Çöz", Icons.camera_alt, SoruCozumEkrani(ogrenci: aktifOgrenci), Colors.amber, Colors.yellow),
                _buildMenuCard(context, "Kronometre", Icons.timer, const KronometreEkrani(), Colors.lightBlue, Colors.cyan),
