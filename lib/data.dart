@@ -2,6 +2,8 @@ import 'dart:convert';
 import 'package:flutter/material.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import 'models.dart';
+import 'randevu_models.dart';
+import 'kurum_models.dart';
 
 class VeriDeposu {
   static late SharedPreferences _prefs;
@@ -14,6 +16,34 @@ class VeriDeposu {
   static List<Rozet> tumRozetler = [];
   static List<Mesaj> mesajlar = [];
   static List<HataDefteriSoru> hataDefteriListesi = [];
+  
+  // RANDEVU SİSTEMİ
+  static Map<String, Map<int, Map<String, String>>> ogretmenMusaitlikleri = {};
+  // Key: ogretmenId, Value: {gunIndex: {saat: durum}}
+  static List<RandevuBildirimi> randevuBildirimleri = [];
+  
+  // KURUM & YOKLAMA SİSTEMİ
+  static Kurum? aktifKurum;
+  static List<YoklamaKaydi> yoklamaKayitlari = [];
+  static List<Kurum> kurumlar = [
+    Kurum(
+      id: "kurum1",
+      ad: "Bayburt Fen Dershanesi",
+      adres: "Bayburt Merkez",
+      latitude: 40.2565,
+      longitude: 40.2256,
+      yaricapMetre: 100,
+    ),
+  ];
+  static List<KurumYoneticisi> kurumYoneticileri = [
+    KurumYoneticisi(
+      id: "kurum1",
+      kurumId: "kurum1",
+      ad: "Müdür Ahmet Yıldız",
+      sifre: "123456",
+    ),
+  ];
+  static List<KurumDuyuru> kurumDuyurulari = [];
 
   static const List<String> aktiviteler = [
     "Konu Çalışma",
@@ -51,7 +81,9 @@ class VeriDeposu {
         hedefUniversite: "Boğaziçi",
         hedefBolum: "Bilgisayar",
         hedefPuan: 520,
-        gunlukSeri: 5),
+        gunlukSeri: 5,
+        kurumKodu: "kurum1", // KURUMSAL ÖĞRENCİ - Dersteyim ve diğer özellikleri görebilir
+    ),
     Ogrenci(
         id: "102",
         tcNo: "22222222222",
@@ -558,7 +590,7 @@ class VeriDeposu {
   static dynamic girisKontrol(String k, String s) {
     if (k == "admin" && s == "123456") return "admin"; // Admin Check
     if (k == "ogrenci1" && s == "1234")
-      return Ogrenci(id: "101", ad: "Ahmet Yılmaz", sinif: "12-A", puan: 1250);
+      return Ogrenci(id: "101", ad: "Ahmet Yılmaz", sinif: "12-A", puan: 1250, veliErisimKodu: "123456");
     // Dynamic Check
     try {
       var o = ogrenciler.firstWhere((e) => e.id == k || e.ad.toLowerCase().replaceAll(" ", "") == k.toLowerCase());
@@ -570,6 +602,39 @@ class VeriDeposu {
     } catch (e) {}
     
     return null;
+  }
+
+  /// Veli girişi için kontrol
+  /// ogrenciId: Öğrenci TC/ID numarası
+  /// erisimKodu: 6 haneli veli erişim kodu
+  static Ogrenci? veliGirisKontrol(String ogrenciId, String erisimKodu) {
+    // Test kullanıcı kontrolü
+    if (ogrenciId == "101" && erisimKodu == "123456") {
+      return Ogrenci(id: "101", ad: "Ahmet Yılmaz", sinif: "12-A", puan: 1250, veliErisimKodu: "123456");
+    }
+    
+    // Gerçek kullanıcı kontrolü
+    try {
+      var ogrenci = ogrenciler.firstWhere(
+        (e) => (e.id == ogrenciId || e.tcNo == ogrenciId) && e.veliErisimKodu == erisimKodu && e.veliErisimKodu.isNotEmpty
+      );
+      return ogrenci;
+    } catch (e) {
+      return null;
+    }
+  }
+
+  /// Kurum yöneticisi girişi için kontrol
+  static (KurumYoneticisi?, Kurum?) kurumYoneticisiGirisKontrol(String id, String sifre) {
+    try {
+      var yonetici = kurumYoneticileri.firstWhere(
+        (y) => y.id == id && y.sifre == sifre
+      );
+      var kurum = kurumlar.firstWhere((k) => k.id == yonetici.kurumId);
+      return (yonetici, kurum);
+    } catch (e) {
+      return (null, null);
+    }
   }
 
   // --- YÖNETİCİ METOTLARI ---

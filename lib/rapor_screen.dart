@@ -82,7 +82,7 @@ class _RaporEkraniState extends State<RaporEkrani> with SingleTickerProviderStat
         .where((d) => d.ogrenciId == widget.ogrenci.id)
         .toList();
     if (denemeler.isEmpty) return 0;
-    return denemeler.fold(0.0, (sum, d) => sum + d.toplamNet) / denemeler.length;
+    return denemeler.fold<double>(0.0, (sum, d) => sum + d.toplamNet) / denemeler.length;
   }
 
   String get _tahminiSiralama {

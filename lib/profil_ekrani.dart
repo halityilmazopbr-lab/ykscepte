@@ -322,7 +322,7 @@ class _ProfilEkraniState extends State<ProfilEkrani> {
     
     // Son 3 deneme ortalaması
     var sonDenemeler = VeriDeposu.denemeListesi.take(3).toList();
-    double ortNet = sonDenemeler.isEmpty ? 0 : sonDenemeler.fold(0.0, (sum, d) => sum + d.toplamNet) / sonDenemeler.length;
+    double ortNet = sonDenemeler.isEmpty ? 0 : sonDenemeler.fold<double>(0.0, (sum, d) => sum + d.toplamNet) / sonDenemeler.length;
     
     return Container(
       padding: const EdgeInsets.all(20),

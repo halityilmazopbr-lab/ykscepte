@@ -12,6 +12,8 @@ import 'main.dart';
 import 'paywall_service.dart';
 import 'ad_service.dart';
 import 'pro_screen.dart';
+import 'ogretmen_randevu_screen.dart';
+import 'kurum_panel_screen.dart';
 // Actually TumProgramEkrani refers to nothing special.
 // ProgramSihirbaziEkrani refers to TumProgramEkrani.
 
@@ -690,8 +692,7 @@ class _DEEState extends State<DenemeEkleEkrani> with SingleTickerProviderStateMi
   // TYT Ders Bilgileri (Ders Adı, Soru Sayısı)
   final List<_DersGiris> _tytDersler = [
     _DersGiris("Türkçe", 40),
-    _DersGiris("Matematik", 40),
-    _DersGiris("Geometri", 10),
+    _DersGiris("Matematik", 50), // Mat + Geo birleşik (40+10)
     _DersGiris("Fizik", 7),
     _DersGiris("Kimya", 7),
     _DersGiris("Biyoloji", 6),
@@ -703,8 +704,7 @@ class _DEEState extends State<DenemeEkleEkrani> with SingleTickerProviderStateMi
   
   // AYT Ders Bilgileri (Sayısal)
   final List<_DersGiris> _aytSayisalDersler = [
-    _DersGiris("Matematik", 40),
-    _DersGiris("Geometri", 10),
+    _DersGiris("Matematik", 50), // Mat + Geo birleşik (40+10)
     _DersGiris("Fizik", 14),
     _DersGiris("Kimya", 13),
     _DersGiris("Biyoloji", 13),
@@ -715,8 +715,7 @@ class _DEEState extends State<DenemeEkleEkrani> with SingleTickerProviderStateMi
     _DersGiris("Edebiyat", 24),
     _DersGiris("Tarih-1", 10),
     _DersGiris("Coğrafya-1", 6),
-    _DersGiris("Matematik", 40),
-    _DersGiris("Geometri", 10),
+    _DersGiris("Matematik", 50), // Mat + Geo birleşik (40+10)
   ];
   
   // AYT Sözel
@@ -1937,6 +1936,17 @@ class _OPState extends State<OgretmenPaneli> {
       appBar: AppBar(
         title: Text("Koç Paneli: ${widget.aktifOgretmen.ad}"),
         actions: [
+          IconButton(
+              icon: const Icon(Icons.calendar_today),
+              tooltip: 'Randevularım',
+              onPressed: () {
+                Navigator.push(
+                  context,
+                  MaterialPageRoute(
+                    builder: (c) => OgretmenRandevuEkrani(ogretmen: widget.aktifOgretmen),
+                  ),
+                );
+              }),
           IconButton(
               icon: const Icon(Icons.logout),
               onPressed: () async {

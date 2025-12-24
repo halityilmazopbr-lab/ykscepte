@@ -20,6 +20,10 @@ class Ogrenci {
   String? kurumKodu; // Hangi okula bağlı
   String? email;
   String? telefon;
+  
+  // VELİ ERİŞİM
+  String veliErisimKodu; // 6 haneli erişim kodu
+  bool devamsizlikDurum; // true = derste, false = yok
 
   Ogrenci({
     required this.id,
@@ -47,6 +51,9 @@ class Ogrenci {
     this.kurumKodu,
     this.email,
     this.telefon,
+    // Veli erişim
+    this.veliErisimKodu = "",
+    this.devamsizlikDurum = true,
   });
   
   // Unvan hesaplama (XP bazlı)
@@ -79,6 +86,9 @@ class Ogrenci {
       default: return Colors.brown;
     }
   }
+  
+  // Kurumsal öğrenci mi? (Bir kuruma/dershaneye bağlı)
+  bool get isKurumsal => kurumKodu != null && kurumKodu!.isNotEmpty;
 
   Map<String, dynamic> toJson() => {
         'id': id,
@@ -105,6 +115,9 @@ class Ogrenci {
         'kurumKodu': kurumKodu,
         'email': email,
         'telefon': telefon,
+        // Veli
+        'veliErisimKodu': veliErisimKodu,
+        'devamsizlikDurum': devamsizlikDurum,
       };
 
   factory Ogrenci.fromJson(Map<String, dynamic> json) => Ogrenci(
@@ -132,6 +145,9 @@ class Ogrenci {
         kurumKodu: json['kurumKodu'],
         email: json['email'],
         telefon: json['telefon'],
+        // Veli
+        veliErisimKodu: json['veliErisimKodu'] ?? '',
+        devamsizlikDurum: json['devamsizlikDurum'] ?? true,
       );
 }
 

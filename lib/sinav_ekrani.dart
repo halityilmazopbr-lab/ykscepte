@@ -212,7 +212,7 @@ class _SinavEkraniState extends State<SinavEkrani> {
     }
   }
 
-  void _sonucGoster(DenemeSonucu sonuc) {
+  void _sonucGoster(KurumsalDenemeSonucu sonuc) {
     showDialog(
       context: context,
       barrierDismissible: false,

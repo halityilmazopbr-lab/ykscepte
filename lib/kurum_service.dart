@@ -42,13 +42,61 @@ class KurumService {
           .orderBy('yayin_tarihi', descending: true)
           .get();
       
+      if (snapshot.docs.isEmpty) {
+        // Firebase boş veya bağlantı yok, demo veriler dön
+        return _demoDenemeleri();
+      }
+      
       return snapshot.docs
           .map((doc) => KurumDenemesi.fromFirestore(doc))
           .toList();
     } catch (e) {
-      print('Denemeler getirilemedi: $e');
-      return [];
+      print('Denemeler getirilemedi (demo kullanılıyor): $e');
+      // Firebase hatası, demo veriler dön
+      return _demoDenemeleri();
     }
+  }
+
+  /// Demo denemeler (Firebase olmadan test için)
+  static List<KurumDenemesi> _demoDenemeleri() {
+    return [
+      KurumDenemesi(
+        id: 'demo1',
+        kurumId: 'kurum1',
+        dersAdi: 'TYT Türkçe Deneme-1',
+        kategori: 'TYT',
+        soruSayisi: 40,
+        sureDk: 50,
+        pdfUrl: '', // Demo için boş, SinavEkrani handle edecek
+        cevapAnahtari: 'ABCDABCDABCDABCDABCDABCDABCDABCDABCDABCD',
+        yayinTarihi: DateTime.now().subtract(const Duration(days: 1)),
+        aktifMi: true,
+      ),
+      KurumDenemesi(
+        id: 'demo2',
+        kurumId: 'kurum1',
+        dersAdi: 'TYT Matematik Deneme-1',
+        kategori: 'TYT',
+        soruSayisi: 50,
+        sureDk: 75,
+        pdfUrl: '',
+        cevapAnahtari: 'ABCDEABCDEABCDEABCDEABCDEABCDEABCDEABCDEABCDEABCDE',
+        yayinTarihi: DateTime.now().subtract(const Duration(days: 2)),
+        aktifMi: true,
+      ),
+      KurumDenemesi(
+        id: 'demo3',
+        kurumId: 'kurum1',
+        dersAdi: 'AYT Matematik Deneme-1',
+        kategori: 'AYT',
+        soruSayisi: 50,
+        sureDk: 80,
+        pdfUrl: '',
+        cevapAnahtari: 'ABCDEABCDEABCDEABCDEABCDEABCDEABCDEABCDEABCDEABCDE',
+        yayinTarihi: DateTime.now().subtract(const Duration(days: 3)),
+        aktifMi: true,
+      ),
+    ];
   }
 
   /// Tek bir deneme getir (ID ile)
@@ -96,7 +144,7 @@ class KurumService {
   }
 
   /// Sınav sonucunu kaydet
-  static Future<bool> sonucKaydet(DenemeSonucu sonuc) async {
+  static Future<bool> sonucKaydet(KurumsalDenemeSonucu sonuc) async {
     try {
       await _sonuclarRef.add(sonuc.toFirestore());
       return true;
@@ -107,7 +155,7 @@ class KurumService {
   }
 
   /// Öğrencinin bir sınava daha önce girip girmediğini kontrol et
-  static Future<DenemeSonucu?> getOgrenciSonucu(String ogrenciId, String denemeId) async {
+  static Future<KurumsalDenemeSonucu?> getOgrenciSonucu(String ogrenciId, String denemeId) async {
     try {
       final snapshot = await _sonuclarRef
           .where('ogrenci_id', isEqualTo: ogrenciId)
@@ -116,7 +164,7 @@ class KurumService {
           .get();
       
       if (snapshot.docs.isNotEmpty) {
-        return DenemeSonucu.fromFirestore(snapshot.docs.first);
+        return KurumsalDenemeSonucu.fromFirestore(snapshot.docs.first);
       }
       return null;
     } catch (e) {
@@ -126,7 +174,7 @@ class KurumService {
   }
 
   /// Öğrencinin tüm sınav sonuçlarını getir
-  static Future<List<DenemeSonucu>> getOgrenciSonuclari(String ogrenciId) async {
+  static Future<List<KurumsalDenemeSonucu>> getOgrenciSonuclari(String ogrenciId) async {
     try {
       final snapshot = await _sonuclarRef
           .where('ogrenci_id', isEqualTo: ogrenciId)
@@ -134,7 +182,7 @@ class KurumService {
           .get();
       
       return snapshot.docs
-          .map((doc) => DenemeSonucu.fromFirestore(doc))
+          .map((doc) => KurumsalDenemeSonucu.fromFirestore(doc))
           .toList();
     } catch (e) {
       print('Sonuçlar getirilemedi: $e');
@@ -146,7 +194,7 @@ class KurumService {
 /// Puanlama Algoritması
 class PuanlamaServisi {
   /// Sınavı değerlendir ve sonuç döndür
-  static DenemeSonucu sinaviDegerlendir({
+  static KurumsalDenemeSonucu sinaviDegerlendir({
     required String ogrenciId,
     required String denemeId,
     required String cevapAnahtari,
@@ -172,7 +220,7 @@ class PuanlamaServisi {
     // Net hesaplama: Doğru - (Yanlış / 4)
     double net = dogru - (yanlis / 4);
 
-    return DenemeSonucu(
+    return KurumsalDenemeSonucu(
       ogrenciId: ogrenciId,
       denemeId: denemeId,
       ogrenciCevaplari: ogrenciCevaplari.join(''),
