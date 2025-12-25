@@ -39,15 +39,13 @@ subprojects {
 }
 
 // Subprojects için compileSdkVersion ayarla (app_links vb. üçüncü parti paketler için)
+// KOŞULSUZ OVERRIDE - tüm pluginleri SDK 35'e zorla
 subprojects {
-    // Eklenti yüklendiği an tetiklenir, 'afterEvaluate' hatasına düşmez
     pluginManager.withPlugin("com.android.library") {
         val androidExtension = extensions.findByType(com.android.build.gradle.BaseExtension::class.java)
         if (androidExtension != null) {
-            // Eğer sdk version eksikse 35 olarak zorla
-            if (androidExtension.compileSdkVersion == null) {
-                androidExtension.compileSdkVersion(35)
-            }
+            // Koşulsuz olarak 35 yap (plugin'in kendi değerini eziyoruz)
+            androidExtension.compileSdkVersion(35)
         }
     }
 }

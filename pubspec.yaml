@@ -33,7 +33,7 @@ dependencies:
   firebase_core: ^3.15.2
   provider: ^6.1.1
   excel: ^4.0.6
-  app_links: ^6.3.3  # Deep link handling for Viral Growth Loop
+  app_links: ^6.4.1  # Deep link handling (using 6.x for Dart SDK 3.9.2 compatibility)
   flutter_tts: ^3.8.3  # Uyku Modu - Audio Flashcards
 
 dev_dependencies:
