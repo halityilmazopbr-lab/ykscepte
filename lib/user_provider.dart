@@ -22,11 +22,32 @@ class UserProvider extends ChangeNotifier {
   /// Kurumsal kullanıcı mı?
   bool get isKurumsal => _currentUser?.isKurumsal ?? false;
   
-  /// Kullanıcı rolü
+  /// Kullanıcı rolü (enum)
   UserRole? get userRole => _currentUser?.rol;
+  
+  /// Kullanıcı rolü (string) - Admin panel kontrolü için
+  String get currentUserRole {
+    switch (_currentUser?.rol) {
+      case UserRole.ogrenci:
+        return 'ogrenci';
+      case UserRole.ogretmen:
+        return 'ogretmen';
+      case UserRole.veli:
+        return 'veli';
+      case UserRole.kurumYoneticisi:
+        return 'kurum_yoneticisi';
+      case UserRole.admin:
+        return 'admin';
+      default:
+        return 'guest';
+    }
+  }
   
   /// Öğrenci verisi (varsa)
   Ogrenci? get ogrenciData => _currentUser?.ogrenciData;
+  
+  /// Mevcut öğrenci (exam_list_screen için alias)
+  Ogrenci? get currentOgrenci => _currentUser?.ogrenciData;
   
   /// Öğretmen verisi (varsa)
   Ogretmen? get ogretmenData => _currentUser?.ogretmenData;

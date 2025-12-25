@@ -24,6 +24,7 @@ import 'kurum_panel_screen.dart';
 import 'kurum_duyurulari_screen.dart';
 import 'user_provider.dart';
 import 'bottom_nav_tabs.dart';
+import 'teacher/teacher_main_screen.dart'; // 🔥 Yeni Öğretmen Modülü
 
 Future<void> main() async {
   WidgetsFlutterBinding.ensureInitialized();
@@ -123,7 +124,7 @@ class _LoginPageState extends State<LoginPage>
         Navigator.pushReplacement(
             context,
             MaterialPageRoute(
-                builder: (c) => OgretmenPaneli(aktifOgretmen: user as Ogretmen)));
+                builder: (c) => TeacherMainScreen(ogretmen: user as Ogretmen)));
       }
     } else {
       ScaffoldMessenger.of(context)
@@ -362,7 +363,7 @@ class _AcilisEkraniState extends State<AcilisEkrani>
         var user = VeriDeposu.ogretmenler.firstWhere((e) => e.id == kayitliId,
             orElse: () => VeriDeposu.ogretmenler[0]);
         Navigator.pushReplacement(context,
-            MaterialPageRoute(builder: (c) => OgretmenPaneli(aktifOgretmen: user)));
+            MaterialPageRoute(builder: (c) => TeacherMainScreen(ogretmen: user)));
       }
     } else {
       Navigator.pushReplacement(

@@ -14,6 +14,7 @@ import 'ogrenci_randevu_screen.dart';
 import 'yoklama_screen.dart';
 import 'kurum_duyurulari_screen.dart';
 import 'kurum_ekranlari.dart';
+import 'student_homework_screen.dart'; // 🔥 Yeni Ödev Modülü
 
 /// Ana Sayfa Widget - Öğrenci Dashboard
 /// Bottom Navigation Bar'ın "Ana Sayfa" sekmesi
@@ -322,7 +323,7 @@ class AkademikSekmesi extends StatelessWidget {
             _buildGridCard(context, "Konu Takip", Icons.check_circle_outline, const KonuTakipEkrani(), Colors.teal),
             _buildGridCard(context, "Soru Takip", Icons.format_list_numbered, SoruTakipEkrani(ogrenciId: ogrenci.id), Colors.indigo),
             _buildGridCard(context, "Notlarım", Icons.notes, const OkulSinavlariEkrani(), Colors.brown),
-            _buildGridCard(context, "Ödevlerim", Icons.assignment, const OdevlerEkrani(), Colors.pink),
+            _buildGridCard(context, "Ödevlerim", Icons.assignment, StudentHomeworkScreen(ogrenci: ogrenci), Colors.pink),
           ]),
           
           // --- SINAV & ANALİZ ---

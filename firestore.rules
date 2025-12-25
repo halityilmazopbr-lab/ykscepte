@@ -49,6 +49,12 @@ service cloud.firestore {
       allow write: if request.auth != null || true; // Demo için
     }
     
+    // Düello Sistemi
+    match /duels/{duelId} {
+      allow read: if true;
+      allow write: if true; // Demo için açık
+    }
+    
     // ========== HATA DEFTERİ - Video Çözüm Linki Pro Kontrolü ==========
     // Pro kullanıcı kontrolü fonksiyonu
     function isPro() {
@@ -84,7 +90,7 @@ service cloud.firestore {
     // Varsayılan: Tüm diğer koleksiyonlar
     match /{document=**} {
       allow read: if true;
-      allow write: if request.auth != null;
+      allow write: if request.auth != null || true; // Demo için açık
     }
   }
 }

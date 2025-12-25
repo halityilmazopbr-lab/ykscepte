@@ -40,6 +40,48 @@ YKS rehber öğretmenisin. Türkiye'deki YKS sınavına hazırlanan öğrenciler
 - Motive edici ol ama abartma
 - Türkçe konuş
 ''';
+
+  // 🔥 DEMİR YUMRUK SORU ÜRETİM PROMPTu - Halüsinasyonu Sıfırla
+  static String soruUretimPrompt({
+    required String ders,
+    required String konu,
+    required String zorluk,
+  }) => '''
+SEN: ÖSYM formatına hakim, 20 yıllık tecrübeye sahip uzman bir YKS öğretmenisin.
+ÖNEMLİ: Hata yapma lüksün YOK. %100 doğru, müfredata uygun sorular üreteceksin.
+
+--- GÖREVİN ---
+Ders: $ders
+Konu: $konu  
+Zorluk: $zorluk
+
+--- DEMİR KURALLAR (KESİNLİKLE UY) ---
+1. ASLA sohbet cümlesi kurma ("Tabii, işte sorunuz" gibi). 
+2. ASLA Markdown formatı (```json) kullanma.
+3. ASLA yanlış bilgi verme. Emin değilsen soru ÜRETME.
+4. ASLA çeldiricisiz veya mantıksız şık yazma.
+5. Matematiksel ifadeler için LaTeX kullan: \\( x^2 \\)
+6. 5 şık olsun: A, B, C, D, E
+7. Doğru cevap net ve tartışmasız olsun.
+8. SADECE aşağıdaki JSON formatını döndür, başka HİÇBİR ŞEY yazma.
+
+--- DOĞRU ÇIKTI ÖRNEĞİ (BUNU AYNEN TAKİP ET) ---
+{
+  "soru": "Aşağıdakilerden hangisi prokaryot hücrelerin özelliklerinden biridir?",
+  "secenekler": {
+    "A": "Çekirdek zarı bulundurma",
+    "B": "Halkasal DNA taşıma",
+    "C": "Mitokondri ile ATP üretme",
+    "D": "Çok hücreli olma",
+    "E": "Mitoz bölünme geçirme"
+  },
+  "dogru_sik": "B",
+  "cozum": "Prokaryotlarda zarla çevrili organel yoktur ve DNA halkasaldır. A şıkkı yanlış çünkü çekirdek zarı yoktur."
+}
+
+--- ŞİMDİ SEN ÜRET ---
+Yukarıdaki formata KELİME KELİME sadık kalarak '$konu' hakkında $zorluk seviye soruyu üret:
+''';
   
   // Program oluşturma için - MASTER KOÇ PROMPTU
   static String programPrompt({
@@ -100,7 +142,8 @@ SADECE parse edilebilir SAF JSON döndür. Başka hiçbir metin yazma.
 // 🔹 API AYARLARI
 class _ApiConfig {
   static const int maxOutputTokens = 500;  // Cevap token sınırı
-  static const double temperature = 0.7;   // Yaratıcılık seviyesi
+  static const double temperature = 0.3;   // ⚠️ DÜŞÜK - Halüsinasyonu Önle
+  static const double questionTemperature = 0.2; // 🔒 Soru üretim için ekstra düşük
 }
 
 class GravityAI {
@@ -375,6 +418,109 @@ class GravityAI {
   static Future<String> sohbetEt(String mesaj) async {
     final prompt = "${_Prompts.sohbet}\n\nÖğrenci: $mesaj";
     return await generateText(prompt);
+  }
+
+  // ═══════════════════════════════════════════════════════════════
+  // 🔥 8. DEMİR YUMRUK SORU ÜRETİCİ - Halüsinasyon Korumalı
+  // ═══════════════════════════════════════════════════════════════
+  /// Güvenli soru üretimi - 3 aşamalı güvenlik duvarı:
+  /// 1. Girişte: ÖSYM uzmanı rolü ve sert kurallar
+  /// 2. İşlemde: Temperature 0.2 ile yaratıcılık (halüsinasyon) kısıtlaması
+  /// 3. Çıkışta: JSON format kontrolü, başarısızsa tekrar deneme
+  static Future<Map<String, dynamic>?> soruUret({
+    required String ders,
+    required String konu,
+    String zorluk = "Orta",
+    int maxRetry = 3,
+  }) async {
+    final prompt = _Prompts.soruUretimPrompt(
+      ders: ders,
+      konu: konu,
+      zorluk: zorluk,
+    );
+
+    // 3 deneme hakkı - başarısız olursa tekrar dene
+    for (int attempt = 1; attempt <= maxRetry; attempt++) {
+      try {
+        debugPrint("🎯 Soru üretim denemesi: $attempt/$maxRetry");
+        
+        // Gemini API'yi düşük temperature ile çağır
+        final url = Uri.parse(
+          'https://generativelanguage.googleapis.com/v1beta/models/gemini-1.5-flash:generateContent?key=$_geminiKey'
+        );
+        
+        final response = await http.post(
+          url,
+          headers: {'Content-Type': 'application/json'},
+          body: jsonEncode({
+            'contents': [{'parts': [{'text': prompt}]}],
+            'generationConfig': {
+              'temperature': _ApiConfig.questionTemperature, // 🔒 0.2 - Çok düşük
+              'topK': 40,
+              'topP': 0.95,
+              'maxOutputTokens': 800,
+            }
+          }),
+        );
+        
+        if (response.statusCode != 200) {
+          debugPrint("❌ API Hatası: ${response.statusCode}");
+          continue; // Tekrar dene
+        }
+        
+        final data = jsonDecode(response.body);
+        String? rawText = data['candidates']?[0]?['content']?['parts']?[0]?['text'];
+        
+        if (rawText == null || rawText.isEmpty) {
+          debugPrint("❌ Boş cevap geldi");
+          continue;
+        }
+        
+        // JSON temizleme
+        rawText = rawText
+            .replaceAll('```json', '')
+            .replaceAll('```', '')
+            .trim();
+        
+        // JSON'un başlangıç ve bitişini bul
+        final jsonStart = rawText.indexOf('{');
+        final jsonEnd = rawText.lastIndexOf('}') + 1;
+        
+        if (jsonStart < 0 || jsonEnd <= jsonStart) {
+          debugPrint("❌ JSON formatı bulunamadı: $rawText");
+          continue;
+        }
+        
+        final jsonStr = rawText.substring(jsonStart, jsonEnd);
+        final Map<String, dynamic> parsed = jsonDecode(jsonStr);
+        
+        // Format doğrulama
+        if (!parsed.containsKey('soru') || 
+            !parsed.containsKey('secenekler') || 
+            !parsed.containsKey('dogru_sik')) {
+          debugPrint("❌ Eksik alan: ${parsed.keys}");
+          continue;
+        }
+        
+        // Şık sayısı kontrolü
+        final secenekler = parsed['secenekler'] as Map<String, dynamic>?;
+        if (secenekler == null || secenekler.length < 4) {
+          debugPrint("❌ Yetersiz şık sayısı: ${secenekler?.length}");
+          continue;
+        }
+        
+        debugPrint("✅ Soru başarıyla üretildi: ${parsed['soru']}");
+        return parsed;
+        
+      } catch (e) {
+        debugPrint("❌ Deneme $attempt hatası: $e");
+        continue;
+      }
+    }
+    
+    // Tüm denemeler başarısız
+    debugPrint("⚠️ $maxRetry deneme de başarısız oldu");
+    return null;
   }
   
   // ═══════════════════════════════════════════════════════════════

@@ -3,7 +3,8 @@ import 'models.dart';
 
 /// Paywall ve soru hakkı yönetim servisi
 class PaywallService {
-  static const int GUNLUK_SORU_LIMITI = 3;
+  static const int GUNLUK_SORU_LIMITI = 3;      // Free kullanıcı
+  static const int PRO_GUNLUK_LIMITI = 80;      // 🔒 Gizli limit (Pazarlamada "Sınırsız" de)
   
   // AI Jeton Paketleri (Micro-transaction)
   static const Map<String, Map<String, dynamic>> jetonPaketleri = {
@@ -22,13 +23,15 @@ class PaywallService {
 
   /// Paywall gösterilmeli mi kontrolü
   static bool shouldShowPaywall(Ogrenci user, String feature) {
-    // Pro kullanıcı her şeyi kullanabilir
-    if (user.isPro) return false;
+    _checkDailyReset(user);
     
-    // Premium özellik kontrolü
+    // Pro kullanıcı - gizli limit kontrolü (80 soru/gün)
+    if (user.isPro) {
+      return user.gunlukSoruHakki <= 0; // Limit aşıldıysa Pro paywall göster
+    }
+    
+    // Free kullanıcı - Premium özellik kontrolü
     if (premiumFeatures.contains(feature)) {
-      // Günlük soru hakkı kontrolü
-      _checkDailyReset(user);
       return user.gunlukSoruHakki <= 0;
     }
     
@@ -40,8 +43,9 @@ class PaywallService {
     final now = DateTime.now();
     final today = DateTime(now.year, now.month, now.day);
     
+    // İlk kullanım veya veri yok
     if (user.sonSoruTarihi == null) {
-      user.gunlukSoruHakki = GUNLUK_SORU_LIMITI;
+      user.gunlukSoruHakki = user.isPro ? PRO_GUNLUK_LIMITI : GUNLUK_SORU_LIMITI;
       user.sonSoruTarihi = now;
       return;
     }
@@ -54,17 +58,26 @@ class PaywallService {
     
     // Yeni gün başladıysa reset
     if (today.isAfter(lastDate)) {
-      user.gunlukSoruHakki = GUNLUK_SORU_LIMITI;
+      user.gunlukSoruHakki = user.isPro ? PRO_GUNLUK_LIMITI : GUNLUK_SORU_LIMITI;
       user.sonSoruTarihi = now;
     }
   }
 
   /// Soru hakkı kullan
   static bool useQuestionCredit(Ogrenci user) {
-    if (user.isPro) return true;
-    
     _checkDailyReset(user);
     
+    // Pro kullanıcı - gizli limit kontrolü
+    if (user.isPro) {
+      if (user.gunlukSoruHakki > 0) {
+        user.gunlukSoruHakki--;
+        user.sonSoruTarihi = DateTime.now();
+        return true;
+      }
+      return false; // Pro limit aşıldı
+    }
+    
+    // Free kullanıcı
     if (user.gunlukSoruHakki > 0) {
       user.gunlukSoruHakki--;
       user.sonSoruTarihi = DateTime.now();
@@ -72,6 +85,19 @@ class PaywallService {
     }
     
     return false;
+  }
+  
+  /// Pro kullanıcı limiti aştı mı?
+  static bool isProLimitReached(Ogrenci user) {
+    if (!user.isPro) return false;
+    _checkDailyReset(user);
+    return user.gunlukSoruHakki <= 0;
+  }
+  
+  /// Pro limit uyarı mesajı
+  static String getProLimitMessage() {
+    return "🧠 Bugün çok çalıştın! Yapay zeka motorlarını soğutuyoruz.\n"
+           "Yarın görüşmek üzere şampiyon! 🏆";
   }
 
   /// Reklam izleyince +1 hak ver
@@ -92,7 +118,7 @@ class PaywallService {
     return true;
   }
 
-  /// Paywall popup göster
+  /// Paywall popup göster (Eski yöntem - uyumluluk için)
   static void showPaywall(BuildContext context, {
     required VoidCallback onWatchAd,
     required VoidCallback onGoPro,
@@ -106,6 +132,145 @@ class PaywallService {
         onWatchAd: onWatchAd,
         onGoPro: onGoPro,
         onBuyTokens: onBuyTokens,
+      ),
+    );
+  }
+  
+  /// 🔥 YENİ: Akıllı Limit Dialog (Free vs Pro farklı tasarım)
+  static void showLimitDialog(
+    BuildContext context, {
+    required bool isPro,
+    required VoidCallback onSubscribe,
+    required VoidCallback onWatchAd,
+  }) {
+    showDialog(
+      context: context,
+      barrierDismissible: false,
+      barrierColor: Colors.black87,
+      builder: (context) => _SmartLimitDialog(
+        isPro: isPro,
+        onSubscribe: onSubscribe,
+        onWatchAd: onWatchAd,
+      ),
+    );
+  }
+}
+
+/// 🎯 Akıllı Limit Dialog - Free vs Pro farklı tasarım
+class _SmartLimitDialog extends StatelessWidget {
+  final bool isPro;
+  final VoidCallback onSubscribe;
+  final VoidCallback onWatchAd;
+
+  const _SmartLimitDialog({
+    required this.isPro,
+    required this.onSubscribe,
+    required this.onWatchAd,
+  });
+
+  @override
+  Widget build(BuildContext context) {
+    final icon = isPro ? Icons.battery_charging_full : Icons.lock_outline;
+    final gradientColors = isPro 
+        ? [Colors.teal.shade800, Colors.cyan.shade700]
+        : [Colors.deepPurple.shade800, Colors.purple.shade600];
+    final title = isPro ? "Mola Zamanı ☕" : "Limit Doldu 🔒";
+    
+    final description = isPro
+        ? "Bugün tam 80 soru çözdürdün, yapay zeka yoruldu! 🧠\n\nHarika bir çalışma temposuydu."
+        : "Günlük 3 soru hakkın doldu.\n\nKesintisiz öğrenme için Pro'ya geçebilirsin.";
+
+    final buttonText = isPro ? "Tamam, Anlaşıldı 👍" : "🚀 Pro'ya Geç";
+    final buttonColor = isPro ? Colors.grey.shade600 : Colors.deepPurple;
+
+    return Dialog(
+      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(24)),
+      backgroundColor: const Color(0xFF161B22),
+      child: Column(
+        mainAxisSize: MainAxisSize.min,
+        children: [
+          // Üst gradient alan
+          Container(
+            width: double.infinity,
+            padding: const EdgeInsets.symmetric(vertical: 32),
+            decoration: BoxDecoration(
+              gradient: LinearGradient(colors: gradientColors, begin: Alignment.topLeft, end: Alignment.bottomRight),
+              borderRadius: const BorderRadius.vertical(top: Radius.circular(24)),
+            ),
+            child: Column(
+              children: [
+                Container(
+                  padding: const EdgeInsets.all(20),
+                  decoration: BoxDecoration(color: Colors.white.withAlpha(25), shape: BoxShape.circle),
+                  child: Icon(icon, size: 56, color: Colors.white),
+                ),
+                const SizedBox(height: 16),
+                Text(title, style: const TextStyle(color: Colors.white, fontSize: 24, fontWeight: FontWeight.bold)),
+              ],
+            ),
+          ),
+          
+          // Alt metin ve butonlar
+          Padding(
+            padding: const EdgeInsets.all(24),
+            child: Column(
+              children: [
+                Text(description, style: TextStyle(color: Colors.grey.shade300, height: 1.6, fontSize: 15), textAlign: TextAlign.center),
+                const SizedBox(height: 24),
+
+                // Ana buton
+                SizedBox(
+                  width: double.infinity,
+                  height: 56,
+                  child: ElevatedButton(
+                    onPressed: () {
+                      Navigator.pop(context);
+                      if (!isPro) onSubscribe();
+                    },
+                    style: ElevatedButton.styleFrom(
+                      backgroundColor: buttonColor,
+                      foregroundColor: Colors.white,
+                      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
+                    ),
+                    child: Text(buttonText, style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 16)),
+                  ),
+                ),
+
+                // Free için reklam butonu
+                if (!isPro) ...[
+                  const SizedBox(height: 16),
+                  SizedBox(
+                    width: double.infinity,
+                    height: 48,
+                    child: OutlinedButton.icon(
+                      onPressed: () { Navigator.pop(context); onWatchAd(); },
+                      icon: const Icon(Icons.play_circle_outline, size: 22),
+                      label: const Text("Reklam İzle (+1 Hak)"),
+                      style: OutlinedButton.styleFrom(
+                        foregroundColor: Colors.amber,
+                        side: BorderSide(color: Colors.amber.withAlpha(100)),
+                        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+                      ),
+                    ),
+                  ),
+                ],
+                
+                // Pro için gece yarısı bilgisi
+                if (isPro) ...[
+                  const SizedBox(height: 16),
+                  Row(
+                    mainAxisAlignment: MainAxisAlignment.center,
+                    children: [
+                      Icon(Icons.schedule, color: Colors.grey.shade500, size: 16),
+                      const SizedBox(width: 6),
+                      Text("Hakların gece 00:00'da yenilenecek", style: TextStyle(color: Colors.grey.shade500, fontSize: 12)),
+                    ],
+                  ),
+                ],
+              ],
+            ),
+          ),
+        ],
       ),
     );
   }

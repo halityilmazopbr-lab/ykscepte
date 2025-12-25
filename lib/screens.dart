@@ -80,14 +80,18 @@ class SoruUretecEkrani extends StatefulWidget {
 
 class _SUEState extends State<SoruUretecEkrani> {
   String? ders, konu, zorluk;
-  String soru = "";
+  Map<String, dynamic>? _soruData; // 🔥 Artık yapısal veri
   bool loading = false;
+  String? _hata;
   
   void _showPaywall() {
-    PaywallService.showPaywall(
+    PaywallService.showLimitDialog(
       context,
+      isPro: widget.ogrenci.isPro,
+      onSubscribe: () {
+        Navigator.push(context, MaterialPageRoute(builder: (c) => const ProScreen()));
+      },
       onWatchAd: () async {
-        // Reklam izle ve hak kazan
         await AdService.showRewardedAd(
           onRewarded: (amount) {
             setState(() {
@@ -99,9 +103,6 @@ class _SUEState extends State<SoruUretecEkrani> {
             );
           },
         );
-      },
-      onGoPro: () {
-        Navigator.push(context, MaterialPageRoute(builder: (c) => const ProScreen()));
       },
     );
   }
@@ -122,28 +123,57 @@ class _SUEState extends State<SoruUretecEkrani> {
     }
     VeriDeposu.kaydet();
     
-    setState(() => loading = true);
-    String s = await GravityAI.generateText(
-        "$ders dersi $konu konusunda ${zorluk ?? 'orta'} seviye bir adet çoktan seçmeli YKS sorusu yaz.");
     setState(() {
-      soru = s;
+      loading = true;
+      _soruData = null;
+      _hata = null;
+    });
+    
+    // 🔥 Demir Yumruk güvenli soru üretimi
+    final result = await GravityAI.soruUret(
+      ders: ders!,
+      konu: konu!,
+      zorluk: zorluk ?? "Orta",
+    );
+    
+    setState(() {
       loading = false;
+      if (result != null) {
+        _soruData = result;
+        _hata = null;
+      } else {
+        _hata = "Soru üretilemedi. Lütfen tekrar deneyin.";
+      }
     });
   }
 
   @override
   Widget build(BuildContext context) {
     return Scaffold(
+        backgroundColor: const Color(0xFF0D1117),
         appBar: AppBar(
-          title: const Text("Soru Üreteci"),
+          backgroundColor: const Color(0xFF161B22),
+          title: const Text("🔥 Soru Üreteci", style: TextStyle(color: Colors.white)),
+          iconTheme: const IconThemeData(color: Colors.white),
           actions: [
             if (!widget.ogrenci.isPro)
               Padding(
                 padding: const EdgeInsets.only(right: 8),
                 child: Chip(
-                  label: Text("${widget.ogrenci.gunlukSoruHakki}/3"),
+                  label: Text("${widget.ogrenci.gunlukSoruHakki}/3", style: const TextStyle(color: Colors.white)),
                   backgroundColor: widget.ogrenci.gunlukSoruHakki > 0 ? Colors.green : Colors.red,
-                  labelStyle: const TextStyle(color: Colors.white),
+                ),
+              )
+            else
+              const Padding(
+                padding: EdgeInsets.only(right: 12),
+                child: Row(
+                  mainAxisSize: MainAxisSize.min,
+                  children: [
+                    Icon(Icons.all_inclusive, color: Colors.amber, size: 18),
+                    SizedBox(width: 4),
+                    Text("PRO", style: TextStyle(color: Colors.amber, fontWeight: FontWeight.bold)),
+                  ],
                 ),
               ),
           ],
@@ -151,41 +181,267 @@ class _SUEState extends State<SoruUretecEkrani> {
         body: Padding(
             padding: const EdgeInsets.all(16),
             child: Column(children: [
-              DropdownButtonFormField(
-                  value: ders,
-                  hint: const Text("Ders"),
-                  items: VeriDeposu.dersKonuAgirliklari.keys
-                      .map((e) => DropdownMenuItem(value: e, child: Text(e)))
-                      .toList(),
-                  onChanged: (v) => setState(() {
-                        ders = v;
-                        konu = null;
-                      })),
-              if (ders != null)
-                DropdownButtonFormField(
-                    value: konu,
-                    hint: const Text("Konu"),
-                    items: VeriDeposu.dersKonuAgirliklari[ders]!
-                        .map((e) =>
-                            DropdownMenuItem(value: e.ad, child: Text(e.ad)))
+              // Ders seçimi
+              Container(
+                decoration: BoxDecoration(
+                  color: const Color(0xFF21262D),
+                  borderRadius: BorderRadius.circular(12),
+                ),
+                child: DropdownButtonFormField<String>(
+                    value: ders,
+                    dropdownColor: const Color(0xFF21262D),
+                    style: const TextStyle(color: Colors.white),
+                    decoration: const InputDecoration(
+                      labelText: "Ders",
+                      labelStyle: TextStyle(color: Colors.grey),
+                      border: InputBorder.none,
+                      contentPadding: EdgeInsets.symmetric(horizontal: 16),
+                    ),
+                    items: VeriDeposu.dersKonuAgirliklari.keys
+                        .map((e) => DropdownMenuItem(value: e, child: Text(e)))
                         .toList(),
-                    onChanged: (v) => setState(() => konu = v)),
-              DropdownButtonFormField(
-                  value: zorluk,
-                  hint: const Text("Zorluk"),
-                  items: ["Kolay", "Orta", "Zor"]
-                      .map((e) => DropdownMenuItem(value: e, child: Text(e)))
-                      .toList(),
-                  onChanged: (v) => setState(() => zorluk = v)),
+                    onChanged: (v) => setState(() {
+                          ders = v;
+                          konu = null;
+                        })),
+              ),
+              const SizedBox(height: 12),
+              
+              // Konu seçimi
+              if (ders != null)
+                Container(
+                  decoration: BoxDecoration(
+                    color: const Color(0xFF21262D),
+                    borderRadius: BorderRadius.circular(12),
+                  ),
+                  child: DropdownButtonFormField<String>(
+                      value: konu,
+                      dropdownColor: const Color(0xFF21262D),
+                      style: const TextStyle(color: Colors.white),
+                      decoration: const InputDecoration(
+                        labelText: "Konu",
+                        labelStyle: TextStyle(color: Colors.grey),
+                        border: InputBorder.none,
+                        contentPadding: EdgeInsets.symmetric(horizontal: 16),
+                      ),
+                      items: VeriDeposu.dersKonuAgirliklari[ders]!
+                          .map((e) =>
+                              DropdownMenuItem(value: e.ad, child: Text(e.ad)))
+                          .toList(),
+                      onChanged: (v) => setState(() => konu = v)),
+                ),
+              const SizedBox(height: 12),
+              
+              // Zorluk seçimi
+              Container(
+                decoration: BoxDecoration(
+                  color: const Color(0xFF21262D),
+                  borderRadius: BorderRadius.circular(12),
+                ),
+                child: DropdownButtonFormField<String>(
+                    value: zorluk,
+                    dropdownColor: const Color(0xFF21262D),
+                    style: const TextStyle(color: Colors.white),
+                    decoration: const InputDecoration(
+                      labelText: "Zorluk",
+                      labelStyle: TextStyle(color: Colors.grey),
+                      border: InputBorder.none,
+                      contentPadding: EdgeInsets.symmetric(horizontal: 16),
+                    ),
+                    items: ["Kolay", "Orta", "Zor"]
+                        .map((e) => DropdownMenuItem(value: e, child: Text(e)))
+                        .toList(),
+                    onChanged: (v) => setState(() => zorluk = v)),
+              ),
               const SizedBox(height: 20),
-              ElevatedButton(
-                  onPressed: loading ? null : _uret,
-                  child: loading
-                      ? const CircularProgressIndicator()
-                      : const Text("SORU ÜRET")),
+              
+              // Üret butonu
+              SizedBox(
+                width: double.infinity,
+                height: 56,
+                child: ElevatedButton(
+                    onPressed: loading ? null : _uret,
+                    style: ElevatedButton.styleFrom(
+                      backgroundColor: Colors.deepPurple,
+                      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
+                    ),
+                    child: loading
+                        ? const CircularProgressIndicator(color: Colors.white)
+                        : const Text("🎯 SORU ÜRET", style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold))),
+              ),
               const SizedBox(height: 20),
-              Expanded(child: SingleChildScrollView(child: Text(soru)))
+              
+              // Sonuç alanı
+              Expanded(child: SingleChildScrollView(child: _buildSoruWidget())),
             ])));
+  }
+  
+  Widget _buildSoruWidget() {
+    if (_hata != null) {
+      return Container(
+        padding: const EdgeInsets.all(20),
+        decoration: BoxDecoration(
+          color: Colors.red.withAlpha(30),
+          borderRadius: BorderRadius.circular(16),
+        ),
+        child: Column(
+          children: [
+            const Icon(Icons.error_outline, color: Colors.red, size: 48),
+            const SizedBox(height: 12),
+            Text(_hata!, style: const TextStyle(color: Colors.red, fontSize: 16)),
+          ],
+        ),
+      );
+    }
+    
+    if (_soruData == null) {
+      return Container(
+        padding: const EdgeInsets.all(40),
+        child: Column(
+          children: [
+            Icon(Icons.psychology, color: Colors.grey.shade600, size: 64),
+            const SizedBox(height: 16),
+            Text(
+              "Ders ve konu seçerek\nÖSYM tarzı soru üretin",
+              textAlign: TextAlign.center,
+              style: TextStyle(color: Colors.grey.shade500, fontSize: 16),
+            ),
+          ],
+        ),
+      );
+    }
+    
+    // 🔥 Premium soru kartı
+    final secenekler = _soruData!['secenekler'] as Map<String, dynamic>? ?? {};
+    final dogruSik = _soruData!['dogru_sik']?.toString() ?? '';
+    
+    return Container(
+      decoration: BoxDecoration(
+        gradient: LinearGradient(
+          colors: [Colors.deepPurple.shade900, Colors.purple.shade800],
+          begin: Alignment.topLeft,
+          end: Alignment.bottomRight,
+        ),
+        borderRadius: BorderRadius.circular(20),
+        boxShadow: [
+          BoxShadow(
+            color: Colors.purple.withAlpha(60),
+            blurRadius: 20,
+            offset: const Offset(0, 10),
+          ),
+        ],
+      ),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          // Soru başlığı
+          Container(
+            padding: const EdgeInsets.all(20),
+            decoration: BoxDecoration(
+              color: Colors.white.withAlpha(10),
+              borderRadius: const BorderRadius.vertical(top: Radius.circular(20)),
+            ),
+            child: Row(
+              children: [
+                Container(
+                  padding: const EdgeInsets.all(8),
+                  decoration: BoxDecoration(
+                    color: Colors.amber.withAlpha(30),
+                    borderRadius: BorderRadius.circular(8),
+                  ),
+                  child: const Icon(Icons.quiz, color: Colors.amber, size: 20),
+                ),
+                const SizedBox(width: 12),
+                Expanded(
+                  child: Text(
+                    _soruData!['soru']?.toString() ?? '',
+                    style: const TextStyle(color: Colors.white, fontSize: 16, fontWeight: FontWeight.w600),
+                  ),
+                ),
+              ],
+            ),
+          ),
+          
+          // Şıklar
+          Padding(
+            padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
+            child: Column(
+              children: secenekler.entries.map((entry) {
+                final isCorrect = entry.key == dogruSik;
+                return Container(
+                  margin: const EdgeInsets.only(bottom: 8),
+                  padding: const EdgeInsets.all(14),
+                  decoration: BoxDecoration(
+                    color: isCorrect ? Colors.green.withAlpha(40) : Colors.white.withAlpha(10),
+                    borderRadius: BorderRadius.circular(12),
+                    border: Border.all(
+                      color: isCorrect ? Colors.green : Colors.white.withAlpha(20),
+                      width: isCorrect ? 2 : 1,
+                    ),
+                  ),
+                  child: Row(
+                    children: [
+                      Container(
+                        width: 32,
+                        height: 32,
+                        decoration: BoxDecoration(
+                          color: isCorrect ? Colors.green : Colors.white.withAlpha(20),
+                          shape: BoxShape.circle,
+                        ),
+                        child: Center(
+                          child: Text(
+                            entry.key,
+                            style: TextStyle(
+                              color: isCorrect ? Colors.white : Colors.grey.shade300,
+                              fontWeight: FontWeight.bold,
+                            ),
+                          ),
+                        ),
+                      ),
+                      const SizedBox(width: 12),
+                      Expanded(
+                        child: Text(
+                          entry.value.toString(),
+                          style: TextStyle(
+                            color: isCorrect ? Colors.green.shade200 : Colors.grey.shade300,
+                            fontSize: 14,
+                          ),
+                        ),
+                      ),
+                      if (isCorrect) const Icon(Icons.check_circle, color: Colors.green, size: 20),
+                    ],
+                  ),
+                );
+              }).toList(),
+            ),
+          ),
+          
+          // Çözüm açıklaması
+          if (_soruData!['cozum'] != null)
+            Container(
+              margin: const EdgeInsets.fromLTRB(16, 0, 16, 16),
+              padding: const EdgeInsets.all(16),
+              decoration: BoxDecoration(
+                color: Colors.blue.withAlpha(30),
+                borderRadius: BorderRadius.circular(12),
+              ),
+              child: Row(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  const Icon(Icons.lightbulb, color: Colors.amber, size: 20),
+                  const SizedBox(width: 12),
+                  Expanded(
+                    child: Text(
+                      _soruData!['cozum'].toString(),
+                      style: TextStyle(color: Colors.blue.shade200, fontSize: 13),
+                    ),
+                  ),
+                ],
+              ),
+            ),
+        ],
+      ),
+    );
   }
 }
 
@@ -220,8 +476,12 @@ class _YZSEState extends State<YapayZekaSohbetEkrani> {
   final TextEditingController _c = TextEditingController();
   
   void _showPaywall() {
-    PaywallService.showPaywall(
+    PaywallService.showLimitDialog(
       context,
+      isPro: widget.ogrenci.isPro,
+      onSubscribe: () {
+        Navigator.push(context, MaterialPageRoute(builder: (c) => const ProScreen()));
+      },
       onWatchAd: () async {
         await AdService.showRewardedAd(
           onRewarded: (amount) {
@@ -234,9 +494,6 @@ class _YZSEState extends State<YapayZekaSohbetEkrani> {
             );
           },
         );
-      },
-      onGoPro: () {
-        Navigator.push(context, MaterialPageRoute(builder: (c) => const ProScreen()));
       },
     );
   }
@@ -280,6 +537,18 @@ class _YZSEState extends State<YapayZekaSohbetEkrani> {
                   label: Text("${widget.ogrenci.gunlukSoruHakki}/3"),
                   backgroundColor: widget.ogrenci.gunlukSoruHakki > 0 ? Colors.green : Colors.red,
                   labelStyle: const TextStyle(color: Colors.white),
+                ),
+              )
+            else
+              const Padding(
+                padding: EdgeInsets.only(right: 12),
+                child: Row(
+                  mainAxisSize: MainAxisSize.min,
+                  children: [
+                    Icon(Icons.all_inclusive, color: Colors.amber, size: 18),
+                    SizedBox(width: 4),
+                    Text("PRO", style: TextStyle(color: Colors.amber, fontWeight: FontWeight.bold)),
+                  ],
                 ),
               ),
           ],
@@ -2147,8 +2416,12 @@ class _SCEState extends State<SoruCozumEkrani> {
   final ImagePicker _picker = ImagePicker();
 
   void _showPaywall() {
-    PaywallService.showPaywall(
+    PaywallService.showLimitDialog(
       context,
+      isPro: widget.ogrenci.isPro,
+      onSubscribe: () {
+        Navigator.push(context, MaterialPageRoute(builder: (c) => const ProScreen()));
+      },
       onWatchAd: () async {
         await AdService.showRewardedAd(
           onRewarded: (amount) {
@@ -2161,9 +2434,6 @@ class _SCEState extends State<SoruCozumEkrani> {
             );
           },
         );
-      },
-      onGoPro: () {
-        Navigator.push(context, MaterialPageRoute(builder: (c) => const ProScreen()));
       },
     );
   }
@@ -2207,6 +2477,18 @@ class _SCEState extends State<SoruCozumEkrani> {
                   label: Text("${widget.ogrenci.gunlukSoruHakki}/3"),
                   backgroundColor: widget.ogrenci.gunlukSoruHakki > 0 ? Colors.green : Colors.red,
                   labelStyle: const TextStyle(color: Colors.white),
+                ),
+              )
+            else
+              const Padding(
+                padding: EdgeInsets.only(right: 12),
+                child: Row(
+                  mainAxisSize: MainAxisSize.min,
+                  children: [
+                    Icon(Icons.all_inclusive, color: Colors.amber, size: 18),
+                    SizedBox(width: 4),
+                    Text("PRO", style: TextStyle(color: Colors.amber, fontWeight: FontWeight.bold)),
+                  ],
                 ),
               ),
           ],
