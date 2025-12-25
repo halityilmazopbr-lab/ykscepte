@@ -25,13 +25,16 @@ import 'kurum_duyurulari_screen.dart';
 import 'user_provider.dart';
 import 'bottom_nav_tabs.dart';
 import 'teacher/teacher_main_screen.dart'; // 🔥 Yeni Öğretmen Modülü
+import 'firebase_options.dart'; // Firebase yapılandırması
 
 Future<void> main() async {
   WidgetsFlutterBinding.ensureInitialized();
   try {
-    await Firebase.initializeApp();
+    await Firebase.initializeApp(
+      options: DefaultFirebaseOptions.currentPlatform,
+    );
   } catch (e) {
-    debugPrint("Firebase başlatılamadı (Henüz google-services.json eklenmemiş olabilir): $e");
+    debugPrint("Firebase başlatılamadı: $e");
   }
   await VeriDeposu.init(); // Veritabanını başlat
   await CacheService.init(); // AI cache'i başlat
