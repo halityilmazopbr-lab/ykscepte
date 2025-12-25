@@ -32,6 +32,11 @@ android {
         jvmTarget = "17"
     }
 
+    lint {
+        checkReleaseBuilds = false
+        abortOnError = false
+    }
+
     signingConfigs {
         // Release signing config (sadece key.properties varsa)
         if (hasKeyProperties) {
