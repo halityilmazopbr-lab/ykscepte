@@ -1,4 +1,9 @@
 buildscript {
+    ext {
+        set("compileSdkVersion", 35)
+        set("minSdkVersion", 21)
+        set("targetSdkVersion", 35)
+    }
     repositories {
         google()
         mavenCentral()
@@ -32,6 +37,21 @@ subprojects {
     project.evaluationDependsOn(":app")
 }
 
+// Subprojects için compileSdkVersion ayarla (üçüncü parti paketler için)
+subprojects {
+    afterEvaluate {
+        if (project.hasProperty("android")) {
+            val android = project.extensions.getByName("android")
+            if (android is com.android.build.gradle.BaseExtension) {
+                if (android.compileSdkVersion == null) {
+                    android.compileSdkVersion(35)
+                }
+            }
+        }
+    }
+}
+
 tasks.register<Delete>("clean") {
     delete(rootProject.layout.buildDirectory)
 }
+
