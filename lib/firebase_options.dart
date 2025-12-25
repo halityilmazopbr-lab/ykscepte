@@ -1,14 +1,10 @@
-// File generated based on Firebase CLI configuration
-// Project: gen-lang-client-0573740353 (YKS MASTER)
+// Firebase configuration matching google-services.json
+// Project: neural-guard-473908-j7
 
 import 'package:firebase_core/firebase_core.dart' show FirebaseOptions;
 import 'package:flutter/foundation.dart'
     show defaultTargetPlatform, kIsWeb, TargetPlatform;
 
-/// Firebase yapılandırma dosyası
-/// 
-/// Project ID: gen-lang-client-0573740353
-/// Project Name: YKS MASTER
 class DefaultFirebaseOptions {
   static FirebaseOptions get currentPlatform {
     if (kIsWeb) {
@@ -35,52 +31,50 @@ class DefaultFirebaseOptions {
     }
   }
 
-  // Web yapılandırması
-  static const FirebaseOptions web = FirebaseOptions(
-    apiKey: 'AIzaSyBP2HHKZL7pNug9pzHRzIhrejJL0H2uMkw',
-    appId: '1:726026626971:web:c81534aaf28a3858c6a33e',
-    messagingSenderId: '726026626971',
-    projectId: 'gen-lang-client-0573740353',
-    authDomain: 'gen-lang-client-0573740353.firebaseapp.com',
-    storageBucket: 'gen-lang-client-0573740353.firebasestorage.app',
+  // Android yapılandırması (google-services.json ile eşleşiyor)
+  static const FirebaseOptions android = FirebaseOptions(
+    apiKey: 'AIzaSyCuK_RiT0B2_XZsDZkOyPLoD7Vz10EfI8k',
+    appId: '1:124569660139:android:0ed2d4c19a8a77bcb52cae',
+    messagingSenderId: '124569660139',
+    projectId: 'neural-guard-473908-j7',
+    storageBucket: 'neural-guard-473908-j7.firebasestorage.app',
   );
 
-  // Android yapılandırması
-  static const FirebaseOptions android = FirebaseOptions(
-    apiKey: 'AIzaSyBP2HHKZL7pNug9pzHRzIhrejJL0H2uMkw',
-    appId: '1:726026626971:web:c81534aaf28a3858c6a33e', // Web appId kullanılıyor
-    messagingSenderId: '726026626971',
-    projectId: 'gen-lang-client-0573740353',
-    storageBucket: 'gen-lang-client-0573740353.firebasestorage.app',
+  // Web yapılandırması
+  static const FirebaseOptions web = FirebaseOptions(
+    apiKey: 'AIzaSyCuK_RiT0B2_XZsDZkOyPLoD7Vz10EfI8k',
+    appId: '1:124569660139:web:0ed2d4c19a8a77bcb52cae',
+    messagingSenderId: '124569660139',
+    projectId: 'neural-guard-473908-j7',
+    storageBucket: 'neural-guard-473908-j7.firebasestorage.app',
   );
 
   // iOS yapılandırması
   static const FirebaseOptions ios = FirebaseOptions(
-    apiKey: 'AIzaSyBP2HHKZL7pNug9pzHRzIhrejJL0H2uMkw',
-    appId: '1:726026626971:web:c81534aaf28a3858c6a33e', // Web appId kullanılıyor
-    messagingSenderId: '726026626971',
-    projectId: 'gen-lang-client-0573740353',
-    storageBucket: 'gen-lang-client-0573740353.firebasestorage.app',
-    iosBundleId: 'com.ykscepte.app',
+    apiKey: 'AIzaSyCuK_RiT0B2_XZsDZkOyPLoD7Vz10EfI8k',
+    appId: '1:124569660139:ios:0ed2d4c19a8a77bcb52cae',
+    messagingSenderId: '124569660139',
+    projectId: 'neural-guard-473908-j7',
+    storageBucket: 'neural-guard-473908-j7.firebasestorage.app',
+    iosBundleId: 'com.example.yks_cepte',
   );
 
   // macOS yapılandırması
   static const FirebaseOptions macos = FirebaseOptions(
-    apiKey: 'AIzaSyBP2HHKZL7pNug9pzHRzIhrejJL0H2uMkw',
-    appId: '1:726026626971:web:c81534aaf28a3858c6a33e',
-    messagingSenderId: '726026626971',
-    projectId: 'gen-lang-client-0573740353',
-    storageBucket: 'gen-lang-client-0573740353.firebasestorage.app',
-    iosBundleId: 'com.ykscepte.app',
+    apiKey: 'AIzaSyCuK_RiT0B2_XZsDZkOyPLoD7Vz10EfI8k',
+    appId: '1:124569660139:macos:0ed2d4c19a8a77bcb52cae',
+    messagingSenderId: '124569660139',
+    projectId: 'neural-guard-473908-j7',
+    storageBucket: 'neural-guard-473908-j7.firebasestorage.app',
+    iosBundleId: 'com.example.yks_cepte',
   );
 
-  // Windows yapılandırması (Web config kullanıyor)
+  // Windows yapılandırması
   static const FirebaseOptions windows = FirebaseOptions(
-    apiKey: 'AIzaSyBP2HHKZL7pNug9pzHRzIhrejJL0H2uMkw',
-    appId: '1:726026626971:web:c81534aaf28a3858c6a33e',
-    messagingSenderId: '726026626971',
-    projectId: 'gen-lang-client-0573740353',
-    authDomain: 'gen-lang-client-0573740353.firebaseapp.com',
-    storageBucket: 'gen-lang-client-0573740353.firebasestorage.app',
+    apiKey: 'AIzaSyCuK_RiT0B2_XZsDZkOyPLoD7Vz10EfI8k',
+    appId: '1:124569660139:web:0ed2d4c19a8a77bcb52cae',
+    messagingSenderId: '124569660139',
+    projectId: 'neural-guard-473908-j7',
+    storageBucket: 'neural-guard-473908-j7.firebasestorage.app',
   );
 }
