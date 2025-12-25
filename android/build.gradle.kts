@@ -1,6 +1,6 @@
 // Root-level extra properties (accessible by all subprojects)
 extra["compileSdkVersion"] = 35
-extra["minSdkVersion"] = 21
+extra["minSdkVersion"] = 23
 extra["targetSdkVersion"] = 35
 
 buildscript {
