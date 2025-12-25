@@ -1,8 +1,9 @@
-buildscript {
-    extra["compileSdkVersion"] = 35
-    extra["minSdkVersion"] = 21
-    extra["targetSdkVersion"] = 35
+// Root-level extra properties (accessible by all subprojects)
+extra["compileSdkVersion"] = 35
+extra["minSdkVersion"] = 21
+extra["targetSdkVersion"] = 35
 
+buildscript {
     repositories {
         google()
         mavenCentral()
@@ -32,17 +33,18 @@ subprojects {
     val newSubprojectBuildDir: Directory = newBuildDir.dir(project.name)
     project.layout.buildDirectory.value(newSubprojectBuildDir)
 }
+
 subprojects {
     project.evaluationDependsOn(":app")
 }
 
-// Subprojects için compileSdkVersion ayarla (üçüncü parti paketler için)
-gradle.projectsEvaluated {
-    subprojects {
-        if (project.hasProperty("android")) {
-            val android = project.extensions.getByName("android")
+// Subprojects için compileSdkVersion ayarla (app_links vb. üçüncü parti paketler için)
+subprojects {
+    afterEvaluate {
+        if (extensions.findByName("android") != null) {
+            val android = extensions.getByName("android")
             if (android is com.android.build.gradle.BaseExtension) {
-                if (android.compileSdkVersion == null) {
+                if (android.compileSdkVersion == null || android.compileSdkVersion!!.substringAfter("-").toIntOrNull() == null) {
                     android.compileSdkVersion(35)
                 }
             }
