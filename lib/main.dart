@@ -29,19 +29,29 @@ import 'firebase_options.dart'; // Firebase yapılandırması
 
 Future<void> main() async {
   WidgetsFlutterBinding.ensureInitialized();
-  try {
-    await Firebase.initializeApp(
-      options: DefaultFirebaseOptions.currentPlatform,
-    );
-  } catch (e) {
-    debugPrint("Firebase başlatılamadı: $e");
-  }
-  await VeriDeposu.init(); // Veritabanını başlat
-  await CacheService.init(); // AI cache'i başlat
+  
+  // ===== TEMPORARY DEBUG: All init disabled to find crash =====
+  // try {
+  //   await Firebase.initializeApp(
+  //     options: DefaultFirebaseOptions.currentPlatform,
+  //   );
+  // } catch (e) {
+  //   debugPrint("Firebase başlatılamadı: $e");
+  // }
+  // await VeriDeposu.init();
+  // await CacheService.init();
+  // ===== END TEMPORARY DEBUG =====
+  
   runApp(
-    ChangeNotifierProvider(
-      create: (_) => UserProvider(),
-      child: const MainApp(),
+    MaterialApp(
+      home: Scaffold(
+        appBar: AppBar(title: const Text('Test Mode')),
+        body: const Center(
+          child: Text('Uygulama başarıyla açıldı!\n\nFirebase devre dışı.', 
+            textAlign: TextAlign.center,
+            style: TextStyle(fontSize: 24)),
+        ),
+      ),
     ),
   );
 }
