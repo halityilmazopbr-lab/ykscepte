@@ -40,15 +40,14 @@ subprojects {
 
 // Subprojects için compileSdkVersion ayarla (app_links vb. üçüncü parti paketler için)
 subprojects {
-    // 'afterEvaluate' kullanmadan, eklenti yüklendiği an müdahale ediyoruz
+    // Eklenti yüklendiği an tetiklenir, 'afterEvaluate' hatasına düşmez
     pluginManager.withPlugin("com.android.library") {
-        try {
-            val android = extensions.getByType(com.android.build.gradle.BaseExtension::class.java)
-            if (android.compileSdkVersion == null) {
-                android.compileSdkVersion(35)
+        val androidExtension = extensions.findByType(com.android.build.gradle.BaseExtension::class.java)
+        if (androidExtension != null) {
+            // Eğer sdk version eksikse 35 olarak zorla
+            if (androidExtension.compileSdkVersion == null) {
+                androidExtension.compileSdkVersion(35)
             }
-        } catch (e: Exception) {
-            println("compileSdkVersion fix uygulanamadı: ${e.message}")
         }
     }
 }
