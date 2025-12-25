@@ -11,6 +11,10 @@ class Kurum {
   int yaricapMetre; // GPS toleransı (default: 100m)
   String? qrKodu; // Base64 encoded QR içeriği
   DateTime olusturmaTarihi;
+  
+  // Admin Giriş Bilgileri
+  String adminEmail;
+  String adminSifre;
 
   Kurum({
     required this.id,
@@ -21,6 +25,8 @@ class Kurum {
     this.yaricapMetre = 100,
     this.qrKodu,
     DateTime? olusturmaTarihi,
+    this.adminEmail = '',
+    this.adminSifre = '',
   }) : olusturmaTarihi = olusturmaTarihi ?? DateTime.now();
 
   /// QR kod için şifreli veri oluştur
@@ -53,6 +59,8 @@ class Kurum {
     'yaricapMetre': yaricapMetre,
     'qrKodu': qrKodu,
     'olusturmaTarihi': olusturmaTarihi.toIso8601String(),
+    'adminEmail': adminEmail,
+    'adminSifre': adminSifre,
   };
 
   factory Kurum.fromJson(Map<String, dynamic> json) => Kurum(
@@ -64,6 +72,8 @@ class Kurum {
     yaricapMetre: json['yaricapMetre'] ?? 100,
     qrKodu: json['qrKodu'],
     olusturmaTarihi: DateTime.parse(json['olusturmaTarihi']),
+    adminEmail: json['adminEmail'] ?? '',
+    adminSifre: json['adminSifre'] ?? '',
   );
 }
 
@@ -407,3 +417,293 @@ class KurumKitabi {
     );
   }
 }
+
+// ═══════════════════════════════════════════════════════════════════════════
+// KURUMSAL DENEME SİSTEMİ MODELLERİ
+// B2B'nin can damarı - Kağıt israfı, optik okuyucu ve Excel hamallığından kurtuluş
+// ═══════════════════════════════════════════════════════════════════════════
+
+/// Kurumsal Deneme - Ana Sınav Modeli
+class KurumsalDeneme {
+  String id;
+  String kurumId;
+  String kurumAdi;
+  String baslik;           // "TYT 1. Deneme" / "AYT Fen 2. Deneme"
+  String tur;              // "TYT" / "AYT_SAY" / "AYT_EA" / "AYT_SOZ"
+  DateTime tarih;
+  int sureDakika;          // 165 (TYT) / 180 (AYT)
+  bool aktif;              // Sınav şu an çözülebilir mi?
+  DateTime? baslangicZamani; // Kurum sınavı başlattığında
+  String? pdfUrl;          // Dijital sınav için PDF linki
+  List<KurumsalDenemeTest> testler;
+  Map<int, String> cevapAnahtari; // {1: "A", 2: "C", 3: "B", ...}
+  Map<int, String?> videoCozumler; // {5: "youtube.com/...", 12: null, ...}
+  
+  KurumsalDeneme({
+    required this.id,
+    required this.kurumId,
+    this.kurumAdi = '',
+    required this.baslik,
+    required this.tur,
+    required this.tarih,
+    required this.sureDakika,
+    this.aktif = false,
+    this.baslangicZamani,
+    this.pdfUrl,
+    required this.testler,
+    required this.cevapAnahtari,
+    this.videoCozumler = const {},
+  });
+  
+  int get toplamSoruSayisi => testler.fold(0, (sum, t) => sum + t.soruSayisi);
+  
+  /// Belirli bir sorunun hangi teste ait olduğunu bul
+  KurumsalDenemeTest? testiGetir(int soruNo) {
+    int sayac = 0;
+    for (var test in testler) {
+      if (soruNo <= sayac + test.soruSayisi) {
+        return test;
+      }
+      sayac += test.soruSayisi;
+    }
+    return null;
+  }
+  
+  Map<String, dynamic> toJson() => {
+    'id': id,
+    'kurum_id': kurumId,
+    'kurum_adi': kurumAdi,
+    'baslik': baslik,
+    'tur': tur,
+    'tarih': tarih.toIso8601String(),
+    'sure_dakika': sureDakika,
+    'aktif': aktif,
+    'baslangic_zamani': baslangicZamani?.toIso8601String(),
+    'pdf_url': pdfUrl,
+    'testler': testler.map((t) => t.toJson()).toList(),
+    'cevap_anahtari': cevapAnahtari.map((k, v) => MapEntry(k.toString(), v)),
+    'video_cozumler': videoCozumler.map((k, v) => MapEntry(k.toString(), v)),
+  };
+  
+  factory KurumsalDeneme.fromJson(Map<String, dynamic> json) => KurumsalDeneme(
+    id: json['id'],
+    kurumId: json['kurum_id'],
+    kurumAdi: json['kurum_adi'] ?? '',
+    baslik: json['baslik'],
+    tur: json['tur'],
+    tarih: DateTime.parse(json['tarih']),
+    sureDakika: json['sure_dakika'],
+    aktif: json['aktif'] ?? false,
+    baslangicZamani: json['baslangic_zamani'] != null ? DateTime.parse(json['baslangic_zamani']) : null,
+    pdfUrl: json['pdf_url'],
+    testler: (json['testler'] as List).map((t) => KurumsalDenemeTest.fromJson(t)).toList(),
+    cevapAnahtari: (json['cevap_anahtari'] as Map<String, dynamic>).map((k, v) => MapEntry(int.parse(k), v as String)),
+    videoCozumler: json['video_cozumler'] != null 
+        ? (json['video_cozumler'] as Map<String, dynamic>).map((k, v) => MapEntry(int.parse(k), v as String?))
+        : {},
+  );
+  
+  /// Demo TYT Denemesi Oluştur
+  factory KurumsalDeneme.demoTYT({required String kurumId, required String kurumAdi}) {
+    return KurumsalDeneme(
+      id: 'tyt_demo_${DateTime.now().millisecondsSinceEpoch}',
+      kurumId: kurumId,
+      kurumAdi: kurumAdi,
+      baslik: 'TYT 1. Deneme',
+      tur: 'TYT',
+      tarih: DateTime.now(),
+      sureDakika: 165,
+      aktif: true,
+      testler: [
+        KurumsalDenemeTest(ad: 'Türkçe', soruSayisi: 40, baslangicSoru: 1),
+        KurumsalDenemeTest(ad: 'Sosyal', soruSayisi: 20, baslangicSoru: 41),
+        KurumsalDenemeTest(ad: 'Matematik', soruSayisi: 40, baslangicSoru: 61),
+        KurumsalDenemeTest(ad: 'Fen', soruSayisi: 20, baslangicSoru: 101),
+      ],
+      cevapAnahtari: _rastgeleCevapAnahtari(120),
+    );
+  }
+  
+  static Map<int, String> _rastgeleCevapAnahtari(int soruSayisi) {
+    final siklar = ['A', 'B', 'C', 'D', 'E'];
+    return Map.fromEntries(
+      List.generate(soruSayisi, (i) => MapEntry(i + 1, siklar[i % 5]))
+    );
+  }
+}
+
+/// Deneme içindeki Test Bölümü (Türkçe, Matematik, vb.)
+class KurumsalDenemeTest {
+  String ad;           // "Türkçe", "Matematik", ...
+  int soruSayisi;      // 40, 20, ...
+  int baslangicSoru;   // Bu testin ilk soru numarası (1, 41, 61, 101 gibi)
+  
+  KurumsalDenemeTest({
+    required this.ad,
+    required this.soruSayisi,
+    required this.baslangicSoru,
+  });
+  
+  int get bitisSoru => baslangicSoru + soruSayisi - 1;
+  
+  Map<String, dynamic> toJson() => {
+    'ad': ad,
+    'soru_sayisi': soruSayisi,
+    'baslangic_soru': baslangicSoru,
+  };
+  
+  factory KurumsalDenemeTest.fromJson(Map<String, dynamic> json) => KurumsalDenemeTest(
+    ad: json['ad'],
+    soruSayisi: json['soru_sayisi'],
+    baslangicSoru: json['baslangic_soru'],
+  );
+}
+
+/// Öğrenci Deneme Sonucu
+class KurumsalDenemeSonuc {
+  String id;
+  String denemeId;
+  String ogrenciId;
+  String ogrenciAd;
+  Map<int, String?> cevaplar; // {1: "A", 2: null, 3: "B", ...} (null = boş)
+  DateTime baslangicZamani;
+  DateTime? bitisZamani;
+  int ihlalSayisi;       // Focus mode ihlalleri
+  bool tamamlandi;
+  
+  // Hesaplanan değerler (bitişte doldurulur)
+  Map<String, double>? testNetleri; // {"Türkçe": 35.5, "Matematik": 28.0}
+  double? toplamNet;
+  int? kurumSirasi;
+  int? kurumKatilimci;
+  
+  KurumsalDenemeSonuc({
+    required this.id,
+    required this.denemeId,
+    required this.ogrenciId,
+    this.ogrenciAd = '',
+    required this.cevaplar,
+    required this.baslangicZamani,
+    this.bitisZamani,
+    this.ihlalSayisi = 0,
+    this.tamamlandi = false,
+    this.testNetleri,
+    this.toplamNet,
+    this.kurumSirasi,
+    this.kurumKatilimci,
+  });
+  
+  /// Net hesapla (D - Y/4)
+  double hesaplaNet(Map<int, String> cevapAnahtari, int baslangic, int bitis) {
+    int dogru = 0, yanlis = 0;
+    for (int i = baslangic; i <= bitis; i++) {
+      final cevap = cevaplar[i];
+      final dogruCevap = cevapAnahtari[i];
+      if (cevap != null && dogruCevap != null) {
+        if (cevap == dogruCevap) {
+          dogru++;
+        } else {
+          yanlis++;
+        }
+      }
+    }
+    return dogru - (yanlis / 4);
+  }
+  
+  /// Tüm netleri hesapla
+  void netleriHesapla(KurumsalDeneme deneme) {
+    testNetleri = {};
+    double toplam = 0;
+    
+    for (var test in deneme.testler) {
+      double net = hesaplaNet(deneme.cevapAnahtari, test.baslangicSoru, test.bitisSoru);
+      testNetleri![test.ad] = net;
+      toplam += net;
+    }
+    
+    toplamNet = toplam;
+  }
+  
+  /// Boş soru sayısı
+  int get bosSayisi {
+    int bos = 0;
+    cevaplar.forEach((k, v) { if (v == null) bos++; });
+    return bos;
+  }
+  
+  /// Doluluk yüzdesi
+  double doluYuzdesi(int toplamSoru) => 
+      ((toplamSoru - bosSayisi) / toplamSoru * 100);
+  
+  Map<String, dynamic> toJson() => {
+    'id': id,
+    'deneme_id': denemeId,
+    'ogrenci_id': ogrenciId,
+    'ogrenci_ad': ogrenciAd,
+    'cevaplar': cevaplar.map((k, v) => MapEntry(k.toString(), v)),
+    'baslangic_zamani': baslangicZamani.toIso8601String(),
+    'bitis_zamani': bitisZamani?.toIso8601String(),
+    'ihlal_sayisi': ihlalSayisi,
+    'tamamlandi': tamamlandi,
+    'test_netleri': testNetleri,
+    'toplam_net': toplamNet,
+    'kurum_sirasi': kurumSirasi,
+    'kurum_katilimci': kurumKatilimci,
+  };
+  
+  factory KurumsalDenemeSonuc.fromJson(Map<String, dynamic> json) => KurumsalDenemeSonuc(
+    id: json['id'],
+    denemeId: json['deneme_id'],
+    ogrenciId: json['ogrenci_id'],
+    ogrenciAd: json['ogrenci_ad'] ?? '',
+    cevaplar: (json['cevaplar'] as Map<String, dynamic>).map((k, v) => MapEntry(int.parse(k), v as String?)),
+    baslangicZamani: DateTime.parse(json['baslangic_zamani']),
+    bitisZamani: json['bitis_zamani'] != null ? DateTime.parse(json['bitis_zamani']) : null,
+    ihlalSayisi: json['ihlal_sayisi'] ?? 0,
+    tamamlandi: json['tamamlandi'] ?? false,
+    testNetleri: json['test_netleri'] != null 
+        ? Map<String, double>.from(json['test_netleri'])
+        : null,
+    toplamNet: json['toplam_net']?.toDouble(),
+    kurumSirasi: json['kurum_sirasi'],
+    kurumKatilimci: json['kurum_katilimci'],
+  );
+}
+
+/// Aktif Sınav Oturumu (Focus Mode ve anlık kayıt için)
+class KurumsalDenemeOturumu {
+  String denemeId;
+  String ogrenciId;
+  DateTime baslangic;
+  int ihlalSayisi;
+  bool aktif;
+  Map<int, String?> geciciCevaplar;
+  
+  KurumsalDenemeOturumu({
+    required this.denemeId,
+    required this.ogrenciId,
+    required this.baslangic,
+    this.ihlalSayisi = 0,
+    this.aktif = true,
+    Map<int, String?>? geciciCevaplar,
+  }) : geciciCevaplar = geciciCevaplar ?? {};
+  
+  /// Kalan süre (saniye)
+  int kalanSure(int toplamDakika) {
+    final gecenSure = DateTime.now().difference(baslangic).inSeconds;
+    final toplamSaniye = toplamDakika * 60;
+    return (toplamSaniye - gecenSure).clamp(0, toplamSaniye);
+  }
+  
+  /// Süre doldu mu?
+  bool sureDolduMu(int toplamDakika) => kalanSure(toplamDakika) <= 0;
+  
+  /// İhlal ekle
+  void ihlalEkle() {
+    ihlalSayisi++;
+    if (ihlalSayisi >= 2) {
+      aktif = false; // Sınav iptal
+    }
+  }
+}
+

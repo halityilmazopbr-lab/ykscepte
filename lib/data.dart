@@ -17,6 +17,10 @@ class VeriDeposu {
   static List<Mesaj> mesajlar = [];
   static List<HataDefteriSoru> hataDefteriListesi = [];
   
+  // GÜNLÜK TAKİP SİSTEMİ
+  static Map<String, Map<String, bool>> gunlukTakipDurumlari = {}; // "2024-12-25": {"09:00-Matematik": true}
+  static Ogrenci? aktifOgrenci;
+  
   // RANDEVU SİSTEMİ
   static Map<String, Map<int, Map<String, String>>> ogretmenMusaitlikleri = {};
   // Key: ogretmenId, Value: {gunIndex: {saat: durum}}
@@ -409,6 +413,114 @@ class VeriDeposu {
       KonuDetay("Bölgeler ve Ülkeler", 1),
       KonuDetay("Çevre ve Toplum", 1),
     ],
+    // --- AYT GEOMETRİ ---
+    "AYT Geometri": [
+      KonuDetay("Üçgenler (İleri)", 2),
+      KonuDetay("Dik Üçgen ve Trigonometri", 2),
+      KonuDetay("Çokgenler ve Dörtgenler (İleri)", 1),
+      KonuDetay("Çemberin Analitik İncelenmesi", 2),
+      KonuDetay("Elips", 1),
+      KonuDetay("Hiperbol", 1),
+      KonuDetay("Parabol (Geometrik)", 1),
+      KonuDetay("Uzay Geometri", 2),
+      KonuDetay("Katı Cisimler (İleri)", 2),
+      KonuDetay("Dönüşümler", 1),
+    ],
+    // --- AYT TARİH-2 (İNKILAP TARİHİ) ---
+    "AYT Tarih-2": [
+      KonuDetay("20. Yüzyıl Başlarında Dünya", 1),
+      KonuDetay("I. Dünya Savaşı", 1),
+      KonuDetay("Mondros Mütarekesi", 1),
+      KonuDetay("Kurtuluş Savaşı Hazırlık Dönemi", 1),
+      KonuDetay("Kuvayımilliye ve Cemiyetler", 1),
+      KonuDetay("TBMM'nin Açılması", 1),
+      KonuDetay("Sevr Antlaşması", 1),
+      KonuDetay("Sakarya ve Büyük Taarruz", 1),
+      KonuDetay("Mudanya ve Lozan", 1),
+      KonuDetay("Cumhuriyet'in İlanı", 1),
+      KonuDetay("Çok Partili Hayat Denemeleri", 1),
+      KonuDetay("Hukuk İnkılabı", 1),
+      KonuDetay("Eğitim ve Kültür İnkılabı", 1),
+      KonuDetay("Ekonomi İnkılabı", 1),
+      KonuDetay("Toplumsal Hayatın Düzenlenmesi", 1),
+      KonuDetay("Atatürk İlkeleri", 2),
+      KonuDetay("Atatürk Dönemi Dış Politika", 1),
+      KonuDetay("II. Dünya Savaşı ve Türkiye", 1),
+      KonuDetay("Soğuk Savaş Dönemi", 1),
+      KonuDetay("21. Yüzyılda Türkiye", 1),
+    ],
+    // --- AYT COĞRAFYA-2 ---
+    "AYT Coğrafya-2": [
+      KonuDetay("Beşeri Sistemler", 1),
+      KonuDetay("Küresel Ortam: Bölgeler ve Ülkeler", 2),
+      KonuDetay("Çevre ve Toplum (İleri)", 1),
+      KonuDetay("Doğal Kaynaklar", 1),
+      KonuDetay("Uluslararası Kuruluşlar", 1),
+      KonuDetay("Kültür Bölgeleri", 1),
+      KonuDetay("Ülkeler Coğrafyası", 2),
+      KonuDetay("Türkiye'nin Jeopolitik Konumu", 1),
+      KonuDetay("Küreselleşme", 1),
+    ],
+    // --- AYT FELSEFE GRUBU ---
+    "AYT Felsefe": [
+      KonuDetay("Felsefenin Konusu ve Yöntemi", 1),
+      KonuDetay("İlk Çağ Felsefesi", 1),
+      KonuDetay("Orta Çağ Felsefesi", 1),
+      KonuDetay("15-17. Yüzyıl Felsefesi", 1),
+      KonuDetay("18. Yüzyıl Felsefesi", 1),
+      KonuDetay("19. Yüzyıl Felsefesi", 1),
+      KonuDetay("20. Yüzyıl Felsefesi", 1),
+      KonuDetay("Varlık Felsefesi (İleri)", 1),
+      KonuDetay("Bilgi Felsefesi (İleri)", 1),
+      KonuDetay("Ahlak Felsefesi (İleri)", 1),
+      KonuDetay("Siyaset Felsefesi (İleri)", 1),
+      KonuDetay("Estetik ve Sanat Felsefesi", 1),
+    ],
+    "AYT Psikoloji": [
+      KonuDetay("Psikolojinin Tanımı ve Yöntemi", 1),
+      KonuDetay("Psikolojinin Alt Dalları", 1),
+      KonuDetay("Öğrenme", 2),
+      KonuDetay("Bellek ve Unutma", 1),
+      KonuDetay("Düşünme ve Problem Çözme", 1),
+      KonuDetay("Zeka", 1),
+      KonuDetay("Güdülenme ve Duygu", 1),
+      KonuDetay("Kişilik", 1),
+      KonuDetay("Davranış Bozuklukları", 1),
+      KonuDetay("Sosyal Etki ve Tutum", 1),
+    ],
+    "AYT Sosyoloji": [
+      KonuDetay("Sosyolojiye Giriş", 1),
+      KonuDetay("Toplumsal Yapı", 1),
+      KonuDetay("Birey ve Toplum", 1),
+      KonuDetay("Toplumsal Gruplar", 1),
+      KonuDetay("Kültür", 1),
+      KonuDetay("Toplumsal Kurumlar", 2),
+      KonuDetay("Toplumsal Tabakalaşma", 1),
+      KonuDetay("Toplumsal Değişme", 1),
+      KonuDetay("Toplumsal Sapma ve Kontrol", 1),
+      KonuDetay("Toplum ve Teknoloji", 1),
+    ],
+    "AYT Mantık": [
+      KonuDetay("Mantığın Konusu ve İlkeleri", 1),
+      KonuDetay("Kavram ve Terim", 1),
+      KonuDetay("Önerme", 1),
+      KonuDetay("Çıkarım", 1),
+      KonuDetay("Kıyas", 2),
+      KonuDetay("Mantık Hataları", 1),
+      KonuDetay("Sembolik Mantık", 2),
+      KonuDetay("Modern Mantık", 1),
+    ],
+    "AYT Din Kültürü": [
+      KonuDetay("Bilgi ve İnanç (İleri)", 1),
+      KonuDetay("İslam ve Bilim", 1),
+      KonuDetay("İslam Medeniyeti", 1),
+      KonuDetay("İslam'ın Temel Kaynakları", 1),
+      KonuDetay("Kelam ve İtikadi Mezhepler", 1),
+      KonuDetay("İslam Fıkhı", 1),
+      KonuDetay("Tasavvuf", 1),
+      KonuDetay("İslam ve Sosyal Hayat", 1),
+      KonuDetay("Günümüz İslam Dünyası", 1),
+    ],
   };
 
   // VERİTABANI YÜKLEME (INIT)
@@ -484,6 +596,8 @@ class VeriDeposu {
         jsonEncode(tumRozetler.map((e) => e.toStateJson()).toList()));
     await _prefs.setString('hataDefteriListesi',
         jsonEncode(hataDefteriListesi.map((e) => e.toJson()).toList()));
+    // Günlük Takip
+    await _prefs.setString('gunlukTakipDurumlari', jsonEncode(gunlukTakipDurumlari));
   }
 
   static void baslat() {

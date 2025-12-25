@@ -24,6 +24,14 @@ class Ogrenci {
   // VELİ ERİŞİM
   String veliErisimKodu; // 6 haneli erişim kodu
   bool devamsizlikDurum; // true = derste, false = yok
+  
+  // 🎫 5 ALTIN BİLET - ONBOARDING SİSTEMİ
+  int programResetCount; // Toplam program sıfırlama sayısı
+  DateTime? sonProgramResetTarihi; // Son sıfırlama tarihi
+  bool onboardingBitti; // Acemilik dönemi bitti mi?
+  
+  // 🎭 MASKOT SİSTEMİ
+  DateTime? sonGirisTarihi; // Tamagotchi modu için son giriş
 
   Ogrenci({
     required this.id,
@@ -54,6 +62,12 @@ class Ogrenci {
     // Veli erişim
     this.veliErisimKodu = "",
     this.devamsizlikDurum = true,
+    // Onboarding
+    this.programResetCount = 0,
+    this.sonProgramResetTarihi,
+    this.onboardingBitti = false,
+    // Maskot
+    this.sonGirisTarihi,
   });
   
   // Unvan hesaplama (XP bazlı)
@@ -118,6 +132,10 @@ class Ogrenci {
         // Veli
         'veliErisimKodu': veliErisimKodu,
         'devamsizlikDurum': devamsizlikDurum,
+        // Onboarding
+        'programResetCount': programResetCount,
+        'sonProgramResetTarihi': sonProgramResetTarihi?.toIso8601String(),
+        'onboardingBitti': onboardingBitti,
       };
 
   factory Ogrenci.fromJson(Map<String, dynamic> json) => Ogrenci(
@@ -148,6 +166,10 @@ class Ogrenci {
         // Veli
         veliErisimKodu: json['veliErisimKodu'] ?? '',
         devamsizlikDurum: json['devamsizlikDurum'] ?? true,
+        // Onboarding
+        programResetCount: json['programResetCount'] ?? 0,
+        sonProgramResetTarihi: json['sonProgramResetTarihi'] != null ? DateTime.parse(json['sonProgramResetTarihi']) : null,
+        onboardingBitti: json['onboardingBitti'] ?? false,
       );
 }
 
@@ -360,6 +382,7 @@ class HataDefteriSoru {
   String ders;            // Matematik, Fizik, vb.
   String konu;            // Türev, Olasılık, vb.
   String? aciklama;       // "İşlem hatası yaptım"
+  String? videoCozumLinki; // 🎯 PRO ÖZEL: YouTube linki veya hoca notu
   bool cozuldu;           // Çözüldü mü?
   DateTime tarih;
 
@@ -370,6 +393,7 @@ class HataDefteriSoru {
     required this.ders,
     required this.konu,
     this.aciklama,
+    this.videoCozumLinki,
     this.cozuldu = false,
     required this.tarih,
   });
@@ -381,6 +405,7 @@ class HataDefteriSoru {
     'ders': ders,
     'konu': konu,
     'aciklama': aciklama,
+    'videoCozumLinki': videoCozumLinki,
     'cozuldu': cozuldu,
     'tarih': tarih.toIso8601String(),
   };
@@ -392,6 +417,7 @@ class HataDefteriSoru {
     ders: json['ders'],
     konu: json['konu'],
     aciklama: json['aciklama'],
+    videoCozumLinki: json['videoCozumLinki'],
     cozuldu: json['cozuldu'] ?? false,
     tarih: DateTime.parse(json['tarih']),
   );

@@ -1,0 +1,220 @@
+<!DOCTYPE html>
+<html lang="tr">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+
+    <!-- Open Graph Meta Tags - WhatsApp/Instagram Önizlemesi -->
+    <meta property="og:title" content="🔥 YKS Cepte - Meydan Okuma!" />
+    <meta property="og:description" content="Arkadaşın bu soruyu çözemedi, sen çözebilir misin? Hemen indir ve dene!" />
+    <meta property="og:image" content="https://gen-lang-client-0573740353.web.app/icons/Icon-512.png" />
+    <meta property="og:image:width" content="512" />
+    <meta property="og:image:height" content="512" />
+    <meta property="og:type" content="website" />
+    <meta property="og:url" content="https://gen-lang-client-0573740353.web.app/soru.html" />
+    <meta property="og:site_name" content="YKS Cepte" />
+
+    <!-- Twitter Card -->
+    <meta name="twitter:card" content="summary_large_image" />
+    <meta name="twitter:title" content="🔥 YKS Cepte - Meydan Okuma!" />
+    <meta name="twitter:description" content="Arkadaşın bu soruyu çözemedi, sen çözebilir misin?" />
+    <meta name="twitter:image" content="https://gen-lang-client-0573740353.web.app/icons/Icon-512.png" />
+
+    <title>YKS Cepte - Meydan Okuma</title>
+
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Oxygen, Ubuntu, sans-serif;
+            background: linear-gradient(135deg, #0D1117 0%, #1A1F36 50%, #2D1B4E 100%);
+            min-height: 100vh;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            color: white;
+            text-align: center;
+            padding: 20px;
+        }
+
+        .container {
+            max-width: 400px;
+            animation: fadeIn 0.5s ease;
+        }
+
+        @keyframes fadeIn {
+            from {
+                opacity: 0;
+                transform: translateY(20px);
+            }
+
+            to {
+                opacity: 1;
+                transform: translateY(0);
+            }
+        }
+
+        .logo {
+            width: 120px;
+            height: 120px;
+            margin-bottom: 24px;
+            border-radius: 24px;
+            box-shadow: 0 10px 40px rgba(147, 51, 234, 0.3);
+        }
+
+        h1 {
+            font-size: 28px;
+            margin-bottom: 12px;
+            background: linear-gradient(90deg, #A855F7, #EC4899);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            background-clip: text;
+        }
+
+        .subtitle {
+            font-size: 16px;
+            color: #9CA3AF;
+            margin-bottom: 32px;
+            line-height: 1.6;
+        }
+
+        .spinner {
+            width: 40px;
+            height: 40px;
+            border: 3px solid rgba(168, 85, 247, 0.3);
+            border-top-color: #A855F7;
+            border-radius: 50%;
+            animation: spin 1s linear infinite;
+            margin: 0 auto 24px;
+        }
+
+        @keyframes spin {
+            to {
+                transform: rotate(360deg);
+            }
+        }
+
+        .status {
+            font-size: 14px;
+            color: #6B7280;
+            margin-bottom: 32px;
+        }
+
+        .download-btn {
+            display: inline-block;
+            background: linear-gradient(90deg, #A855F7, #EC4899);
+            color: white;
+            text-decoration: none;
+            padding: 16px 32px;
+            border-radius: 12px;
+            font-weight: 600;
+            font-size: 16px;
+            transition: transform 0.2s, box-shadow 0.2s;
+            box-shadow: 0 4px 20px rgba(168, 85, 247, 0.4);
+        }
+
+        .download-btn:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 8px 30px rgba(168, 85, 247, 0.5);
+        }
+
+        .badge {
+            display: inline-block;
+            background: rgba(168, 85, 247, 0.2);
+            color: #A855F7;
+            padding: 8px 16px;
+            border-radius: 20px;
+            font-size: 14px;
+            margin-top: 24px;
+        }
+
+        .features {
+            display: flex;
+            gap: 16px;
+            justify-content: center;
+            margin-top: 32px;
+            flex-wrap: wrap;
+        }
+
+        .feature {
+            background: rgba(255, 255, 255, 0.05);
+            padding: 12px 16px;
+            border-radius: 10px;
+            font-size: 13px;
+            color: #9CA3AF;
+        }
+    </style>
+
+    <script type="text/javascript">
+        window.onload = function () {
+            // URL'deki soru ID'sini al
+            const urlParams = new URLSearchParams(window.location.search);
+            const soruId = urlParams.get('id') || 'unknown';
+
+            console.log('Soru ID:', soruId);
+
+            // Platform tespiti
+            const userAgent = navigator.userAgent || navigator.vendor || window.opera;
+            const isAndroid = /android/i.test(userAgent);
+            const isIOS = /iPad|iPhone|iPod/.test(userAgent) && !window.MSStream;
+
+            // Mağaza linki
+            let storeUrl;
+            if (isIOS) {
+                // App Store linki (yayınlandığında güncellenecek)
+                storeUrl = 'https://apps.apple.com/app/yks-cepte/id123456789';
+            } else {
+                // Play Store linki
+                storeUrl = 'https://play.google.com/store/apps/details?id=com.ykscepte.app';
+            }
+
+            // 1. Önce Deep Link ile uygulamayı açmayı dene
+            const deepLink = 'ykscepte://soru/' + soruId;
+            window.location.href = deepLink;
+
+            // 2. Eğer 1.5 saniye içinde uygulama açılmazsa mağazaya yönlendir
+            setTimeout(function () {
+                document.getElementById('status').textContent = 'Mağazaya yönlendiriliyor...';
+                window.location.href = storeUrl;
+            }, 1500);
+        };
+    </script>
+</head>
+
+<body>
+    <div class="container">
+        <img src="icons/Icon-512.png" alt="YKS Cepte Logo" class="logo" />
+
+        <h1>🔥 Meydan Okuma!</h1>
+
+        <p class="subtitle">
+            Arkadaşın bu soruyu çözemedi.<br />
+            Sen çözebilir misin?
+        </p>
+
+        <div class="spinner"></div>
+
+        <p id="status" class="status">Uygulama açılıyor...</p>
+
+        <a href="#" class="download-btn"
+            onclick="window.location.href='https://play.google.com/store/apps/details?id=com.ykscepte.app'">
+            📲 YKS Cepte'yi İndir
+        </a>
+
+        <div class="badge">Ücretsiz YKS Hazırlık</div>
+
+        <div class="features">
+            <div class="feature">📚 Ders Programı</div>
+            <div class="feature">🤖 AI Soru Çözücü</div>
+            <div class="feature">📊 Deneme Takibi</div>
+        </div>
+    </div>
+</body>
+
+</html>

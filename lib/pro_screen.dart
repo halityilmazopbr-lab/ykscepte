@@ -163,6 +163,27 @@ class _ProScreenState extends State<ProScreen> {
                         ),
                       ),
 
+                      const SizedBox(height: 8),
+
+                      // Psikolojik karşılaştırma metni
+                      Container(
+                        padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
+                        decoration: BoxDecoration(
+                          color: Colors.green.withOpacity(0.2),
+                          borderRadius: BorderRadius.circular(20),
+                        ),
+                        child: Text(
+                          SubscriptionService.isLaunchMode 
+                              ? "🎉 Lansman Fırsatı: ${SubscriptionService.yearlyComparison}"
+                              : SubscriptionService.yearlyComparison,
+                          style: const TextStyle(
+                            color: Colors.green,
+                            fontSize: 13,
+                            fontWeight: FontWeight.w600,
+                          ),
+                        ),
+                      ),
+
                       const SizedBox(height: 30),
 
                       // Features
@@ -170,7 +191,21 @@ class _ProScreenState extends State<ProScreen> {
 
                       const SizedBox(height: 30),
 
-                      // Plan cards
+                      // Plan cards - 3 seçenek
+                      if (SubscriptionService.isLaunchMode) ...[
+                        // LANSMAN FIRSATI KART (Büyük, öne çıkan)
+                        _buildPlanCard(
+                          id: SubscriptionService.launchYearlyProductId,
+                          title: "🔥 Yıllık Lansman",
+                          price: SubscriptionService.launchYearlyPrice,
+                          originalPrice: SubscriptionService.yearlyPrice,
+                          subtitle: SubscriptionService.launchSavings,
+                          isPopular: true,
+                          isLaunch: true,
+                        ),
+                        const SizedBox(height: 12),
+                      ],
+                      
                       Row(
                         children: [
                           Expanded(
@@ -178,6 +213,7 @@ class _ProScreenState extends State<ProScreen> {
                               id: SubscriptionService.monthlyProductId,
                               title: "Aylık",
                               price: SubscriptionService.monthlyPrice,
+                              subtitle: SubscriptionService.monthlyComparison,
                               isPopular: false,
                             ),
                           ),
@@ -188,7 +224,7 @@ class _ProScreenState extends State<ProScreen> {
                               title: "Yıllık",
                               price: SubscriptionService.yearlyPrice,
                               subtitle: SubscriptionService.yearlySavings,
-                              isPopular: true,
+                              isPopular: !SubscriptionService.isLaunchMode,
                             ),
                           ),
                         ],
@@ -294,8 +330,10 @@ class _ProScreenState extends State<ProScreen> {
     required String id,
     required String title,
     required String price,
+    String? originalPrice,
     String? subtitle,
     bool isPopular = false,
+    bool isLaunch = false,
   }) {
     bool isSelected = _selectedPlan == id;
 
@@ -339,12 +377,22 @@ class _ProScreenState extends State<ProScreen> {
               ),
             ),
             const SizedBox(height: 4),
+            if (originalPrice != null) ...[
+              Text(
+                originalPrice,
+                style: TextStyle(
+                  color: Colors.white.withOpacity(0.5),
+                  fontSize: 12,
+                  decoration: TextDecoration.lineThrough,
+                ),
+              ),
+            ],
             Text(
               price,
               style: TextStyle(
-                color: isSelected ? Colors.amber : Colors.white70,
+                color: isSelected ? (isLaunch ? Colors.green : Colors.amber) : Colors.white70,
                 fontWeight: FontWeight.bold,
-                fontSize: 14,
+                fontSize: isLaunch ? 18 : 14,
               ),
             ),
             if (subtitle != null) ...[

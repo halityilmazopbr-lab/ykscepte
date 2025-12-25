@@ -4,8 +4,13 @@ import 'package:flutter/material.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import 'package:appinio_swiper/appinio_swiper.dart';
 import 'package:flip_card/flip_card.dart';
+import 'package:share_plus/share_plus.dart';
 import 'gemini_service.dart';
 import 'models.dart';
+import 'audio_study_service.dart';
+import 'ocr_service.dart';
+import 'duel_service.dart';
+import 'duel_model.dart';
 
 /// Akıllı Bilgi Kartları - Tinder Style Flashcards
 /// Leitner System (Spaced Repetition) ile
@@ -24,6 +29,17 @@ class _FlashcardsEkraniState extends State<FlashcardsEkrani> {
   int _sessionWrong = 0;
   bool _deckFinished = false;
   bool _isGenerating = false;
+  
+  // 🎵 Uyku Modu (Audio Flashcards)
+  final AudioStudyService _audioService = AudioStudyService();
+  AudioState _audioState = AudioState.stopped;
+  int _currentAudioIndex = 0;
+  
+  // ⚔️ Düello Sistemi
+  final DuelService _duelService = DuelService();
+  bool _isDuelMode = false;
+  DuelModel? _activeDuel;
+  final Stopwatch _duelStopwatch = Stopwatch();
   
   final AppinioSwiperController _swiperController = AppinioSwiperController();
   final TextEditingController _aiTopicController = TextEditingController();
@@ -99,6 +115,13 @@ class _FlashcardsEkraniState extends State<FlashcardsEkrani> {
   void initState() {
     super.initState();
     _loadLeitnerData();
+    _audioService.init(); // 🎵 TTS motorunu başlat
+  }
+  
+  @override
+  void dispose() {
+    _audioService.stop(); // 🎵 Sayfa kapanınca sesi durdur
+    super.dispose();
   }
 
   Future<void> _loadLeitnerData() async {
@@ -185,6 +208,10 @@ class _FlashcardsEkraniState extends State<FlashcardsEkrani> {
 
   void _checkDeckFinished(int index) {
     if (index >= _currentDeck.length - 1) {
+      if (_isDuelMode) {
+        _duelStopwatch.stop();
+        _submitDuelResult();
+      }
       setState(() => _deckFinished = true);
     }
   }
@@ -250,10 +277,31 @@ Bana bilgi kartı (Flashcard) formatında 10 adet Soru-Cevap çifti oluştur.
         title: const Text("🃏 Bilgi Kartları", style: TextStyle(color: Colors.white)),
         iconTheme: const IconThemeData(color: Colors.white),
         actions: [
+          // 🎵 Uyku Modu Butonu (Pro Özelliği)
+          IconButton(
+            icon: Icon(
+              _audioState == AudioState.stopped ? Icons.headphones : Icons.pause_circle,
+              color: _audioState == AudioState.stopped ? Colors.deepPurple : Colors.green,
+            ),
+            onPressed: _showAudioPlayerSheet,
+            tooltip: "Uyku Modu",
+          ),
+          // 🦖 Paragraf Canavarı Butonu
+          IconButton(
+            icon: const Icon(Icons.article, color: Colors.teal),
+            onPressed: _showParagrafCanavarDialog,
+            tooltip: "Paragraf Canavarı",
+          ),
           IconButton(
             icon: const Icon(Icons.auto_awesome, color: Colors.amber),
             onPressed: _showAIGeneratorDialog,
             tooltip: "AI ile Deste Oluştur",
+          ),
+          // ⚔️ Düelloya Katıl Butonu
+          IconButton(
+            icon: const Icon(Icons.bolt, color: Colors.orange),
+            onPressed: _showJoinDuelDialog,
+            tooltip: "Düelloya Katıl",
           ),
           IconButton(
             icon: const Icon(Icons.refresh),
@@ -612,6 +660,19 @@ Bana bilgi kartı (Flashcard) formatında 10 adet Soru-Cevap çifti oluştur.
             icon: const Icon(Icons.refresh),
             label: const Text("Tekrar Çalış", style: TextStyle(fontSize: 16)),
           ),
+          if (!_isDuelMode && total > 0) ...[
+            const SizedBox(height: 16),
+            ElevatedButton.icon(
+              onPressed: _startDuelChallenge,
+              style: ElevatedButton.styleFrom(
+                backgroundColor: Colors.orange.shade800,
+                padding: const EdgeInsets.symmetric(horizontal: 32, vertical: 16),
+                shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(30)),
+              ),
+              icon: const Icon(Icons.bolt),
+              label: const Text("🔥 Arkadaşına Meydan Oku", style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold)),
+            ),
+          ],
         ],
       ),
     );
@@ -697,7 +758,818 @@ Bana bilgi kartı (Flashcard) formatında 10 adet Soru-Cevap çifti oluştur.
       ),
     );
   }
+  
+  /// 🦖 Paragraf Canavarı - Metinden Flashcard Oluştur
+  final TextEditingController _paragrafController = TextEditingController();
+  bool _isParagrafLoading = false;
+  
+  void _showParagrafCanavarDialog() {
+    _paragrafController.clear();
+    _isParagrafLoading = false;
+    
+    showModalBottomSheet(
+      context: context,
+      backgroundColor: Colors.transparent,
+      isScrollControlled: true,
+      builder: (context) => StatefulBuilder(
+        builder: (context, setSheetState) {
+          return Container(
+            padding: EdgeInsets.only(
+              left: 24,
+              right: 24,
+              top: 24,
+              bottom: MediaQuery.of(context).viewInsets.bottom + 24,
+            ),
+            decoration: const BoxDecoration(
+              color: Color(0xFF161B22),
+              borderRadius: BorderRadius.vertical(top: Radius.circular(24)),
+            ),
+            child: SingleChildScrollView(
+              child: Column(
+                mainAxisSize: MainAxisSize.min,
+                children: [
+                  // Handle bar
+                  Container(
+                    width: 40,
+                    height: 4,
+                    margin: const EdgeInsets.only(bottom: 20),
+                    decoration: BoxDecoration(
+                      color: Colors.grey.shade700,
+                      borderRadius: BorderRadius.circular(2),
+                    ),
+                  ),
+                  
+                  // Başlık
+                  Row(
+                    children: [
+                      Container(
+                        padding: const EdgeInsets.all(12),
+                        decoration: BoxDecoration(
+                          color: Colors.teal.withAlpha(30),
+                          borderRadius: BorderRadius.circular(12),
+                        ),
+                        child: const Text("🦖", style: TextStyle(fontSize: 28)),
+                      ),
+                      const SizedBox(width: 16),
+                      Expanded(
+                        child: Column(
+                          crossAxisAlignment: CrossAxisAlignment.start,
+                          children: [
+                            const Text(
+                              "Paragraf Canavarı",
+                              style: TextStyle(color: Colors.white, fontSize: 20, fontWeight: FontWeight.bold),
+                            ),
+                            Text(
+                              "Metni ver, kartları al",
+                              style: TextStyle(color: Colors.grey.shade500, fontSize: 13),
+                            ),
+                          ],
+                        ),
+                      ),
+                      Container(
+                        padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 6),
+                        decoration: BoxDecoration(
+                          gradient: LinearGradient(colors: [Colors.teal.shade700, Colors.cyan.shade600]),
+                          borderRadius: BorderRadius.circular(20),
+                        ),
+                        child: const Text("AI", style: TextStyle(color: Colors.white, fontSize: 11, fontWeight: FontWeight.bold)),
+                      ),
+                    ],
+                  ),
+                  const SizedBox(height: 20),
+                  
+                  // Açıklama
+                  Container(
+                    padding: const EdgeInsets.all(16),
+                    decoration: BoxDecoration(
+                      color: Colors.teal.withAlpha(20),
+                      borderRadius: BorderRadius.circular(12),
+                      border: Border.all(color: Colors.teal.withAlpha(50)),
+                    ),
+                    child: Row(
+                      children: [
+                        const Icon(Icons.info_outline, color: Colors.teal, size: 20),
+                        const SizedBox(width: 12),
+                        Expanded(
+                          child: Text(
+                            "Ders kitabından veya notlarından bir paragraf yapıştır. AI en önemli 5 bilgiyi kart haline getirecek.",
+                            style: TextStyle(color: Colors.teal.shade200, fontSize: 13),
+                          ),
+                        ),
+                      ],
+                    ),
+                  ),
+                  const SizedBox(height: 20),
+                  
+                  // 📸 Kamera/Galeri OCR Butonları
+                  if (!_isParagrafLoading) ...[
+                    Container(
+                      padding: const EdgeInsets.all(12),
+                      decoration: BoxDecoration(
+                        color: const Color(0xFF21262D),
+                        borderRadius: BorderRadius.circular(12),
+                      ),
+                      child: Row(
+                        children: [
+                          Expanded(
+                            child: Text(
+                              "Metin yapıştır veya fotoğraf çek:",
+                              style: TextStyle(color: Colors.grey.shade400, fontSize: 12),
+                            ),
+                          ),
+                          // Kamera butonu
+                          IconButton(
+                            onPressed: () async {
+                              setSheetState(() => _isParagrafLoading = true);
+                              try {
+                                final ocrService = OcrService();
+                                final metin = await ocrService.extractTextFromCamera();
+                                if (metin != null && metin.isNotEmpty) {
+                                  _paragrafController.text = metin;
+                                  ScaffoldMessenger.of(context).showSnackBar(
+                                    const SnackBar(
+                                      content: Text("📸 Metin okundu! Düzeltip \"Ören\" diyebilirsin."),
+                                      backgroundColor: Colors.teal,
+                                    ),
+                                  );
+                                }
+                              } catch (e) {
+                                ScaffoldMessenger.of(context).showSnackBar(
+                                  SnackBar(
+                                    content: Text("❌ $e"),
+                                    backgroundColor: Colors.red,
+                                  ),
+                                );
+                              } finally {
+                                setSheetState(() => _isParagrafLoading = false);
+                              }
+                            },
+                            icon: const Icon(Icons.camera_alt, color: Colors.teal),
+                            tooltip: "Kameradan Tara",
+                          ),
+                          // Galeri butonu
+                          IconButton(
+                            onPressed: () async {
+                              setSheetState(() => _isParagrafLoading = true);
+                              try {
+                                final ocrService = OcrService();
+                                final metin = await ocrService.extractTextFromGallery();
+                                if (metin != null && metin.isNotEmpty) {
+                                  _paragrafController.text = metin;
+                                  ScaffoldMessenger.of(context).showSnackBar(
+                                    const SnackBar(
+                                      content: Text("🖼️ Metin okundu! Düzeltip \"Ören\" diyebilirsin."),
+                                      backgroundColor: Colors.teal,
+                                    ),
+                                  );
+                                }
+                              } catch (e) {
+                                ScaffoldMessenger.of(context).showSnackBar(
+                                  SnackBar(
+                                    content: Text("❌ $e"),
+                                    backgroundColor: Colors.red,
+                                  ),
+                                );
+                              } finally {
+                                setSheetState(() => _isParagrafLoading = false);
+                              }
+                            },
+                            icon: const Icon(Icons.photo_library, color: Colors.cyan),
+                            tooltip: "Galeriden Seç",
+                          ),
+                        ],
+                      ),
+                    ),
+                    const SizedBox(height: 12),
+                  ],
+                  
+                  // Loading durumu
+                  if (_isParagrafLoading) ...[
+                    Container(
+                      padding: const EdgeInsets.all(40),
+                      child: Column(
+                        children: [
+                          const CircularProgressIndicator(color: Colors.teal),
+                          const SizedBox(height: 20),
+                          Text(
+                            "🦖 Metni yutuyorum...",
+                            style: TextStyle(color: Colors.grey.shade400, fontSize: 16),
+                          ),
+                          const SizedBox(height: 8),
+                          Text(
+                            "En önemli bilgileri çıkarıyorum (2-5 saniye)",
+                            style: TextStyle(color: Colors.grey.shade600, fontSize: 12),
+                          ),
+                        ],
+                      ),
+                    ),
+                  ] else ...[
+                    // Metin alanı
+                    TextField(
+                      controller: _paragrafController,
+                      maxLines: 8,
+                      style: const TextStyle(color: Colors.white, fontSize: 14),
+                      decoration: InputDecoration(
+                        hintText: "Ders kitabından veya notlarından kopyaladığın paragrafı buraya yapıştır...\n\nÖrnek:\n\"Tanzimat Fermanı 1839'da Gülhane Parkı'nda okundu. Bu fermanla padişahın yetkileri sınırlandırıldı...\"",
+                        hintStyle: TextStyle(color: Colors.grey.shade600, fontSize: 13),
+                        filled: true,
+                        fillColor: const Color(0xFF21262D),
+                        border: OutlineInputBorder(
+                          borderRadius: BorderRadius.circular(16),
+                          borderSide: BorderSide.none,
+                        ),
+                        contentPadding: const EdgeInsets.all(16),
+                      ),
+                    ),
+                    const SizedBox(height: 20),
+                    
+                    // Butonlar
+                    Row(
+                      children: [
+                        Expanded(
+                          child: OutlinedButton(
+                            onPressed: () => Navigator.pop(context),
+                            style: OutlinedButton.styleFrom(
+                              foregroundColor: Colors.grey,
+                              side: BorderSide(color: Colors.grey.shade700),
+                              padding: const EdgeInsets.symmetric(vertical: 16),
+                              shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
+                            ),
+                            child: const Text("İptal"),
+                          ),
+                        ),
+                        const SizedBox(width: 16),
+                        Expanded(
+                          flex: 2,
+                          child: ElevatedButton.icon(
+                            onPressed: () async {
+                              if (_paragrafController.text.length < 50) {
+                                ScaffoldMessenger.of(context).showSnackBar(
+                                  const SnackBar(
+                                    content: Text("⚠️ Lütfen daha uzun bir metin girin (en az 50 karakter)"),
+                                    backgroundColor: Colors.orange,
+                                  ),
+                                );
+                                return;
+                              }
+                              
+                              setSheetState(() => _isParagrafLoading = true);
+                              
+                              try {
+                                final kartlar = await GravityAI.paragrafToFlashcards(
+                                  _paragrafController.text,
+                                  kartSayisi: 5,
+                                );
+                                
+                                // Kartları destenin başına ekle
+                                final yeniKartlar = kartlar.map((k) => LeitnerCard(
+                                  id: "AI:${DateTime.now().millisecondsSinceEpoch}:${k['soru']}",
+                                  front: k['soru'] ?? '',
+                                  back: k['cevap'] ?? '',
+                                  box: 1,
+                                )).toList();
+                                
+                                setState(() {
+                                  _currentDeck = [...yeniKartlar, ..._currentDeck];
+                                  _deckFinished = false;
+                                });
+                                
+                                Navigator.pop(context);
+                                
+                                ScaffoldMessenger.of(context).showSnackBar(
+                                  SnackBar(
+                                    content: Row(
+                                      children: [
+                                        const Text("🦖", style: TextStyle(fontSize: 20)),
+                                        const SizedBox(width: 12),
+                                        Text("${yeniKartlar.length} kart oluşturuldu!"),
+                                      ],
+                                    ),
+                                    backgroundColor: Colors.teal,
+                                    duration: const Duration(seconds: 3),
+                                  ),
+                                );
+                                
+                              } catch (e) {
+                                setSheetState(() => _isParagrafLoading = false);
+                                ScaffoldMessenger.of(context).showSnackBar(
+                                  SnackBar(
+                                    content: Text("❌ Hata: $e"),
+                                    backgroundColor: Colors.red,
+                                  ),
+                                );
+                              }
+                            },
+                            icon: const Text("🦖", style: TextStyle(fontSize: 18)),
+                            label: const Text("Kartları Oluştur", style: TextStyle(fontWeight: FontWeight.bold)),
+                            style: ElevatedButton.styleFrom(
+                              backgroundColor: Colors.teal,
+                              foregroundColor: Colors.white,
+                              padding: const EdgeInsets.symmetric(vertical: 16),
+                              shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
+                            ),
+                          ),
+                        ),
+                      ],
+                    ),
+                  ],
+                  
+                  const SizedBox(height: 16),
+                ],
+              ),
+            ),
+          );
+        },
+      ),
+    );
+  }
+  
+  /// 🎧 Uyku Modu - Audio Player Bottom Sheet
+  void _showAudioPlayerSheet() {
+    showModalBottomSheet(
+      context: context,
+      backgroundColor: Colors.transparent,
+      isScrollControlled: true,
+      builder: (context) => StatefulBuilder(
+        builder: (context, setSheetState) {
+          return Container(
+            padding: const EdgeInsets.all(24),
+            decoration: const BoxDecoration(
+              color: Color(0xFF161B22),
+              borderRadius: BorderRadius.vertical(top: Radius.circular(24)),
+            ),
+            child: Column(
+              mainAxisSize: MainAxisSize.min,
+              children: [
+                // Handle bar
+                Container(
+                  width: 40,
+                  height: 4,
+                  margin: const EdgeInsets.only(bottom: 20),
+                  decoration: BoxDecoration(
+                    color: Colors.grey.shade700,
+                    borderRadius: BorderRadius.circular(2),
+                  ),
+                ),
+                
+                // Başlık
+                Row(
+                  children: [
+                    Container(
+                      padding: const EdgeInsets.all(12),
+                      decoration: BoxDecoration(
+                        color: Colors.deepPurple.withAlpha(30),
+                        borderRadius: BorderRadius.circular(12),
+                      ),
+                      child: const Icon(Icons.headphones, color: Colors.deepPurple, size: 28),
+                    ),
+                    const SizedBox(width: 16),
+                    Expanded(
+                      child: Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
+                          const Row(
+                            children: [
+                              Text(
+                                "Uyku Modu",
+                                style: TextStyle(color: Colors.white, fontSize: 20, fontWeight: FontWeight.bold),
+                              ),
+                              SizedBox(width: 8),
+                              Text("🎧", style: TextStyle(fontSize: 20)),
+                            ],
+                          ),
+                          const SizedBox(height: 4),
+                          Text(
+                            "Ekranı kapat, dinle ve öğren",
+                            style: TextStyle(color: Colors.grey.shade500, fontSize: 13),
+                          ),
+                        ],
+                      ),
+                    ),
+                    Container(
+                      padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 6),
+                      decoration: BoxDecoration(
+                        gradient: LinearGradient(colors: [Colors.amber.shade700, Colors.orange.shade600]),
+                        borderRadius: BorderRadius.circular(20),
+                      ),
+                      child: const Text("PRO", style: TextStyle(color: Colors.white, fontSize: 11, fontWeight: FontWeight.bold)),
+                    ),
+                  ],
+                ),
+                const SizedBox(height: 24),
+                
+                // Açıklama kartı
+                Container(
+                  padding: const EdgeInsets.all(16),
+                  decoration: BoxDecoration(
+                    color: Colors.deepPurple.withAlpha(20),
+                    borderRadius: BorderRadius.circular(16),
+                    border: Border.all(color: Colors.deepPurple.withAlpha(50)),
+                  ),
+                  child: Row(
+                    children: [
+                      const Icon(Icons.info_outline, color: Colors.deepPurple, size: 20),
+                      const SizedBox(width: 12),
+                      Expanded(
+                        child: Text(
+                          "Soruyu okuyacağım, düşün, sonra cevabı söyleyeceğim. Otobüste, yatakta bile çalışabilirsin!",
+                          style: TextStyle(color: Colors.deepPurple.shade200, fontSize: 13, height: 1.4),
+                        ),
+                      ),
+                    ],
+                  ),
+                ),
+                const SizedBox(height: 24),
+                
+                // Durum Göstergesi
+                if (_audioState != AudioState.stopped) ...[
+                  Container(
+                    padding: const EdgeInsets.all(16),
+                    decoration: BoxDecoration(
+                      color: const Color(0xFF21262D),
+                      borderRadius: BorderRadius.circular(16),
+                    ),
+                    child: Row(
+                      children: [
+                        Container(
+                          width: 48,
+                          height: 48,
+                          decoration: BoxDecoration(
+                            color: Colors.green.withAlpha(30),
+                            borderRadius: BorderRadius.circular(12),
+                          ),
+                          alignment: Alignment.center,
+                          child: Text(
+                            "${_currentAudioIndex + 1}",
+                            style: const TextStyle(color: Colors.green, fontSize: 20, fontWeight: FontWeight.bold),
+                          ),
+                        ),
+                        const SizedBox(width: 16),
+                        Expanded(
+                          child: Column(
+                            crossAxisAlignment: CrossAxisAlignment.start,
+                            children: [
+                              Text(
+                                "${_audioState.emoji} ${_audioState.label}",
+                                style: const TextStyle(color: Colors.white, fontSize: 16, fontWeight: FontWeight.bold),
+                              ),
+                              const SizedBox(height: 4),
+                              Text(
+                                "Kart ${_currentAudioIndex + 1} / ${_currentDeck.length}",
+                                style: TextStyle(color: Colors.grey.shade500, fontSize: 13),
+                              ),
+                            ],
+                          ),
+                        ),
+                      ],
+                    ),
+                  ),
+                  const SizedBox(height: 24),
+                ],
+                
+                // Kontrol Butonları
+                Row(
+                  mainAxisAlignment: MainAxisAlignment.center,
+                  children: [
+                    // Durdur
+                    if (_audioState != AudioState.stopped)
+                      GestureDetector(
+                        onTap: () {
+                          _audioService.stop();
+                          setState(() => _audioState = AudioState.stopped);
+                          setSheetState(() {});
+                        },
+                        child: Container(
+                          padding: const EdgeInsets.all(16),
+                          decoration: BoxDecoration(
+                            color: Colors.red.withAlpha(30),
+                            shape: BoxShape.circle,
+                          ),
+                          child: const Icon(Icons.stop, color: Colors.red, size: 28),
+                        ),
+                      ),
+                    const SizedBox(width: 20),
+                    
+                    // Oynat / Duraklat
+                    GestureDetector(
+                      onTap: () {
+                        if (_audioState == AudioState.stopped) {
+                          // Başlat
+                          final cards = _currentDeck.map((c) => {
+                            'soru': c.front,
+                            'cevap': c.back,
+                          }).toList();
+                          
+                          _audioService.startPlaylist(
+                            cards,
+                            onIndexChanged: (index) {
+                              setState(() => _currentAudioIndex = index);
+                              setSheetState(() {});
+                              // Ekrandaki kartı da çevir
+                              if (index < _currentDeck.length) {
+                                _swiperController.swipeDefault();
+                              }
+                            },
+                            onStateChanged: (state) {
+                              setState(() => _audioState = state);
+                              setSheetState(() {});
+                            },
+                          );
+                          setState(() => _audioState = AudioState.playing);
+                          setSheetState(() {});
+                          
+                          Navigator.pop(context);
+                          ScaffoldMessenger.of(context).showSnackBar(
+                            SnackBar(
+                              content: const Row(
+                                children: [
+                                  Icon(Icons.headphones, color: Colors.white),
+                                  SizedBox(width: 12),
+                                  Text("🎧 Uyku Modu aktif! Ekranı kapatabilirsin."),
+                                ],
+                              ),
+                              backgroundColor: Colors.deepPurple,
+                              duration: const Duration(seconds: 3),
+                            ),
+                          );
+                        } else if (_audioState == AudioState.paused) {
+                          // Devam et
+                          _audioService.resume();
+                          setState(() => _audioState = AudioState.playing);
+                          setSheetState(() {});
+                        } else {
+                          // Duraklat
+                          _audioService.pause();
+                          setState(() => _audioState = AudioState.paused);
+                          setSheetState(() {});
+                        }
+                      },
+                      child: Container(
+                        padding: const EdgeInsets.all(24),
+                        decoration: BoxDecoration(
+                          gradient: LinearGradient(
+                            colors: _audioState == AudioState.stopped
+                                ? [Colors.deepPurple, Colors.purple]
+                                : [Colors.green, Colors.teal],
+                          ),
+                          shape: BoxShape.circle,
+                          boxShadow: [
+                            BoxShadow(
+                              color: (_audioState == AudioState.stopped ? Colors.deepPurple : Colors.green).withAlpha(100),
+                              blurRadius: 20,
+                              spreadRadius: 2,
+                            ),
+                          ],
+                        ),
+                        child: Icon(
+                          _audioState == AudioState.stopped
+                              ? Icons.play_arrow
+                              : (_audioState == AudioState.paused ? Icons.play_arrow : Icons.pause),
+                          color: Colors.white,
+                          size: 36,
+                        ),
+                      ),
+                    ),
+                    const SizedBox(width: 20),
+                    
+                    // Sonraki
+                    if (_audioState != AudioState.stopped)
+                      GestureDetector(
+                        onTap: () {
+                          _audioService.skipToNext();
+                        },
+                        child: Container(
+                          padding: const EdgeInsets.all(16),
+                          decoration: BoxDecoration(
+                            color: Colors.blue.withAlpha(30),
+                            shape: BoxShape.circle,
+                          ),
+                          child: const Icon(Icons.skip_next, color: Colors.blue, size: 28),
+                        ),
+                      ),
+                  ],
+                ),
+                
+                const SizedBox(height: 24),
+                
+                // Kart sayısı bilgisi
+                Text(
+                  "${_currentDeck.length} kart dinlenmeye hazır",
+                  style: TextStyle(color: Colors.grey.shade600, fontSize: 13),
+                ),
+                
+                const SizedBox(height: 16),
+              ],
+            ),
+          );
+        },
+      ),
+    );
+  }
+  
+  // ⚔️ DÜELLO MANTIĞI
+  
+  /// Mevcut desteyi dondurup arkadaşına meydan oku
+  void _startDuelChallenge() async {
+    // Pro Kontrolü (Simüle)
+    // if (!widget.ogrenci!.isPro) { ... }
+    
+    showDialog(
+      context: context,
+      barrierDismissible: false,
+      builder: (context) => const Center(child: CircularProgressIndicator(color: Colors.orange)),
+    );
+
+    try {
+      // Mevcut desteyi Map listesine çevir
+      final kartMapler = _currentDeck.map((k) => {
+        'front': k.front,
+        'back': k.back,
+      }).toList();
+
+      final code = await _duelService.createDuel(
+        userId: widget.ogrenci?.id ?? "anonim",
+        ad: widget.ogrenci?.ad ?? "Rakip",
+        kartListesi: kartMapler,
+        skor: _sessionCorrect,
+        sureSaniye: 60, // Şimdilik sabit, normalde stopwatch farkı
+      );
+
+      Navigator.pop(context); // Loading'i kapat
+
+      // Paylaşım Mesajı
+      final message = "YKS Cepte'de sana meydan okuyorum! ⚔️\n"
+          "Skorum: $_sessionCorrect / ${_sessionCorrect + _sessionWrong}\n"
+          "Kodum: $code\n"
+          "Hadi göreyim seni! 💪\n"
+          "Uygulamayı indir: https://ykscepte.app";
+
+      await Share.share(message, subject: "YKS Bilgi Kartları Düellosu");
+
+    } catch (e) {
+      Navigator.pop(context);
+      ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text("Hata: $e")));
+    }
+  }
+
+  /// Düello kodunu girme ekranı
+  void _showJoinDuelDialog() {
+    final TextEditingController codeController = TextEditingController();
+    
+    showDialog(
+      context: context,
+      builder: (context) => AlertDialog(
+        backgroundColor: const Color(0xFF161B22),
+        title: const Text("⚔️ Düelloya Katıl", style: TextStyle(color: Colors.white)),
+        content: Column(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            const Text(
+              "Arkadaşından gelen 6 haneli kodu gir ve onunla kapış!",
+              style: TextStyle(color: Colors.grey, fontSize: 13),
+            ),
+            const SizedBox(height: 20),
+            TextField(
+              controller: codeController,
+              keyboardType: TextInputType.number,
+              maxLength: 6,
+              style: const TextStyle(color: Colors.white, fontSize: 24, letterSpacing: 8),
+              textAlign: TextAlign.center,
+              decoration: InputDecoration(
+                hintText: "000000",
+                hintStyle: TextStyle(color: Colors.grey.shade700),
+                counterStyle: const TextStyle(color: Colors.grey),
+                filled: true,
+                fillColor: const Color(0xFF0D1117),
+                border: OutlineInputBorder(borderRadius: BorderRadius.circular(12)),
+              ),
+            ),
+          ],
+        ),
+        actions: [
+          TextButton(onPressed: () => Navigator.pop(context), child: const Text("İptal")),
+          ElevatedButton(
+            onPressed: () async {
+              if (codeController.text.length < 6) return;
+              
+              Navigator.pop(context);
+              _joinDuel(codeController.text);
+            },
+            style: ElevatedButton.styleFrom(backgroundColor: Colors.orange.shade800),
+            child: const Text("BAŞLA!", style: TextStyle(color: Colors.white)),
+          ),
+        ],
+      ),
+    );
+  }
+
+  /// Düelloya katıl ve desteyi yükle
+  void _joinDuel(String code) async {
+    showDialog(
+      context: context,
+      barrierDismissible: false,
+      builder: (context) => const Center(child: CircularProgressIndicator(color: Colors.orange)),
+    );
+
+    try {
+      final duel = await _duelService.joinDuel(code, widget.ogrenci?.id ?? "anonim_rakip");
+      
+      final duelCards = duel.kartlar.map((k) => LeitnerCard(
+        id: "DUEL:${duel.id}:${k['front']}",
+        front: k['front'],
+        back: k['back'],
+        box: 1,
+      )).toList();
+
+      setState(() {
+        _currentDeck = duelCards;
+        _isDuelMode = true;
+        _activeDuel = duel;
+        _deckFinished = false;
+        _sessionCorrect = 0;
+        _sessionWrong = 0;
+        _duelStopwatch.reset();
+        _duelStopwatch.start();
+      });
+
+      Navigator.pop(context); // Loading kapat
+      
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(
+          content: Text("⚔️ ${duel.kurucuAd} ile düello başladı! Başarılar!"),
+          backgroundColor: Colors.orange.shade900,
+        ),
+      );
+
+    } catch (e) {
+      Navigator.pop(context);
+      ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text("Olamadı: $e"), backgroundColor: Colors.red));
+    }
+  }
+
+  /// Düello sonucunu rakip olarak gönder
+  void _submitDuelResult() async {
+    if (_activeDuel == null) return;
+
+    try {
+      await _duelService.submitRakipScore(
+        duelId: _activeDuel!.id,
+        rakipAd: widget.ogrenci?.ad ?? "Rakip",
+        skor: _sessionCorrect,
+        sureSaniye: _duelStopwatch.elapsed.inSeconds,
+      );
+      
+      setState(() => _isDuelMode = false); // Düello bitti
+
+      _showWinnerDialog(); // Kim kazandı göster
+
+    } catch (e) {
+      debugPrint("Sonuç gönderilemedi: $e");
+    }
+  }
+
+  /// Kazananı kutlama ekranı
+  void _showWinnerDialog() {
+    // Basit bir kazanan kontrolü
+    bool kazandim = false;
+    if (_activeDuel != null) {
+      if (_sessionCorrect > _activeDuel!.kurucuSkor) {
+        kazandim = true;
+      } else if (_sessionCorrect == _activeDuel!.kurucuSkor) {
+        // Skorda eşitlik varsa süreye bakılabilir (implementasyon eksik)
+        kazandim = false;
+      }
+    }
+
+    showDialog(
+      context: context,
+      builder: (context) => AlertDialog(
+        backgroundColor: const Color(0xFF161B22),
+        content: Column(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            Text(kazandim ? "🎉 TEBRİKLER!" : "💪 GÜZEL ÇABAYDI!", style: const TextStyle(color: Colors.white, fontSize: 24, fontWeight: FontWeight.bold)),
+            const SizedBox(height: 16),
+            Text(
+              kazandim 
+                ? "Arkadaşını ${_sessionCorrect} - ${_activeDuel?.kurucuSkor} skorla yendin! Sınıfın yeni kralı sensin! 👑"
+                : "Arkadaşın ${_activeDuel?.kurucuSkor} yaptı, sen ${_sessionCorrect} yaptın. Bir dahaki sefere! 😉",
+              textAlign: TextAlign.center,
+              style: const TextStyle(color: Colors.grey),
+            ),
+            const SizedBox(height: 24),
+            ElevatedButton(
+              onPressed: () => Navigator.pop(context),
+              style: ElevatedButton.styleFrom(backgroundColor: kazandim ? Colors.green : Colors.purple),
+              child: const Text("Tamam"),
+            ),
+          ],
+        ),
+      ),
+    );
+  }
 }
+
 
 /// Leitner Kart Modeli
 class LeitnerCard {

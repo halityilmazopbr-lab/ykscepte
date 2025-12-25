@@ -6,6 +6,7 @@ import 'package:flutter/foundation.dart' show kIsWeb;
 import 'kurum_models.dart';
 import 'data.dart';
 import 'models.dart';
+import 'kurum_deneme_cozum_screen.dart';
 
 /// Öğrenci için Kurum Duyuruları Ekranı
 class KurumDuyurulariEkrani extends StatelessWidget {
@@ -334,43 +335,151 @@ class KurumDuyurulariEkrani extends StatelessWidget {
   }
 
   Widget _buildDenemelerTab() {
-    final denemeler = VeriDeposu.kurumsalDenemeler;
+    // Demo kurumsal deneme oluştur
+    final demoDeneme = KurumsalDeneme.demoTYT(
+      kurumId: ogrenci.kurumKodu ?? 'demo',
+      kurumAdi: 'Bayburt Fen Dershanesi',
+    );
     
-    if (denemeler.isEmpty) {
-      return const Center(
-        child: Column(
-          mainAxisSize: MainAxisSize.min,
-          children: [
-            Icon(Icons.assignment_outlined, size: 64, color: Colors.grey),
-            SizedBox(height: 12),
-            Text("Henüz deneme eklenmedi", style: TextStyle(color: Colors.grey)),
-          ],
-        ),
-      );
-    }
+    final denemeler = [demoDeneme];
     
     return ListView.builder(
       padding: const EdgeInsets.all(16),
       itemCount: denemeler.length,
       itemBuilder: (context, index) {
         final d = denemeler[index];
-        return Card(
-          margin: const EdgeInsets.only(bottom: 12),
-          child: ListTile(
-            leading: const CircleAvatar(
-              backgroundColor: Colors.purple,
-              child: Icon(Icons.assignment, color: Colors.white),
+        return Container(
+          margin: const EdgeInsets.only(bottom: 16),
+          decoration: BoxDecoration(
+            gradient: LinearGradient(
+              colors: [Colors.purple.shade900, const Color(0xFF21262D)],
+              begin: Alignment.topLeft,
+              end: Alignment.bottomRight,
             ),
-            title: Text(d.baslik, style: const TextStyle(fontWeight: FontWeight.bold)),
-            subtitle: Text("${d.tarih.day}/${d.tarih.month}/${d.tarih.year}"),
-            trailing: ElevatedButton(
-              onPressed: () {
-                ScaffoldMessenger.of(context).showSnackBar(
-                  const SnackBar(content: Text('Deneme PDF açılıyor...')),
-                );
-              },
-              child: const Text("AÇ"),
-            ),
+            borderRadius: BorderRadius.circular(16),
+            border: Border.all(color: Colors.purple.withAlpha(50)),
+          ),
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              // Üst Kısım - Deneme Bilgileri
+              Padding(
+                padding: const EdgeInsets.all(16),
+                child: Row(
+                  children: [
+                    Container(
+                      padding: const EdgeInsets.all(12),
+                      decoration: BoxDecoration(
+                        color: Colors.purple.withAlpha(50),
+                        borderRadius: BorderRadius.circular(12),
+                      ),
+                      child: const Icon(Icons.assignment, color: Colors.purple, size: 28),
+                    ),
+                    const SizedBox(width: 16),
+                    Expanded(
+                      child: Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
+                          Text(
+                            d.baslik,
+                            style: const TextStyle(
+                              color: Colors.white,
+                              fontSize: 18,
+                              fontWeight: FontWeight.bold,
+                            ),
+                          ),
+                          const SizedBox(height: 4),
+                          Text(
+                            "${d.toplamSoruSayisi} Soru • ${d.sureDakika} Dakika",
+                            style: TextStyle(color: Colors.grey.shade400, fontSize: 13),
+                          ),
+                        ],
+                      ),
+                    ),
+                    if (d.aktif)
+                      Container(
+                        padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
+                        decoration: BoxDecoration(
+                          color: Colors.green,
+                          borderRadius: BorderRadius.circular(12),
+                        ),
+                        child: const Text(
+                          "AKTİF",
+                          style: TextStyle(color: Colors.white, fontSize: 10, fontWeight: FontWeight.bold),
+                        ),
+                      ),
+                  ],
+                ),
+              ),
+              
+              // Alt Kısım - Sınav Modu Butonları
+              Container(
+                padding: const EdgeInsets.all(16),
+                decoration: BoxDecoration(
+                  color: Colors.black.withAlpha(30),
+                  borderRadius: const BorderRadius.vertical(bottom: Radius.circular(16)),
+                ),
+                child: Row(
+                  children: [
+                    // Fiziksel Sınav (Sanal Optik)
+                    Expanded(
+                      child: ElevatedButton.icon(
+                        onPressed: () {
+                          Navigator.push(
+                            context,
+                            MaterialPageRoute(
+                              builder: (c) => KurumDenemeCozumScreen(
+                                deneme: d,
+                                ogrenci: ogrenci,
+                                dijitalMod: false,
+                              ),
+                            ),
+                          );
+                        },
+                        icon: const Icon(Icons.add_box, size: 18),
+                        label: const Text("Fiziksel Sınav"),
+                        style: ElevatedButton.styleFrom(
+                          backgroundColor: Colors.purple,
+                          foregroundColor: Colors.white,
+                          padding: const EdgeInsets.symmetric(vertical: 12),
+                        ),
+                      ),
+                    ),
+                    const SizedBox(width: 12),
+                    // Dijital Sınav (PDF Split)
+                    Expanded(
+                      child: OutlinedButton.icon(
+                        onPressed: () {
+                          if (d.pdfUrl == null) {
+                            ScaffoldMessenger.of(context).showSnackBar(
+                              const SnackBar(content: Text("Bu deneme için PDF yüklenmemiş.")),
+                            );
+                            return;
+                          }
+                          Navigator.push(
+                            context,
+                            MaterialPageRoute(
+                              builder: (c) => KurumDenemeCozumScreen(
+                                deneme: d,
+                                ogrenci: ogrenci,
+                                dijitalMod: true,
+                              ),
+                            ),
+                          );
+                        },
+                        icon: const Icon(Icons.picture_as_pdf, size: 18),
+                        label: const Text("Dijital Sınav"),
+                        style: OutlinedButton.styleFrom(
+                          foregroundColor: Colors.white70,
+                          side: const BorderSide(color: Colors.white30),
+                          padding: const EdgeInsets.symmetric(vertical: 12),
+                        ),
+                      ),
+                    ),
+                  ],
+                ),
+              ),
+            ],
           ),
         );
       },

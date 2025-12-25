@@ -777,13 +777,129 @@ class _KurumPanelEkraniState extends State<KurumPanelEkrani> with SingleTickerPr
 
   // =================== 6. AYARLAR ===================
   Widget _buildAyarlarTab() {
+    final kurumOgrenciSayisi = VeriDeposu.ogrenciler.length;
+    const fiyatPerOgrenci = 300; // TL/yıl normal
+    const lansmanFiyat = 200; // TL/yıl lansman
+    const isLansman = true; // İlk 5 kurum için
+    final aktifFiyat = isLansman ? lansmanFiyat : fiyatPerOgrenci;
+    final toplamMaliyet = kurumOgrenciSayisi * aktifFiyat;
+    
     return SingleChildScrollView(
       padding: const EdgeInsets.all(20),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          const Text("📍 Kurum Konum Ayarları", style: TextStyle(fontSize: 20, fontWeight: FontWeight.bold)),
+          // === FİYATLANDIRMA BÖLÜMÜ ===
+          const Text("💰 Kurumsal Fiyatlandırma", style: TextStyle(fontSize: 20, fontWeight: FontWeight.bold)),
+          const SizedBox(height: 16),
+          
+          Container(
+            padding: const EdgeInsets.all(20),
+            decoration: BoxDecoration(
+              gradient: LinearGradient(
+                colors: [Colors.indigo.shade800, Colors.purple.shade700],
+                begin: Alignment.topLeft,
+                end: Alignment.bottomRight,
+              ),
+              borderRadius: BorderRadius.circular(16),
+            ),
+            child: Column(
+              children: [
+                if (isLansman) ...[
+                  Container(
+                    padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
+                    decoration: BoxDecoration(
+                      color: Colors.orange,
+                      borderRadius: BorderRadius.circular(20),
+                    ),
+                    child: const Text(
+                      "🔥 LANSMAN İNDİRİMİ - İLK 5 KURUM",
+                      style: TextStyle(color: Colors.white, fontWeight: FontWeight.bold, fontSize: 12),
+                    ),
+                  ),
+                  const SizedBox(height: 16),
+                ],
+                
+                Row(
+                  mainAxisAlignment: MainAxisAlignment.center,
+                  children: [
+                    if (isLansman) ...[
+                      Text(
+                        "₺$fiyatPerOgrenci",
+                        style: TextStyle(
+                          color: Colors.white.withAlpha(150),
+                          fontSize: 18,
+                          decoration: TextDecoration.lineThrough,
+                        ),
+                      ),
+                      const SizedBox(width: 12),
+                    ],
+                    Text(
+                      "₺$aktifFiyat",
+                      style: const TextStyle(
+                        color: Colors.white,
+                        fontSize: 36,
+                        fontWeight: FontWeight.bold,
+                      ),
+                    ),
+                    const Text(
+                      " /öğrenci/yıl",
+                      style: TextStyle(color: Colors.white70, fontSize: 14),
+                    ),
+                  ],
+                ),
+                
+                const SizedBox(height: 8),
+                Text(
+                  "Bir top A4 kağıdı parasına tüm dijital sistem",
+                  style: TextStyle(color: Colors.white.withAlpha(180), fontSize: 13),
+                ),
+                
+                const SizedBox(height: 24),
+                Container(
+                  padding: const EdgeInsets.all(16),
+                  decoration: BoxDecoration(
+                    color: Colors.white.withAlpha(25),
+                    borderRadius: BorderRadius.circular(12),
+                  ),
+                  child: Column(
+                    children: [
+                      Row(
+                        mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                        children: [
+                          const Text("Kayıtlı Öğrenci:", style: TextStyle(color: Colors.white70)),
+                          Text("$kurumOgrenciSayisi öğrenci", style: const TextStyle(color: Colors.white, fontWeight: FontWeight.bold)),
+                        ],
+                      ),
+                      const SizedBox(height: 8),
+                      Row(
+                        mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                        children: [
+                          const Text("Yıllık Maliyet:", style: TextStyle(color: Colors.white70)),
+                          Text(
+                            "₺${toplamMaliyet.toString().replaceAllMapped(RegExp(r'(\d{1,3})(?=(\d{3})+(?!\d))'), (m) => '${m[1]}.')}",
+                            style: const TextStyle(color: Colors.greenAccent, fontWeight: FontWeight.bold, fontSize: 20),
+                          ),
+                        ],
+                      ),
+                    ],
+                  ),
+                ),
+                
+                const SizedBox(height: 16),
+                const Text(
+                  "• Sınırsız QR yoklama\n• Excel deneme sonuç aktarımı\n• Veli erişim kodu\n• Duyuru & etkinlik sistemi\n• 7/24 teknik destek",
+                  style: TextStyle(color: Colors.white70, fontSize: 12),
+                ),
+              ],
+            ),
+          ),
+          
           const SizedBox(height: 24),
+          
+          // === KONUM AYARLARI ===
+          const Text("📍 Kurum Konum Ayarları", style: TextStyle(fontSize: 20, fontWeight: FontWeight.bold)),
+          const SizedBox(height: 16),
           
           Card(
             child: Padding(

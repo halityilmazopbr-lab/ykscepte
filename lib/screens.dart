@@ -1745,24 +1745,392 @@ class SoruTakipEkrani extends StatefulWidget {
   @override
   State<SoruTakipEkrani> createState() => _STE();
 }
+
 class _STE extends State<SoruTakipEkrani> {
-  String? d, k;
-  final c1 = TextEditingController(), c2 = TextEditingController();
+  String? secilenDers, secilenKonu;
+  final dogruController = TextEditingController();
+  final yanlisController = TextEditingController();
+  String? acikDers; // Hangi dersin konuları açık
+  
+  // Bu öğrencinin soru kayıtları
+  List<SoruCozumKaydi> get kayitlar => 
+      VeriDeposu.soruCozumListesi.where((x) => x.ogrenciId == widget.ogrenciId).toList();
+  
+  // Dersleri soru sayısına göre sırala
+  List<MapEntry<String, int>> get derslerSirali {
+    Map<String, int> dersSayilari = {};
+    for (var kayit in kayitlar) {
+      dersSayilari[kayit.ders] = (dersSayilari[kayit.ders] ?? 0) + kayit.dogru + kayit.yanlis;
+    }
+    var liste = dersSayilari.entries.toList();
+    liste.sort((a, b) => b.value.compareTo(a.value)); // Çoktan aza
+    return liste;
+  }
+  
+  // Bir dersin konularını alfabetik sırala
+  List<String> konulariGetir(String ders) {
+    var konular = kayitlar
+        .where((k) => k.ders == ders)
+        .map((k) => k.konu)
+        .toSet()
+        .toList();
+    konular.sort(); // Alfabetik
+    return konular;
+  }
+  
+  // Bir konunun kayıtlarını getir
+  List<SoruCozumKaydi> konuKayitlari(String ders, String konu) {
+    return kayitlar.where((k) => k.ders == ders && k.konu == konu).toList();
+  }
+  
+  // Bir konunun toplamlarını hesapla
+  (int, int) konuToplamlari(String ders, String konu) {
+    var liste = konuKayitlari(ders, konu);
+    int toplamDogru = liste.fold(0, (sum, k) => sum + k.dogru);
+    int toplamYanlis = liste.fold(0, (sum, k) => sum + k.yanlis);
+    return (toplamDogru, toplamYanlis);
+  }
+  
+  void _kaydet() {
+    if (secilenDers == null || secilenKonu == null) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(content: Text("Ders ve konu seçiniz!"), backgroundColor: Colors.orange),
+      );
+      return;
+    }
+    
+    VeriDeposu.soruEkle(SoruCozumKaydi(
+      ogrenciId: widget.ogrenciId,
+      ders: secilenDers!,
+      konu: secilenKonu!,
+      dogru: int.tryParse(dogruController.text) ?? 0,
+      yanlis: int.tryParse(yanlisController.text) ?? 0,
+      tarih: DateTime.now(),
+    ));
+    
+    // Temizle
+    dogruController.clear();
+    yanlisController.clear();
+    
+    ScaffoldMessenger.of(context).showSnackBar(
+      const SnackBar(content: Text("✅ Soru kaydedildi!"), backgroundColor: Colors.green),
+    );
+    setState(() {});
+  }
+
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-        appBar: AppBar(title: const Text("Soru Takip")),
-        body: Padding(padding: const EdgeInsets.all(10), child: Column(children: [
-              DropdownButton<String>(isExpanded: true, value: d, hint: const Text("Ders"), items: VeriDeposu.dersKonuAgirliklari.keys.map((e) => DropdownMenuItem(value: e, child: Text(e))).toList(), onChanged: (v) => setState(() { d = v; k = null; })),
-              if (d != null) DropdownButton<String>(isExpanded: true, value: k, hint: const Text("Konu"), items: VeriDeposu.dersKonuAgirliklari[d]!.map((e) => DropdownMenuItem(value: e.ad, child: Text(e.ad))).toList(), onChanged: (v) => setState(() => k = v)),
-              Row(children: [Expanded(child: TextField(controller: c1, keyboardType: TextInputType.number, decoration: const InputDecoration(labelText: "Doğru"))), const SizedBox(width: 10), Expanded(child: TextField(controller: c2, keyboardType: TextInputType.number, decoration: const InputDecoration(labelText: "Yanlış")))]),
-              ElevatedButton(onPressed: () {
-                    VeriDeposu.soruEkle(SoruCozumKaydi(ogrenciId: widget.ogrenciId, ders: d ?? "?", konu: k ?? "?", dogru: int.tryParse(c1.text)??0, yanlis: int.tryParse(c2.text)??0, tarih: DateTime.now()));
-                    ScaffoldMessenger.of(context).showSnackBar(const SnackBar(content: Text("Soru Kaydedildi!"), backgroundColor: Colors.green));
-                    setState(() {});
-                  }, child: const Text("KAYDET & EKLE")),
-              Expanded(child: ListView.builder(itemCount: VeriDeposu.soruCozumListesi.where((x) => x.ogrenciId == widget.ogrenciId).length, itemBuilder: (c, i) => ListTile(title: Text(VeriDeposu.soruCozumListesi[i].konu), trailing: Text("D:${VeriDeposu.soruCozumListesi[i].dogru} Y:${VeriDeposu.soruCozumListesi[i].yanlis}"))))
-            ])));
+      backgroundColor: const Color(0xFF0D1117),
+      appBar: AppBar(
+        title: const Text("📊 Soru Takip"),
+        backgroundColor: const Color(0xFF161B22),
+      ),
+      body: Column(
+        children: [
+          // ═══════════════════════════════════════════════════════════
+          // ÜST BÖLÜM: SORU EKLEME FORMU
+          // ═══════════════════════════════════════════════════════════
+          Container(
+            padding: const EdgeInsets.all(16),
+            decoration: const BoxDecoration(
+              color: Color(0xFF21262D),
+              borderRadius: BorderRadius.vertical(bottom: Radius.circular(20)),
+            ),
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.stretch,
+              children: [
+                // Ders Dropdown
+                Container(
+                  padding: const EdgeInsets.symmetric(horizontal: 12),
+                  decoration: BoxDecoration(
+                    color: const Color(0xFF0D1117),
+                    borderRadius: BorderRadius.circular(12),
+                    border: Border.all(color: Colors.purple.withAlpha(50)),
+                  ),
+                  child: DropdownButton<String>(
+                    isExpanded: true,
+                    value: secilenDers,
+                    hint: const Text("📚 Ders Seç", style: TextStyle(color: Colors.grey)),
+                    dropdownColor: const Color(0xFF21262D),
+                    style: const TextStyle(color: Colors.white),
+                    underline: const SizedBox(),
+                    items: VeriDeposu.dersKonuAgirliklari.keys
+                        .map((e) => DropdownMenuItem(value: e, child: Text(e)))
+                        .toList(),
+                    onChanged: (v) => setState(() {
+                      secilenDers = v;
+                      secilenKonu = null;
+                    }),
+                  ),
+                ),
+                const SizedBox(height: 12),
+                
+                // Konu Dropdown
+                if (secilenDers != null)
+                  Container(
+                    padding: const EdgeInsets.symmetric(horizontal: 12),
+                    decoration: BoxDecoration(
+                      color: const Color(0xFF0D1117),
+                      borderRadius: BorderRadius.circular(12),
+                      border: Border.all(color: Colors.blue.withAlpha(50)),
+                    ),
+                    child: DropdownButton<String>(
+                      isExpanded: true,
+                      value: secilenKonu,
+                      hint: const Text("📖 Konu Seç", style: TextStyle(color: Colors.grey)),
+                      dropdownColor: const Color(0xFF21262D),
+                      style: const TextStyle(color: Colors.white),
+                      underline: const SizedBox(),
+                      items: VeriDeposu.dersKonuAgirliklari[secilenDers]!
+                          .map((e) => DropdownMenuItem(value: e.ad, child: Text(e.ad)))
+                          .toList(),
+                      onChanged: (v) => setState(() => secilenKonu = v),
+                    ),
+                  ),
+                const SizedBox(height: 12),
+                
+                // Doğru / Yanlış Input
+                Row(
+                  children: [
+                    Expanded(
+                      child: TextField(
+                        controller: dogruController,
+                        keyboardType: TextInputType.number,
+                        style: const TextStyle(color: Colors.white),
+                        decoration: InputDecoration(
+                          labelText: "✅ Doğru",
+                          labelStyle: TextStyle(color: Colors.green.shade300),
+                          filled: true,
+                          fillColor: const Color(0xFF0D1117),
+                          border: OutlineInputBorder(
+                            borderRadius: BorderRadius.circular(12),
+                            borderSide: BorderSide.none,
+                          ),
+                          focusedBorder: OutlineInputBorder(
+                            borderRadius: BorderRadius.circular(12),
+                            borderSide: const BorderSide(color: Colors.green),
+                          ),
+                        ),
+                      ),
+                    ),
+                    const SizedBox(width: 12),
+                    Expanded(
+                      child: TextField(
+                        controller: yanlisController,
+                        keyboardType: TextInputType.number,
+                        style: const TextStyle(color: Colors.white),
+                        decoration: InputDecoration(
+                          labelText: "❌ Yanlış",
+                          labelStyle: TextStyle(color: Colors.red.shade300),
+                          filled: true,
+                          fillColor: const Color(0xFF0D1117),
+                          border: OutlineInputBorder(
+                            borderRadius: BorderRadius.circular(12),
+                            borderSide: BorderSide.none,
+                          ),
+                          focusedBorder: OutlineInputBorder(
+                            borderRadius: BorderRadius.circular(12),
+                            borderSide: const BorderSide(color: Colors.red),
+                          ),
+                        ),
+                      ),
+                    ),
+                  ],
+                ),
+                const SizedBox(height: 16),
+                
+                // Kaydet Butonu
+                ElevatedButton.icon(
+                  onPressed: _kaydet,
+                  icon: const Icon(Icons.add_circle),
+                  label: const Text("KAYDET & EKLE"),
+                  style: ElevatedButton.styleFrom(
+                    backgroundColor: Colors.purple,
+                    foregroundColor: Colors.white,
+                    padding: const EdgeInsets.symmetric(vertical: 14),
+                    shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+                  ),
+                ),
+              ],
+            ),
+          ),
+          
+          // ═══════════════════════════════════════════════════════════
+          // ALT BÖLÜM: DERS BUTONLARI VE KONU LİSTESİ
+          // ═══════════════════════════════════════════════════════════
+          Expanded(
+            child: kayitlar.isEmpty
+                ? Center(
+                    child: Column(
+                      mainAxisAlignment: MainAxisAlignment.center,
+                      children: [
+                        Icon(Icons.quiz, size: 60, color: Colors.grey.shade700),
+                        const SizedBox(height: 16),
+                        Text(
+                          "Henüz soru kaydın yok",
+                          style: TextStyle(color: Colors.grey.shade500, fontSize: 16),
+                        ),
+                        const SizedBox(height: 8),
+                        Text(
+                          "Yukarıdan soru ekleyerek başla!",
+                          style: TextStyle(color: Colors.grey.shade600, fontSize: 12),
+                        ),
+                      ],
+                    ),
+                  )
+                : ListView(
+                    padding: const EdgeInsets.all(16),
+                    children: [
+                      // Ders Butonları (En çok soru çözülenden en aza)
+                      Wrap(
+                        spacing: 8,
+                        runSpacing: 8,
+                        children: derslerSirali.map((entry) {
+                          final ders = entry.key;
+                          final sayi = entry.value;
+                          final acik = acikDers == ders;
+                          
+                          return GestureDetector(
+                            onTap: () => setState(() => acikDers = acik ? null : ders),
+                            child: Container(
+                              padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 10),
+                              decoration: BoxDecoration(
+                                color: acik ? Colors.purple : const Color(0xFF21262D),
+                                borderRadius: BorderRadius.circular(20),
+                                border: Border.all(
+                                  color: acik ? Colors.purple : Colors.grey.withAlpha(50),
+                                ),
+                              ),
+                              child: Row(
+                                mainAxisSize: MainAxisSize.min,
+                                children: [
+                                  Text(
+                                    ders.length > 15 ? "${ders.substring(0, 15)}..." : ders,
+                                    style: TextStyle(
+                                      color: acik ? Colors.white : Colors.grey.shade300,
+                                      fontWeight: acik ? FontWeight.bold : FontWeight.normal,
+                                    ),
+                                  ),
+                                  const SizedBox(width: 8),
+                                  Container(
+                                    padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 2),
+                                    decoration: BoxDecoration(
+                                      color: acik ? Colors.white.withAlpha(30) : Colors.purple.withAlpha(30),
+                                      borderRadius: BorderRadius.circular(10),
+                                    ),
+                                    child: Text(
+                                      "$sayi",
+                                      style: TextStyle(
+                                        color: acik ? Colors.white : Colors.purple,
+                                        fontSize: 12,
+                                        fontWeight: FontWeight.bold,
+                                      ),
+                                    ),
+                                  ),
+                                ],
+                              ),
+                            ),
+                          );
+                        }).toList(),
+                      ),
+                      
+                      const SizedBox(height: 20),
+                      
+                      // Seçili Dersin Konuları
+                      if (acikDers != null) ...[
+                        Text(
+                          "📚 $acikDers - Konular",
+                          style: const TextStyle(color: Colors.white, fontSize: 16, fontWeight: FontWeight.bold),
+                        ),
+                        const SizedBox(height: 12),
+                        
+                        ...konulariGetir(acikDers!).map((konu) {
+                          final kayitListesi = konuKayitlari(acikDers!, konu);
+                          final (toplamDogru, toplamYanlis) = konuToplamlari(acikDers!, konu);
+                          
+                          return Container(
+                            margin: const EdgeInsets.only(bottom: 12),
+                            decoration: BoxDecoration(
+                              color: const Color(0xFF21262D),
+                              borderRadius: BorderRadius.circular(12),
+                            ),
+                            child: ExpansionTile(
+                              tilePadding: const EdgeInsets.symmetric(horizontal: 16),
+                              title: Text(konu, style: const TextStyle(color: Colors.white)),
+                              subtitle: Text(
+                                "D: $toplamDogru  Y: $toplamYanlis  |  Net: ${(toplamDogru - toplamYanlis * 0.25).toStringAsFixed(2)}",
+                                style: TextStyle(color: Colors.grey.shade500, fontSize: 12),
+                              ),
+                              trailing: Container(
+                                padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
+                                decoration: BoxDecoration(
+                                  color: Colors.green.withAlpha(30),
+                                  borderRadius: BorderRadius.circular(8),
+                                ),
+                                child: Text(
+                                  "${kayitListesi.length} kayıt",
+                                  style: const TextStyle(color: Colors.green, fontSize: 12),
+                                ),
+                              ),
+                              children: [
+                                // Tek tek kayıtlar
+                                ...kayitListesi.map((k) => Container(
+                                  padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
+                                  decoration: BoxDecoration(
+                                    border: Border(top: BorderSide(color: Colors.grey.withAlpha(30))),
+                                  ),
+                                  child: Row(
+                                    children: [
+                                      Text(
+                                        "${k.tarih.day}/${k.tarih.month}",
+                                        style: TextStyle(color: Colors.grey.shade600, fontSize: 12),
+                                      ),
+                                      const Spacer(),
+                                      Text("✅ ${k.dogru}", style: const TextStyle(color: Colors.green)),
+                                      const SizedBox(width: 16),
+                                      Text("❌ ${k.yanlis}", style: const TextStyle(color: Colors.red)),
+                                    ],
+                                  ),
+                                )),
+                                
+                                // Toplam satırı
+                                Container(
+                                  padding: const EdgeInsets.all(12),
+                                  decoration: BoxDecoration(
+                                    color: Colors.purple.withAlpha(20),
+                                    borderRadius: const BorderRadius.vertical(bottom: Radius.circular(12)),
+                                  ),
+                                  child: Row(
+                                    mainAxisAlignment: MainAxisAlignment.center,
+                                    children: [
+                                      const Icon(Icons.functions, color: Colors.purple, size: 18),
+                                      const SizedBox(width: 8),
+                                      Text(
+                                        "TOPLAM: $toplamDogru Doğru, $toplamYanlis Yanlış",
+                                        style: const TextStyle(color: Colors.purple, fontWeight: FontWeight.bold),
+                                      ),
+                                    ],
+                                  ),
+                                ),
+                              ],
+                            ),
+                          );
+                        }),
+                      ],
+                    ],
+                  ),
+          ),
+        ],
+      ),
+    );
+  }
+  
+  @override
+  void dispose() {
+    dogruController.dispose();
+    yanlisController.dispose();
+    super.dispose();
   }
 }
 
@@ -1866,17 +2234,275 @@ class GunlukTakipEkrani extends StatefulWidget {
   @override
   State<GunlukTakipEkrani> createState() => _GTEState();
 }
+
 class _GTEState extends State<GunlukTakipEkrani> {
-  final Map<String, bool> _check = {"Paragraf Çözdüm": false, "Problem Çözdüm": false, "Deneme Çözdüm": false, "8 Saat Uyudum": false, "Su İçtim": false};
+  Map<String, bool> _tamamlananlar = {};
+  List<Gorev> _bugunGorevler = [];
+  
+  @override
+  void initState() {
+    super.initState();
+    _bugunGorevleriYukle();
+  }
+  
+  void _bugunGorevleriYukle() {
+    // Bugünün gününü al
+    final bugun = DateTime.now();
+    final gunler = ["Pazar", "Pazartesi", "Salı", "Çarşamba", "Perşembe", "Cuma", "Cumartesi"];
+    final bugunAdi = gunler[bugun.weekday % 7];
+    
+    // Kaydedilen programdan bugünün görevlerini filtrele
+    _bugunGorevler = VeriDeposu.kayitliProgram
+        .where((g) => g.gun.toLowerCase() == bugunAdi.toLowerCase())
+        .toList();
+    
+    // Eğer program boşsa varsayılan görevler
+    if (_bugunGorevler.isEmpty) {
+      _bugunGorevler = [
+        Gorev(hafta: 1, gun: bugunAdi, saat: "09:00", ders: "Rutin", konu: "20 Paragraf + 20 Problem"),
+        Gorev(hafta: 1, gun: bugunAdi, saat: "10:00", ders: "Matematik", konu: "Konu Çalışması"),
+        Gorev(hafta: 1, gun: bugunAdi, saat: "14:00", ders: "Fizik", konu: "Test Çözümü"),
+      ];
+    }
+    
+    // Tamamlanma durumlarını yükle
+    final kayitliDurum = VeriDeposu.gunlukTakipDurumlari[_tarihKey(bugun)] ?? {};
+    for (var gorev in _bugunGorevler) {
+      final key = "${gorev.saat}-${gorev.ders}";
+      _tamamlananlar[key] = kayitliDurum[key] ?? false;
+    }
+  }
+  
+  String _tarihKey(DateTime tarih) => "${tarih.year}-${tarih.month}-${tarih.day}";
+  
+  void _durumDegistir(String key, bool deger) {
+    setState(() {
+      _tamamlananlar[key] = deger;
+    });
+    // Kaydet
+    final bugun = DateTime.now();
+    VeriDeposu.gunlukTakipDurumlari[_tarihKey(bugun)] = Map.from(_tamamlananlar);
+    VeriDeposu.kaydet();
+  }
+  
+  int get tamamlananSayisi => _tamamlananlar.values.where((v) => v).length;
+  double get ilerlemeYuzdesi => _bugunGorevler.isEmpty ? 0 : tamamlananSayisi / _bugunGorevler.length;
+
   @override
   Widget build(BuildContext context) {
+    final gunler = ["Pazar", "Pazartesi", "Salı", "Çarşamba", "Perşembe", "Cuma", "Cumartesi"];
+    final bugunAdi = gunler[DateTime.now().weekday % 7];
+    
     return Scaffold(
-        appBar: AppBar(title: const Text("Günlük Rutin")),
-        floatingActionButton: FloatingActionButton(child: const Icon(Icons.save), onPressed: () {
-           // Save logic placeholder
-           ScaffoldMessenger.of(context).showSnackBar(const SnackBar(content: Text("Rutin Kaydedildi! +20 Puan"), backgroundColor: Colors.green));
-        }),
-        body: ListView(children: _check.keys.map((k) => CheckboxListTile(title: Text(k), value: _check[k], onChanged: (v) => setState(() => _check[k] = v!))).toList()));
+      backgroundColor: const Color(0xFF0D1117),
+      appBar: AppBar(
+        title: Text("📅 $bugunAdi - Günlük Takip"),
+        backgroundColor: const Color(0xFF161B22),
+        actions: [
+          Padding(
+            padding: const EdgeInsets.only(right: 16),
+            child: Center(
+              child: Container(
+                padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
+                decoration: BoxDecoration(
+                  color: ilerlemeYuzdesi == 1.0 ? Colors.green : Colors.purple.withAlpha(50),
+                  borderRadius: BorderRadius.circular(20),
+                ),
+                child: Text(
+                  "$tamamlananSayisi/${_bugunGorevler.length}",
+                  style: TextStyle(
+                    color: ilerlemeYuzdesi == 1.0 ? Colors.white : Colors.purple,
+                    fontWeight: FontWeight.bold,
+                  ),
+                ),
+              ),
+            ),
+          ),
+        ],
+      ),
+      floatingActionButton: FloatingActionButton.extended(
+        onPressed: () {
+          if (ilerlemeYuzdesi == 1.0) {
+            // Bonus puan ver
+            VeriDeposu.aktifOgrenci?.puan += 50;
+            VeriDeposu.aktifOgrenci?.gunlukSeri++;
+            VeriDeposu.kaydet();
+            ScaffoldMessenger.of(context).showSnackBar(
+              const SnackBar(
+                content: Text("🎉 Tüm görevleri tamamladın! +50 XP & 🔥 Seri arttı!"),
+                backgroundColor: Colors.green,
+              ),
+            );
+          } else {
+            ScaffoldMessenger.of(context).showSnackBar(
+              SnackBar(
+                content: Text("📝 İlerleme kaydedildi ($tamamlananSayisi/${_bugunGorevler.length})"),
+                backgroundColor: Colors.purple,
+              ),
+            );
+          }
+        },
+        backgroundColor: ilerlemeYuzdesi == 1.0 ? Colors.green : Colors.purple,
+        icon: Icon(ilerlemeYuzdesi == 1.0 ? Icons.celebration : Icons.save),
+        label: Text(ilerlemeYuzdesi == 1.0 ? "GÜNÜ TAMAMLA" : "KAYDET"),
+      ),
+      body: Column(
+        children: [
+          // İlerleme Barı
+          Container(
+            padding: const EdgeInsets.all(20),
+            child: Column(
+              children: [
+                Row(
+                  mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                  children: [
+                    Text(
+                      "Günlük İlerleme",
+                      style: TextStyle(color: Colors.grey.shade400),
+                    ),
+                    Text(
+                      "%${(ilerlemeYuzdesi * 100).toInt()}",
+                      style: TextStyle(
+                        color: ilerlemeYuzdesi == 1.0 ? Colors.green : Colors.purple,
+                        fontWeight: FontWeight.bold,
+                        fontSize: 18,
+                      ),
+                    ),
+                  ],
+                ),
+                const SizedBox(height: 8),
+                ClipRRect(
+                  borderRadius: BorderRadius.circular(8),
+                  child: LinearProgressIndicator(
+                    value: ilerlemeYuzdesi,
+                    minHeight: 10,
+                    backgroundColor: Colors.grey.withAlpha(50),
+                    valueColor: AlwaysStoppedAnimation(
+                      ilerlemeYuzdesi == 1.0 ? Colors.green : Colors.purple,
+                    ),
+                  ),
+                ),
+              ],
+            ),
+          ),
+          
+          // Görev Listesi
+          Expanded(
+            child: _bugunGorevler.isEmpty
+                ? Center(
+                    child: Column(
+                      mainAxisAlignment: MainAxisAlignment.center,
+                      children: [
+                        Icon(Icons.calendar_today, size: 60, color: Colors.grey.shade700),
+                        const SizedBox(height: 16),
+                        Text(
+                          "Henüz program oluşturmadın",
+                          style: TextStyle(color: Colors.grey.shade500, fontSize: 16),
+                        ),
+                        const SizedBox(height: 8),
+                        ElevatedButton.icon(
+                          onPressed: () => Navigator.pushNamed(context, '/programWizard'),
+                          icon: const Icon(Icons.auto_awesome),
+                          label: const Text("Program Oluştur"),
+                          style: ElevatedButton.styleFrom(backgroundColor: Colors.purple),
+                        ),
+                      ],
+                    ),
+                  )
+                : ListView.builder(
+                    padding: const EdgeInsets.symmetric(horizontal: 16),
+                    itemCount: _bugunGorevler.length,
+                    itemBuilder: (context, index) {
+                      final gorev = _bugunGorevler[index];
+                      final key = "${gorev.saat}-${gorev.ders}";
+                      final tamamlandi = _tamamlananlar[key] ?? false;
+                      
+                      return Container(
+                        margin: const EdgeInsets.only(bottom: 12),
+                        decoration: BoxDecoration(
+                          color: tamamlandi 
+                              ? Colors.green.withAlpha(30) 
+                              : const Color(0xFF21262D),
+                          borderRadius: BorderRadius.circular(16),
+                          border: tamamlandi 
+                              ? Border.all(color: Colors.green.withAlpha(100))
+                              : null,
+                        ),
+                        child: CheckboxListTile(
+                          value: tamamlandi,
+                          onChanged: (v) => _durumDegistir(key, v ?? false),
+                          activeColor: Colors.green,
+                          checkboxShape: RoundedRectangleBorder(
+                            borderRadius: BorderRadius.circular(6),
+                          ),
+                          title: Row(
+                            children: [
+                              Container(
+                                padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
+                                decoration: BoxDecoration(
+                                  color: _getDersRengi(gorev.ders).withAlpha(50),
+                                  borderRadius: BorderRadius.circular(8),
+                                ),
+                                child: Text(
+                                  gorev.saat,
+                                  style: TextStyle(
+                                    color: _getDersRengi(gorev.ders),
+                                    fontWeight: FontWeight.bold,
+                                    fontSize: 12,
+                                  ),
+                                ),
+                              ),
+                              const SizedBox(width: 12),
+                              Expanded(
+                                child: Text(
+                                  gorev.ders,
+                                  style: TextStyle(
+                                    color: tamamlandi ? Colors.green : Colors.white,
+                                    fontWeight: FontWeight.bold,
+                                    decoration: tamamlandi ? TextDecoration.lineThrough : null,
+                                  ),
+                                ),
+                              ),
+                            ],
+                          ),
+                          subtitle: Padding(
+                            padding: const EdgeInsets.only(left: 60, top: 4),
+                            child: Text(
+                              gorev.konu,
+                              style: TextStyle(
+                                color: tamamlandi ? Colors.green.shade300 : Colors.grey.shade500,
+                                fontSize: 13,
+                              ),
+                            ),
+                          ),
+                          secondary: Icon(
+                            tamamlandi ? Icons.check_circle : Icons.circle_outlined,
+                            color: tamamlandi ? Colors.green : Colors.grey.shade600,
+                          ),
+                        ),
+                      );
+                    },
+                  ),
+          ),
+        ],
+      ),
+    );
+  }
+  
+  Color _getDersRengi(String ders) {
+    switch (ders.toLowerCase()) {
+      case "matematik": return Colors.blue;
+      case "fizik": return Colors.purple;
+      case "kimya": return Colors.green;
+      case "biyoloji": return Colors.teal;
+      case "türkçe": return Colors.orange;
+      case "edebiyat": return Colors.deepOrange;
+      case "tarih": return Colors.red;
+      case "coğrafya": return Colors.brown;
+      case "geometri": return Colors.cyan;
+      case "rutin": return Colors.pink;
+      default: return Colors.grey;
+    }
   }
 }
 

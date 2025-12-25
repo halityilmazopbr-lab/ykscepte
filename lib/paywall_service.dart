@@ -5,6 +5,13 @@ import 'models.dart';
 class PaywallService {
   static const int GUNLUK_SORU_LIMITI = 3;
   
+  // AI Jeton Paketleri (Micro-transaction)
+  static const Map<String, Map<String, dynamic>> jetonPaketleri = {
+    'jeton_50': {'miktar': 50, 'fiyat': '49,99 TL', 'fiyatNum': 49.99, 'popüler': true},
+    'jeton_20': {'miktar': 20, 'fiyat': '24,99 TL', 'fiyatNum': 24.99, 'popüler': false},
+    'jeton_100': {'miktar': 100, 'fiyat': '89,99 TL', 'fiyatNum': 89.99, 'popüler': false},
+  };
+  
   /// Premium özelliklerin listesi
   static const List<String> premiumFeatures = [
     'DetailedAnalysis',
@@ -72,10 +79,24 @@ class PaywallService {
     user.gunlukSoruHakki++;
   }
 
+  /// Jeton paketi satın al (50 soru = 49.99 TL)
+  static Future<bool> buyTokenPackage(Ogrenci user, String paketId) async {
+    final paket = jetonPaketleri[paketId];
+    if (paket == null) return false;
+    
+    // TODO: Gerçek satın alma işlemi (RevenueCat/Google Play)
+    // Success olursa:
+    final miktar = paket['miktar'] as int;
+    user.gunlukSoruHakki += miktar;
+    debugPrint('💰 Jeton paketi satın alındı: +$miktar soru hakkı');
+    return true;
+  }
+
   /// Paywall popup göster
   static void showPaywall(BuildContext context, {
     required VoidCallback onWatchAd,
     required VoidCallback onGoPro,
+    VoidCallback? onBuyTokens,
   }) {
     showModalBottomSheet(
       context: context,
@@ -84,6 +105,7 @@ class PaywallService {
       builder: (context) => _PaywallBottomSheet(
         onWatchAd: onWatchAd,
         onGoPro: onGoPro,
+        onBuyTokens: onBuyTokens,
       ),
     );
   }
@@ -93,10 +115,12 @@ class PaywallService {
 class _PaywallBottomSheet extends StatelessWidget {
   final VoidCallback onWatchAd;
   final VoidCallback onGoPro;
+  final VoidCallback? onBuyTokens;
 
   const _PaywallBottomSheet({
     required this.onWatchAd,
     required this.onGoPro,
+    this.onBuyTokens,
   });
 
   @override
@@ -196,6 +220,29 @@ class _PaywallBottomSheet extends StatelessWidget {
               ),
             ),
           ),
+          
+          // Buy Tokens Button (yeni)
+          if (onBuyTokens != null) ...[
+            const SizedBox(height: 12),
+            SizedBox(
+              width: double.infinity,
+              child: OutlinedButton.icon(
+                onPressed: () {
+                  Navigator.pop(context);
+                  onBuyTokens!();
+                },
+                icon: const Icon(Icons.token, color: Colors.orange),
+                label: const Text("50 Soru Hakkı = 49,99 TL", style: TextStyle(color: Colors.orange)),
+                style: OutlinedButton.styleFrom(
+                  padding: const EdgeInsets.symmetric(vertical: 14),
+                  side: const BorderSide(color: Colors.orange),
+                  shape: RoundedRectangleBorder(
+                    borderRadius: BorderRadius.circular(12),
+                  ),
+                ),
+              ),
+            ),
+          ],
           
           const SizedBox(height: 16),
         ],

@@ -21,11 +21,21 @@ class SubscriptionService {
   // Ürün ID'leri (Google Play Console'da tanımlayın)
   static const String monthlyProductId = 'ykscepte_pro_monthly';
   static const String yearlyProductId = 'ykscepte_pro_yearly';
+  static const String launchYearlyProductId = 'ykscepte_pro_yearly_launch'; // Lansman fiyatı
 
-  // Fiyatlar (Görüntüleme için)
-  static const String monthlyPrice = '₺29.99/ay';
-  static const String yearlyPrice = '₺199.99/yıl';
-  static const String yearlySavings = '%45 Tasarruf';
+  // Fiyatlar (Görüntüleme için) - Yeni Strateji 2025
+  static const String monthlyPrice = '₺79,99/ay';
+  static const String yearlyPrice = '₺599/yıl';
+  static const String launchYearlyPrice = '₺399/yıl'; // Lansman indirimi
+  static const String yearlySavings = '%33 Tasarruf';
+  static const String launchSavings = '🔥 LANSMAN: %50 İndirim!';
+  
+  // Psikolojik karşılaştırma metinleri
+  static const String monthlyComparison = 'Bir dürüm parasına dijital koçluk';
+  static const String yearlyComparison = 'Sadece 2 kitap fiyatına tüm yıl sınırsız';
+  
+  // Lansman modu aktif mi? (İlk 3 ay için true)
+  static bool isLaunchMode = true;
 
   /// Abonelik sistemini başlat
   static Future<void> initialize() async {
