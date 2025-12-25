@@ -30,30 +30,18 @@ import 'firebase_options.dart'; // Firebase yapılandırması
 Future<void> main() async {
   WidgetsFlutterBinding.ensureInitialized();
   
-  // ===== TEMPORARY DEBUG: All init disabled to find crash =====
-  // try {
-  //   await Firebase.initializeApp(
-  //     options: DefaultFirebaseOptions.currentPlatform,
-  //   );
-  // } catch (e) {
-  //   debugPrint("Firebase başlatılamadı: $e");
-  // }
-  // await VeriDeposu.init();
-  // await CacheService.init();
-  // ===== END TEMPORARY DEBUG =====
+  try {
+    await Firebase.initializeApp(
+      options: DefaultFirebaseOptions.currentPlatform,
+    );
+  } catch (e) {
+    debugPrint("Firebase başlatılamadı: $e");
+  }
   
-  runApp(
-    MaterialApp(
-      home: Scaffold(
-        appBar: AppBar(title: const Text('Test Mode')),
-        body: const Center(
-          child: Text('Uygulama başarıyla açıldı!\n\nFirebase devre dışı.', 
-            textAlign: TextAlign.center,
-            style: TextStyle(fontSize: 24)),
-        ),
-      ),
-    ),
-  );
+  await VeriDeposu.init();
+  await CacheService.init();
+  
+  runApp(const MainApp());
 }
 
 class MainApp extends StatelessWidget {

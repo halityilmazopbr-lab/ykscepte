@@ -1,21 +1,21 @@
 {
   "project_info": {
-    "project_number": "124569660139",
-    "project_id": "neural-guard-473908-j7",
-    "storage_bucket": "neural-guard-473908-j7.firebasestorage.app"
+    "project_number": "726026626971",
+    "project_id": "gen-lang-client-0573740353",
+    "storage_bucket": "gen-lang-client-0573740353.firebasestorage.app"
   },
   "client": [
     {
       "client_info": {
-        "mobilesdk_app_id": "1:124569660139:android:0ed2d4c19a8a77bcb52cae",
+        "mobilesdk_app_id": "1:726026626971:android:cdde27c861a25b57c6a33e",
         "android_client_info": {
-          "package_name": "com.example.yks_cepte"
+          "package_name": "com.ykscepte.app"
         }
       },
       "oauth_client": [],
       "api_key": [
         {
-          "current_key": "AIzaSyCuK_RiT0B2_XZsDZkOyPLoD7Vz10EfI8k"
+          "current_key": "AIzaSyAWF_39IA3d9CgBl8Om-W0KkPllsL2SQX8"
         }
       ],
       "services": {

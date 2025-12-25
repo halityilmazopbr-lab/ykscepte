@@ -19,7 +19,7 @@ if (hasKeyProperties) {
 }
 
 android {
-    namespace = "com.example.yks_cepte"
+    namespace = "com.ykscepte.app"
     compileSdk = 35
     ndkVersion = flutter.ndkVersion
 
@@ -50,7 +50,7 @@ android {
     }
 
     defaultConfig {
-        applicationId = "com.example.yks_cepte"
+        applicationId = "com.ykscepte.app"
         minSdk = 23
         targetSdk = 35
         versionCode = flutter.versionCode
