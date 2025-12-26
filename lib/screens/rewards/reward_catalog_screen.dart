@@ -234,7 +234,7 @@ class _RewardCatalogScreenState extends State<RewardCatalogScreen> {
                 child: ElevatedButton(
                   onPressed: () {
                     Navigator.pop(ctx);
-                    ScaffoldMessenger.of(context).showSnackBar(const SnackBar(content: Text("Hedef oluşturma yakında eklenecek!")));
+                    _showGoalCreationDialog(context, item);
                   },
                   style: ElevatedButton.styleFrom(
                     backgroundColor: const Color(0xFF2563EB),
@@ -247,6 +247,124 @@ class _RewardCatalogScreenState extends State<RewardCatalogScreen> {
           ),
         );
       },
+    );
+  }
+
+  /// Hedef Oluşturma Dialog'u
+  void _showGoalCreationDialog(BuildContext context, RewardItem reward) {
+    final TextEditingController targetController = TextEditingController();
+    String selectedType = 'Soru Çözme';
+
+    showDialog(
+      context: context,
+      builder: (ctx) => StatefulBuilder(
+        builder: (context, setState) => AlertDialog(
+          title: Text('${reward.name} için Hedef Oluştur'),
+          content: SingleChildScrollView(
+            child: Column(
+              mainAxisSize: MainAxisSize.min,
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                const Text('Hedef Türü:', style: TextStyle(fontWeight: FontWeight.bold)),
+                const SizedBox(height: 8),
+                DropdownButton<String>(
+                  value: selectedType,
+                  isExpanded: true,
+                  items: ['Soru Çözme', 'Ders Saati', 'Deneme', 'Konu Bitirme']
+                      .map((type) => DropdownMenuItem(value: type, child: Text(type)))
+                      .toList(),
+                  onChanged: (value) => setState(() => selectedType = value!),
+                ),
+                const SizedBox(height: 16),
+                const Text('Hedef Miktarı:', style: TextStyle(fontWeight: FontWeight.bold)),
+                const SizedBox(height: 8),
+                TextField(
+                  controller: targetController,
+                  keyboardType: TextInputType.number,
+                  decoration: InputDecoration(
+                    hintText: selectedType == 'Soru Çözme' ? '500' : '20',
+                    border: const OutlineInputBorder(),
+                    suffixText: selectedType == 'Soru Çözme' ? 'soru' : 'saat',
+                  ),
+                ),
+                const SizedBox(height: 16),
+                Container(
+                  padding: const EdgeInsets.all(12),
+                  decoration: BoxDecoration(
+                    color: Colors.orange[50],
+                    borderRadius: BorderRadius.circular(8),
+                  ),
+                  child: Column(
+                    children: [
+                      const Row(
+                        children: [
+                          Icon(Icons.info_outline, color: Colors.orange, size: 20),
+                          SizedBox(width: 8),
+                          Text('Veli Onayı Gerekiyor', style: TextStyle(fontWeight: FontWeight.bold)),
+                        ],
+                      ),
+                      const SizedBox(height: 8),
+                      Text(
+                        'Bu hedef için velinin ₺${reward.price.toInt()} ödemesi gerekiyor. Onay isteyeceksiniz.',
+                        style: const TextStyle(fontSize: 12),
+                      ),
+                    ],
+                  ),
+                ),
+              ],
+            ),
+          ),
+          actions: [
+            TextButton(
+              onPressed: () => Navigator.pop(ctx),
+              child: const Text('İptal'),
+            ),
+            ElevatedButton(
+              onPressed: () {
+                if (targetController.text.isEmpty) {
+                  ScaffoldMessenger.of(context).showSnackBar(
+                    const SnackBar(content: Text('Lütfen hedef miktarı girin!')),
+                  );
+                  return;
+                }
+                Navigator.pop(ctx);
+                _confirmGoalCreation(context, reward, selectedType, targetController.text);
+              },
+              style: ElevatedButton.styleFrom(backgroundColor: const Color(0xFF2563EB)),
+              child: const Text('VELİDEN ONAY İSTE', style: TextStyle(color: Colors.white)),
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+
+  /// Hedef oluşturma onayı
+  void _confirmGoalCreation(BuildContext context, RewardItem reward, String type, String amount) {
+    // TODO: Firestore'a kaydet
+    // TODO: Veliye bildirim gönder
+    
+    ScaffoldMessenger.of(context).showSnackBar(
+      SnackBar(
+        content: Text('✅ Hedef oluşturuldu! $amount $type yapınca ${reward.name} kazanacaksın.'),
+        duration: const Duration(seconds: 3),
+        backgroundColor: Colors.green,
+      ),
+    );
+    
+    // Hedeflerim ekranına yönlendir
+    showDialog(
+      context: context,
+      builder: (ctx) => AlertDialog(
+        title: const Text('🎯 Hedef Oluşturuldu!'),
+        content: const Text('Velinden onay bekleniyor. Onaylanınca çalışmaya başlayabilirsin!'),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.pop(ctx),
+            child: const Text('Tamam'),
+          ),
+        ],
+      ),
     );
   }
 }
