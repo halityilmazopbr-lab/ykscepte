@@ -15,10 +15,19 @@ class _RewardCatalogScreenState extends State<RewardCatalogScreen> {
   final List<RewardItem> allRewards = [
     RewardItem(id: "1", name: "D&R 200 TL Hediye Çeki", imagePath: "assets/brands/dr.png", price: 210, category: RewardCategory.education, isParentApproved: true, description: "Kitap ve kırtasiye alışverişi için"),
     RewardItem(id: "2", name: "1450 Valorant VP", imagePath: "assets/brands/valorant.png", price: 180, category: RewardCategory.gaming, description: "Valorant oyun içi para"),
-    RewardItem(id: "3", name: "Starbucks Tall Kahve", imagePath: "assets/brands/starbucks.png", price: 80, category: RewardCategory.lifestyle, description: "Bir kahve molası"),
     RewardItem(id: "4", name: "Steam 10 USD Cüzdan", imagePath: "assets/brands/steam.png", price: 340, category: RewardCategory.gaming, description: "PC oyunları için"),
     RewardItem(id: "5", name: "Trendyol 100 TL Cüzdan", imagePath: "assets/brands/trendyol.png", price: 110, category: RewardCategory.lifestyle, description: "Online alışveriş"),
-    RewardItem(id: "6", name: "Kunduz 1 Aylık Paket", imagePath: "assets/brands/kunduz.png", price: 250, category: RewardCategory.education, isParentApproved: true, description: "Soru çözüm desteği"),
+    
+    // Yeni Eklenenler
+    RewardItem(id: "7", name: "Duolingo Super 1 Yıl", imagePath: "assets/brands/duolingo.png", price: 520, category: RewardCategory.education, isParentApproved: true, description: "Yabancı dil öğrenme premium"),
+    RewardItem(id: "8", name: "600 PUBG UC", imagePath: "assets/brands/pubg.png", price: 190, category: RewardCategory.gaming, description: "PUBG Mobile oyun parası"),
+    RewardItem(id: "9", name: "170 Brawl Stars Gems", imagePath: "assets/brands/brawlstars.png", price: 85, category: RewardCategory.gaming, description: "Brawl Stars elmas"),
+    RewardItem(id: "10", name: "PlayStation Store 100 TL", imagePath: "assets/brands/playstation.png", price: 110, category: RewardCategory.gaming, description: "PS Store oyun ve içerik"),
+    RewardItem(id: "11", name: "Xbox Store 100 TL", imagePath: "assets/brands/xbox.png", price: 110, category: RewardCategory.gaming, description: "Xbox Store oyun ve içerik"),
+    RewardItem(id: "12", name: "Spotify Premium 3 Ay", imagePath: "assets/brands/spotify.png", price: 180, category: RewardCategory.lifestyle, description: "Reklamsız müzik dinle"),
+    RewardItem(id: "13", name: "YouTube Premium 3 Ay", imagePath: "assets/brands/youtube.png", price: 210, category: RewardCategory.lifestyle, description: "Reklamsız video izle"),
+    RewardItem(id: "14", name: "Cinemaximum Sinema Bileti", imagePath: "assets/brands/cinemaximum.png", price: 95, category: RewardCategory.lifestyle, description: "Film keyfi"),
+    RewardItem(id: "15", name: "Cinemapink Sinema Bileti", imagePath: "assets/brands/cinemapink.png", price: 90, category: RewardCategory.lifestyle, description: "Film keyfi"),
   ];
 
   @override
