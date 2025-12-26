@@ -15,6 +15,12 @@ import 'yoklama_screen.dart';
 import 'kurum_duyurulari_screen.dart';
 import 'kurum_ekranlari.dart';
 import 'student_homework_screen.dart'; // 🔥 Yeni Ödev Modülü
+import 'twin/twin.dart'; // 🧬 Sınav İkizi Modülü
+import 'detective/detective.dart'; // 🕵️ NET-X Dedektifi
+import 'league/league.dart'; // 🏆 NET-X Lig Modülü
+import 'oracle/oracle.dart'; // 🔮 Kahin Modülü
+import 'focus/focus.dart'; // 🎯 Focus Modülü
+import 'trivia/trivia.dart'; // 📱 Canlı Trivia Modülü
 
 /// Ana Sayfa Widget - Öğrenci Dashboard
 /// Bottom Navigation Bar'ın "Ana Sayfa" sekmesi
@@ -36,23 +42,46 @@ class AnaSayfaSekmesi extends StatelessWidget {
           // --- YKS SAYACI ---
           _buildYksSayaci(context),
           
+          // --- KAHİN KARTI ---
+          Padding(
+            padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
+            child: OracleCard(
+              currentTytNet: ogrenci.ortalamaNet ?? 50.0,
+              targetRank: 20000,
+              userName: ogrenci.ad,
+              schoolName: ogrenci.okul,
+            ),
+          ),
+          
+          // --- SINAV İKİZİ KARTI ---
+          TwinDailyWidget(
+            odgrenciId: ogrenci.id,
+            alan: ogrenci.alan,
+            hedefBolum: ogrenci.hedefBolum,
+          ),
+          
           // --- HIZLI ERİŞİM ---
           _buildSectionHeader("⚡ HIZLI ERİŞİM", "En çok kullandığın özellikler"),
           _buildHorizontalList([
+            _buildMenuCard(context, "Dedektif", Icons.search, DetectiveMainScreen(ogrenciId: ogrenci.id), Colors.red.shade700, Colors.redAccent),
             _buildMenuCard(context, "Programım", Icons.schedule, const TumProgramEkrani(), Colors.blueAccent, Colors.lightBlueAccent),
             _buildMenuCard(context, "Deneme Ekle", Icons.add_chart, DenemeEkleEkrani(ogrenciId: ogrenci.id), Colors.green, Colors.lightGreenAccent),
             _buildMenuCard(context, "Soru Çöz", Icons.camera_alt, SoruCozumEkrani(ogrenci: ogrenci), Colors.amber, Colors.yellow),
-            _buildMenuCard(context, "Odak Modu", Icons.headphones, const OdakModuEkrani(), Colors.purple, Colors.purpleAccent),
+            _buildMenuCard(context, "Odak Modu", Icons.lock_clock, const FocusMenuScreen(), Colors.purple, Colors.purpleAccent),
           ]),
 
           // --- İLERLEME ANALİZİ ---
           _buildSectionHeader("📊 İLERLEME", "Başarına göz at"),
           _buildHorizontalList([
+            _buildMenuCard(context, "Lig", Icons.emoji_events, LeagueScreen(ogrenciId: ogrenci.id, ogrenciAdi: ogrenci.ad, okulAdi: ogrenci.okul), Colors.amber.shade800, Colors.orangeAccent),
             _buildMenuCard(context, "Grafik", Icons.show_chart, BasariGrafigiEkrani(ogrenciId: ogrenci.id), Colors.purpleAccent, Colors.deepPurpleAccent),
             _buildMenuCard(context, "Rozetlerim", Icons.emoji_events, RozetlerEkrani(ogrenci: ogrenci), Colors.yellow.shade700, Colors.amberAccent),
             _buildMenuCard(context, "Günlük Takip", Icons.today, const GunlukTakipEkrani(), Colors.teal, Colors.greenAccent),
             _buildMenuCard(context, "Rapor", Icons.leaderboard, RaporEkrani(ogrenci: ogrenci), Colors.indigo, Colors.indigoAccent),
           ]),
+          
+          // --- CANLI TRIVIA BANNER ---
+          _buildTriviaBanner(context),
           
           // --- PRO KARTI ---
           if (!ogrenci.isPro) ...[ 
@@ -178,6 +207,81 @@ class AnaSayfaSekmesi extends StatelessWidget {
           const SizedBox(width: 8),
           const Text("⏰", style: TextStyle(fontSize: 18)),
         ],
+      ),
+    );
+  }
+
+  Widget _buildTriviaBanner(BuildContext context) {
+    return GestureDetector(
+      onTap: () => Navigator.push(
+        context,
+        MaterialPageRoute(builder: (context) => const LiveTriviaScreen()),
+      ),
+      child: Container(
+        margin: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
+        padding: const EdgeInsets.all(16),
+        decoration: BoxDecoration(
+          gradient: const LinearGradient(
+            colors: [Color(0xFF6200EA), Color(0xFF0F0F2D)],
+            begin: Alignment.topLeft,
+            end: Alignment.bottomRight,
+          ),
+          borderRadius: BorderRadius.circular(16),
+          border: Border.all(color: Colors.purpleAccent.withValues(alpha: 0.3)),
+          boxShadow: [
+            BoxShadow(
+              color: Colors.purple.withValues(alpha: 0.2),
+              blurRadius: 15,
+              offset: const Offset(0, 5),
+            ),
+          ],
+        ),
+        child: Row(
+          children: [
+            Container(
+              padding: const EdgeInsets.all(10),
+              decoration: BoxDecoration(
+                color: Colors.red.withValues(alpha: 0.2),
+                shape: BoxShape.circle,
+              ),
+              child: const Icon(Icons.live_tv, color: Colors.redAccent, size: 28),
+            ),
+            const SizedBox(width: 16),
+            Expanded(
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Row(
+                    children: [
+                      Container(
+                        padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 2),
+                        decoration: BoxDecoration(
+                          color: Colors.red,
+                          borderRadius: BorderRadius.circular(4),
+                        ),
+                        child: const Text(
+                          "CANLI",
+                          style: TextStyle(color: Colors.white, fontSize: 9, fontWeight: FontWeight.bold),
+                        ),
+                      ),
+                      const SizedBox(width: 8),
+                      const Text(
+                        "Trivia Yarışması",
+                        style: TextStyle(color: Colors.white, fontWeight: FontWeight.bold, fontSize: 15),
+                      ),
+                    ],
+                  ),
+                  const SizedBox(height: 4),
+                  Text(
+                    "Bilgi yarışmasına katıl, elmas kazan!",
+                    style: TextStyle(color: Colors.grey[400], fontSize: 11),
+                  ),
+                ],
+              ),
+            ),
+            const Icon(Icons.arrow_forward_ios, color: Colors.white54, size: 18),
+          ],
+        ),
       ),
     );
   }

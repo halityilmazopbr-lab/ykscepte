@@ -87,6 +87,35 @@ service cloud.firestore {
       allow update, delete: if false;
     }
     
+    // ========== SINAV İKİZİ SİSTEMİ ==========
+    
+    // Twin Profilleri - Kullanıcı sadece kendi profilini okuyabilir
+    match /twinProfiles/{odgrenciId} {
+      allow read: if request.auth.uid == odgrenciId || true; // Demo için açık
+      allow write: if request.auth != null || true;
+    }
+    
+    // İkiz Eşleşmeleri - Sadece kendi eşleşmesini görebilir
+    match /examTwins/{twinId} {
+      allow read: if request.auth.uid == resource.data.odgrenciId 
+                  || request.auth.uid == resource.data.ikizId
+                  || true; // Demo için açık
+      allow write: if request.auth != null || true;
+    }
+    
+    // Günlük Düellolar
+    match /dailyBets/{betId} {
+      allow read: if true;
+      allow write: if request.auth != null || true;
+    }
+    
+    // Reaksiyonlar - Herkes okuyabilir, oluşturabilir ama silemez
+    match /twinReactions/{reactionId} {
+      allow read: if true;
+      allow create: if request.auth != null || true;
+      allow update, delete: if false;
+    }
+    
     // Varsayılan: Tüm diğer koleksiyonlar
     match /{document=**} {
       allow read: if true;

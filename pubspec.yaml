@@ -13,7 +13,7 @@ dependencies:
   http: ^1.2.10
   shared_preferences: ^2.2.2
   image_picker: ^1.0.7
-  fl_chart: ^0.68.0
+  fl_chart: ^1.1.1
   audioplayers: ^6.1.0
   appinio_swiper: ^2.1.1
   flip_card: ^0.7.0
@@ -35,6 +35,11 @@ dependencies:
   excel: ^4.0.6
   app_links: ^6.4.1  # Deep link handling (using 6.x for Dart SDK 3.9.2 compatibility)
   flutter_tts: ^3.8.3  # Uyku Modu - Audio Flashcards
+  google_generative_ai: ^0.4.7
+  screenshot: ^3.0.0
+  sensors_plus: ^7.0.0
+  vibration: ^3.1.5
+  wakelock_plus: ^1.4.0
 
 dev_dependencies:
   flutter_test:
