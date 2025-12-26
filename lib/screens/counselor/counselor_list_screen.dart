@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import '../../models/counselor_models.dart';
+import '../../config/app_config.dart';
 
 /// Danışman Listesi (Öğrenci Tarafı)
 class CounselorListScreen extends StatelessWidget {
@@ -8,7 +9,21 @@ class CounselorListScreen extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     // Mock data
-    final counselors = _getMockCounselors();
+    var counselors = _getMockCounselors();
+    
+    // Marketplace kapalıysa sadece kurucu görünsün
+    if (!AppConfig.ENABLE_COUNSELOR_MARKETPLACE) {
+      counselors = counselors.where((c) => c.isSupervisor).toList();
+    }
+    
+    // SIRALAMA: Süpervizör → Online → Puan
+    counselors.sort((a, b) {
+      if (a.isSupervisor && !b.isSupervisor) return -1;
+      if (!a.isSupervisor && b.isSupervisor) return 1;
+      if (a.isOnlineNow && !b.isOnlineNow) return -1;
+      if (!a.isOnlineNow && b.isOnlineNow) return 1;
+      return b.rating.compareTo(a.rating);
+    });
 
     return Scaffold(
       backgroundColor: Colors.grey[50],
@@ -32,67 +47,184 @@ class CounselorListScreen extends StatelessWidget {
       decoration: BoxDecoration(
         color: Colors.white,
         borderRadius: BorderRadius.circular(16),
+        border: Border.all(
+          color: counselor.isSupervisor ? const Color(0xFFFFD700) : Colors.grey[200]!,
+          width: counselor.isSupervisor ? 2 : 1,
+        ),
         boxShadow: [BoxShadow(color: Colors.black.withOpacity(0.05), blurRadius: 10)],
       ),
       child: Padding(
         padding: const EdgeInsets.all(16),
-        child: Row(
+        child: Column(
           children: [
-            CircleAvatar(
-              radius: 35,
-              backgroundColor: const Color(0xFF6366F1),
-              child: Text(
-                counselor.name[0],
-                style: const TextStyle(color: Colors.white, fontSize: 24, fontWeight: FontWeight.bold),
+            if (counselor.isSupervisor)
+              Container(
+                width: double.infinity,
+                padding: const EdgeInsets.symmetric(vertical: 6),
+                margin: const EdgeInsets.only(bottom: 12),
+                decoration: BoxDecoration(
+                  gradient: const LinearGradient(colors: [Color(0xFFFFD700), Color(0xFFFFA500)]),
+                  borderRadius: BorderRadius.circular(8),
+                ),
+                child: const Text(
+                  '👑 KURUCU DANIŞMAN - SÜPERVIZÖR',
+                  textAlign: TextAlign.center,
+                  style: TextStyle(color: Colors.white, fontSize: 12, fontWeight: FontWeight.bold),
+                ),
               ),
-            ),
-            const SizedBox(width: 16),
-            Expanded(
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  Text(counselor.name, style: const TextStyle(fontSize: 17, fontWeight: FontWeight.bold)),
-                  const SizedBox(height: 4),
-                  Row(
+            Row(
+              children: [
+                Stack(
+                  children: [
+                    CircleAvatar(
+                      radius: 35,
+                      backgroundColor: counselor.isSupervisor ? const Color(0xFFFFD700) : const Color(0xFF6366F1),
+                      child: Text(
+                        counselor.name[0],
+                        style: const TextStyle(color: Colors.white, fontSize: 24, fontWeight: FontWeight.bold),
+                      ),
+                    ),
+                    if (counselor.isOnlineNow)
+                      Positioned(
+                        bottom: 0,
+                        right: 0,
+                        child: Container(
+                          width: 14,
+                          height: 14,
+                          decoration: BoxDecoration(
+                            color: const Color(0xFF10B981),
+                            shape: BoxShape.circle,
+                            border: Border.all(color: Colors.white, width: 2),
+                          ),
+                        ),
+                      ),
+                  ],
+                ),
+                const SizedBox(width: 16),
+                Expanded(
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
-                      const Icon(Icons.star, color: Colors.amber, size: 16),
-                      const SizedBox(width: 4),
-                      Text('${counselor.rating.toStringAsFixed(1)} (${counselor.totalReviews} yorum)', 
-                           style: const TextStyle(fontSize: 13, color: Colors.grey)),
+                      Text(counselor.name, style: const TextStyle(fontSize: 17, fontWeight: FontWeight.bold)),
+                      const SizedBox(height: 4),
+                      Row(
+                        children: [
+                          const Icon(Icons.star, color: Colors.amber, size: 16),
+                          const SizedBox(width: 4),
+                          Text('${counselor.rating.toStringAsFixed(1)} (${counselor.totalReviews} yorum)', 
+                               style: const TextStyle(fontSize: 13, color: Colors.grey)),
+                        ],
+                      ),
+                      const SizedBox(height: 4),
+                      Text('${counselor.experienceYears} yıl deneyim', style: TextStyle(fontSize: 12, color: Colors.grey[600])),
+                      if (counselor.isOnlineNow)
+                        Container(
+                          margin: const EdgeInsets.only(top: 6),
+                          padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
+                          decoration: BoxDecoration(
+                            color: const Color(0xFF10B981),
+                            borderRadius: BorderRadius.circular(12),
+                          ),
+                          child: const Text('🟢 ŞİMDİ MÜSAIT', style: TextStyle(color: Colors.white, fontSize: 10, fontWeight: FontWeight.bold)),
+                        ),
                     ],
                   ),
-                  const SizedBox(height: 4),
-                  Text('${counselor.experienceYears} yıl deneyim', style: TextStyle(fontSize: 12, color: Colors.grey[600])),
-                  const SizedBox(height: 8),
-                  Wrap(
-                    spacing: 4,
-                    children: counselor.specializations.take(2).map((s) => Chip(
-                      label: Text(s, style: const TextStyle(fontSize: 11)),
-                      padding: const EdgeInsets.symmetric(horizontal: 4),
-                      materialTapTargetSize: MaterialTapTargetSize.shirinkWrap,
-                    )).toList(),
-                  ),
-                ],
-              ),
-            ),
-            Column(
-              children: [
-                Text('₺${counselor.monthlyPrice.toInt()}', style: const TextStyle(fontSize: 20, fontWeight: FontWeight.bold, color: Color(0xFF6366F1))),
-                const Text('/ay', style: TextStyle(fontSize: 12, color: Colors.grey)),
-                const SizedBox(height: 8),
-                ElevatedButton(
-                  onPressed: () => _showCounselorDetail(context, counselor),
-                  style: ElevatedButton.styleFrom(
-                    backgroundColor: const Color(0xFF6366F1),
-                    padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 8),
-                    shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(8)),
-                  ),
-                  child: const Text('Detay', style: TextStyle(color: Colors.white)),
+                ),
+                Column(
+                  children: [
+                    Text('₺${counselor.monthlyPrice.toInt()}', style: const TextStyle(fontSize: 20, fontWeight: FontWeight.bold, color: Color(0xFF6366F1))),
+                    const Text('/ay', style: TextStyle(fontSize: 12, color: Colors.grey)),
+                    const SizedBox(height: 8),
+                    if (counselor.isOnlineNow)
+                      ElevatedButton.icon(
+                        onPressed: () => _showQuickCallDialog(context, counselor),
+                        icon: const Icon(Icons.bolt, size: 16),
+                        label: const Text('Hemen Görüş', style: TextStyle(fontSize: 11)),
+                        style: ElevatedButton.styleFrom(
+                          backgroundColor: const Color(0xFF10B981),
+                          foregroundColor: Colors.white,
+                          padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
+                          shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(8)),
+                        ),
+                      )
+                    else
+                      ElevatedButton(
+                        onPressed: () => _showCounselorDetail(context, counselor),
+                        style: ElevatedButton.styleFrom(
+                          backgroundColor: const Color(0xFF6366F1),
+                          padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 8),
+                          shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(8)),
+                        ),
+                        child: const Text('Detay', style: TextStyle(color: Colors.white)),
+                      ),
+                  ],
                 ),
               ],
             ),
           ],
         ),
+      ),
+    );
+  }
+
+  void _showQuickCallDialog(BuildContext context, Counselor counselor) {
+    showDialog(
+      context: context,
+      builder: (ctx) => AlertDialog(
+        title: Row(
+          children: [
+            const Icon(Icons.bolt, color: Color(0xFF10B981)),
+            const SizedBox(width: 8),
+            Text('${counselor.name} ile Hemen Görüş'),
+          ],
+        ),
+        content: Column(
+          mainAxisSize: MainAxisSize.min,
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            const Text('⚡ 15 Dakikalık Ekspres Görüşme', style: TextStyle(fontWeight: FontWeight.bold)),
+            const SizedBox(height: 12),
+            Container(
+              padding: const EdgeInsets.all(12),
+              decoration: BoxDecoration(
+                color: Colors.green[50],
+                borderRadius: BorderRadius.circular(8),
+              ),
+              child: const Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Text('✅ Anında bağlanma', style: TextStyle(fontSize: 13)),
+                  Text('✅ Acil destek', style: TextStyle(fontSize: 13)),
+                  Text('✅ Sınav öncesi psikolojik hazırlık', style: TextStyle(fontSize: 13)),
+                ],
+              ),
+            ),
+            const SizedBox(height: 16),
+            const Row(
+              mainAxisAlignment: MainAxisAlignment.spaceBetween,
+              children: [
+                Text('Ücret:', style: TextStyle(fontWeight: FontWeight.bold)),
+                Text('₺150 (15 dk)', style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold, color: Color(0xFF10B981))),
+              ],
+            ),
+          ],
+        ),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.pop(ctx),
+            child: const Text('İptal'),
+          ),
+          ElevatedButton(
+            onPressed: () {
+              Navigator.pop(ctx);
+              ScaffoldMessenger.of(context).showSnackBar(
+                const SnackBar(content: Text('Zoom linki şuan devrede değil. Yakında aktif!')),
+              );
+            },
+            style: ElevatedButton.styleFrom(backgroundColor: const Color(0xFF10B981)),
+            child: const Text('BAĞLAN', style: TextStyle(color: Colors.white)),
+          ),
+        ],
       ),
     );
   }
@@ -144,7 +276,7 @@ class CounselorListScreen extends StatelessWidget {
                 onPressed: () {
                   Navigator.pop(ctx);
                   ScaffoldMessenger.of(context).showSnackBar(
-                    const SnackBar(content: Text('Randevu sistemi yakında aktif olacak!')),
+                    const SnackBar(content: Text('Ödeme sistemi yakında aktif!')),
                   );
                 },
                 style: ElevatedButton.styleFrom(
@@ -163,18 +295,36 @@ class CounselorListScreen extends StatelessWidget {
 
   List<Counselor> _getMockCounselors() {
     return [
+      // SEN - KURUCU DANIŞMAN (En üstte görünecek)
+      Counselor(
+        id: '0',
+        name: 'Halit Yılmaz',
+        email: 'halit@netx.app',
+        phone: '555',
+        specializations: ['Sınav Kaygısı', 'Motivasyon', 'Kariyer Danışmanlığı'],
+        experienceYears: 15,
+        level: CounselorLevel.expert,
+        bio: 'NETX kurucusu. 15+ yıldır psikolojik danışmanlık alanında çalışıyorum. YKS öğrencilerine özel destek programları geliştirdim.',
+        rating: 5.0,
+        totalReviews: 247,
+        monthlyPrice: 2499, // VIP paket fiyatı
+        isSupervisor: true,
+        isOnlineNow: true, // Şu an müsait
+        createdAt: DateTime.now(),
+      ),
       Counselor(
         id: '1',
         name: 'Dr. Ayşe Yılmaz',
         email: 'ayse@example.com',
         phone: '555',
-        specializations: ['Sınav Kaygısı', 'Motivasyon'],
+        specializations: ['Sınav Kaygısı', 'Burnout'],
         experienceYears: 10,
         level: CounselorLevel.expert,
         bio: 'Öğrencilerle çalışmayı seviyorum. YKS sürecinde 500+ öğrenciye destek verdim.',
         rating: 4.8,
         totalReviews: 127,
         monthlyPrice: 1999,
+        isOnlineNow: false,
         createdAt: DateTime.now(),
       ),
       Counselor(
@@ -189,6 +339,7 @@ class CounselorListScreen extends StatelessWidget {
         rating: 4.5,
         totalReviews: 63,
         monthlyPrice: 1599,
+        isOnlineNow: true, // Şu an müsait
         createdAt: DateTime.now(),
       ),
       Counselor(

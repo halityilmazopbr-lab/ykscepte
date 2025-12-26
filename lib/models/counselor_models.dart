@@ -21,6 +21,8 @@ class Counselor {
   final int totalReviews;
   final bool isActive;
   final double monthlyPrice; // Aylık paket fiyatı
+  final bool isSupervisor; // Kurucu/Süpervizör (en üstte göster)
+  final bool isOnlineNow; // Nöbetçi uzman (hemen görüş butonu)
   final DateTime createdAt;
   final DateTime? approvedAt;
 
@@ -38,6 +40,8 @@ class Counselor {
     this.totalReviews = 0,
     this.isActive = true,
     required this.monthlyPrice,
+    this.isSupervisor = false,
+    this.isOnlineNow = false,
     required this.createdAt,
     this.approvedAt,
   });
@@ -56,6 +60,8 @@ class Counselor {
         'totalReviews': totalReviews,
         'isActive': isActive,
         'monthlyPrice': monthlyPrice,
+        'isSupervisor': isSupervisor,
+        'isOnlineNow': isOnlineNow,
         'createdAt': Timestamp.fromDate(createdAt),
         'approvedAt': approvedAt != null ? Timestamp.fromDate(approvedAt!) : null,
       };
@@ -74,6 +80,8 @@ class Counselor {
         totalReviews: json['totalReviews'] ?? 0,
         isActive: json['isActive'] ?? true,
         monthlyPrice: (json['monthlyPrice']).toDouble(),
+        isSupervisor: json['isSupervisor'] ?? false,
+        isOnlineNow: json['isOnlineNow'] ?? false,
         createdAt: (json['createdAt'] as Timestamp).toDate(),
         approvedAt: json['approvedAt'] != null ? (json['approvedAt'] as Timestamp).toDate() : null,
       );

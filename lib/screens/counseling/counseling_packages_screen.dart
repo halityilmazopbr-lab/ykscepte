@@ -111,6 +111,21 @@ class CounselingPackagesScreen extends StatelessWidget {
                 style: TextStyle(color: Colors.white, fontWeight: FontWeight.bold, fontSize: 12),
               ),
             ),
+          // VIP Özel Badge
+          if (package.type == CounselingPackageType.vip)
+            Container(
+              width: double.infinity,
+              padding: const EdgeInsets.symmetric(vertical: 8),
+              decoration: const BoxDecoration(
+                gradient: LinearGradient(colors: [Color(0xFFFFD700), Color(0xFFFFA500)]),
+                borderRadius: BorderRadius.vertical(top: Radius.circular(18)),
+              ),
+              child: const Text(
+                '👑 SADECE 3 KİŞİYE ÖZEL',
+                textAlign: TextAlign.center,
+                style: TextStyle(color: Colors.white, fontWeight: FontWeight.bold, fontSize: 12),
+              ),
+            ),
           Padding(
             padding: const EdgeInsets.all(20),
             child: Column(

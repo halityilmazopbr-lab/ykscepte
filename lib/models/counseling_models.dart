@@ -77,6 +77,7 @@ class CounselingPackage {
         includesParentMeeting: true,
         includesEmergencySession: true,
         features: [
+          '👑 SADECE 3 KİŞİYE ÖZEL (Sınırlı Kontenjan)',
           'Ayda 4 × 45 dk seans',
           'WhatsApp Ultra Hızlı (12 saat)',
           'Veli ile aylık bilgilendirme',

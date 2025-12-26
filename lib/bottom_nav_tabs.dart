@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'config/app_config.dart'; // Feature flags
 import 'models.dart';
 import 'data.dart';
 import 'screens.dart' hide DenemeListesiEkrani;
@@ -546,8 +547,11 @@ class AraclarSekmesi extends StatelessWidget {
             _buildGridCard(context, "Ödül Mağazası", Icons.redeem, const RewardCatalogScreen(), Colors.orange.shade700),
             _buildGridCard(context, "Psikolojik Destek", Icons.psychology, const CounselingPackagesScreen(), Color(0xFF6366F1)),
             _buildGridCard(context, "Paketim", Icons.card_membership, const MyCounselingScreen(), Color(0xFF8B5CF6)),
-            _buildGridCard(context, "Uzman Danışmanlar", Icons.people, const CounselorListScreen(), Colors.teal.shade700),
-            _buildGridCard(context, "Danışman Ol", Icons.work, const CounselorApplicationScreen(), Colors.purple.shade700),
+            // DANIŞMAN MARKETPLACE (Sadece aktif ise göster)
+            if (AppConfig.ENABLE_COUNSELOR_MARKETPLACE) ..[
+              _buildGridCard(context, "Uzman Danışmanlar", Icons.people, const CounselorListScreen(), Colors.teal.shade700),
+              _buildGridCard(context, "Danışman Ol", Icons.work, const CounselorApplicationScreen(), Colors.purple.shade700),
+            ],
           ]),
           
           const SizedBox(height: 100),
