@@ -17,16 +17,27 @@ class _OnboardingFlowState extends State<OnboardingFlow> {
   String _studentName = '';
   String _selectedField = ''; // Sayısal, Eşit Ağırlık, Sözel
 
-  // Adım 2: Akademik Durum
-  final Map<String, int> _nets = {
-    'TYT Türkçe': 0,
-    'TYT Matematik': 0,
-    'TYT Fen': 0,
-    'TYT Sosyal': 0,
+  // Adım 2: Akademik Durum (YKS Uyumlu)
+  final Map<String, int> _tytNets = {
+    'Türkçe': 0,
+    'Matematik': 0,
+    'Fen': 0, // 20 soru
+    'Sosyal': 0,
+  };
+  
+  final Map<String, int> _aytNets = {
+    'Matematik': 0,
+    'Fizik': 0,
+    'Kimya': 0,
+    'Biyoloji': 0,
+    'Edebiyat': 0,
+    'Tarih-1': 0,
+    'Coğrafya-1': 0,
   };
 
   // Adım 3: Engeller
   final List<String> _selectedBarriers = [];
+  final TextEditingController _otherBarrierController = TextEditingController();
   final List<String> _availableBarriers = [
     'Motivasyon eksikliği',
     'Zaman yönetimi',
@@ -160,8 +171,12 @@ class _OnboardingFlowState extends State<OnboardingFlow> {
     );
   }
 
-  /// ADIM 2: Akademik Röntgen
+  /// ADIM 2: Akademik Röntgen (YKS Uyumlu)
   Widget _buildStep2() {
+    // Soru sayıları (YKS gerçek değerleri)
+    final Map<String, int> tytMax = {'Türkçe': 40, 'Matematik': 40, 'Fen': 20, 'Sosyal': 20};
+    final Map<String, int> aytMax = {'Matematik': 40, 'Fizik': 14, 'Kimya': 13, 'Biyoloji': 13, 'Edebiyat': 24, 'Tarih-1': 10, 'Coğrafya-1': 6};
+
     return Padding(
       padding: const EdgeInsets.all(24),
       child: Column(
@@ -170,39 +185,18 @@ class _OnboardingFlowState extends State<OnboardingFlow> {
           const Text('📊 Akademik Röntgen', style: TextStyle(fontSize: 28, fontWeight: FontWeight.bold)),
           const SizedBox(height: 8),
           const Text('Mevcut net durumunu görelim', style: TextStyle(fontSize: 16, color: Colors.grey)),
-          const SizedBox(height: 32),
+          const SizedBox(height: 24),
           Expanded(
             child: ListView(
-              children: _nets.keys.map((subject) {
-                return Padding(
-                  padding: const EdgeInsets.only(bottom: 20),
-                  child: Column(
-                    crossAxisAlignment: CrossAxisAlignment.start,
-                    children: [
-                      Text(subject, style: const TextStyle(fontWeight: FontWeight.bold)),
-                      const SizedBox(height: 8),
-                      Row(
-                        children: [
-                          Expanded(
-                            child: Slider(
-                              value: _nets[subject]!.toDouble(),
-                              min: 0,
-                              max: 40,
-                              divisions: 40,
-                              label: _nets[subject].toString(),
-                              onChanged: (value) => setState(() => _nets[subject] = value.toInt()),
-                            ),
-                          ),
-                          SizedBox(
-                            width: 40,
-                            child: Text('${_nets[subject]}', style: const TextStyle(fontSize: 18, fontWeight: FontWeight.bold)),
-                          ),
-                        ],
-                      ),
-                    ],
-                  ),
-                );
-              }).toList(),
+              children: [
+                const Text('TYT', style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold, color: Color(0xFF6366F1))),
+                const SizedBox(height: 12),
+                ..._tytNets.keys.map((subject) => _buildNetSlider(subject, _tytNets, tytMax[subject]!)),
+                const SizedBox(height: 20),
+                const Text('AYT', style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold, color: Color(0xFF8B5CF6))),
+                const SizedBox(height: 12),
+                ..._aytNets.keys.map((subject) => _buildNetSlider(subject, _aytNets, aytMax[subject]!)),
+              ],
             ),
           ),
           _buildNextButton(() => _pageController.nextPage(duration: const Duration(milliseconds: 300), curve: Curves.easeInOut)),
@@ -211,7 +205,33 @@ class _OnboardingFlowState extends State<OnboardingFlow> {
     );
   }
 
-  /// ADIM 3: İhtiyaç Analizi
+  Widget _buildNetSlider(String subject, Map<String, int> netMap, int maxValue) {
+    return Padding(
+      padding: const EdgeInsets.only(bottom: 16),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Row(
+            mainAxisAlignment: MainAxisAlignment.spaceBetween,
+            children: [
+              Text(subject, style: const TextStyle(fontWeight: FontWeight.w600)),
+              Text('${netMap[subject]} / $maxValue', style: const TextStyle(fontSize: 13, color: Colors.grey)),
+            ],
+          ),
+          Slider(
+            value: netMap[subject]!.toDouble(),
+            min: 0,
+            max: maxValue.toDouble(),
+            divisions: maxValue,
+            label: netMap[subject].toString(),
+            onChanged: (value) => setState(() => netMap[subject] = value.toInt()),
+          ),
+        ],
+      ),
+    );
+  }
+
+  /// ADIM 3: İhtiyaç Analizi + Diğer Seçeneği
   Widget _buildStep3() {
     return Padding(
       padding: const EdgeInsets.all(24),
@@ -221,34 +241,60 @@ class _OnboardingFlowState extends State<OnboardingFlow> {
           const Text('🎯 Seni Engelleyen Ne?', style: TextStyle(fontSize: 28, fontWeight: FontWeight.bold)),
           const SizedBox(height: 8),
           const Text('Birden fazla seçebilirsin', style: TextStyle(fontSize: 16, color: Colors.grey)),
-          const SizedBox(height: 32),
+          const SizedBox(height: 24),
           Expanded(
             child: ListView(
-              children: _availableBarriers.map((barrier) {
-                final isSelected = _selectedBarriers.contains(barrier);
-                return CheckboxListTile(
-                  title: Text(barrier),
-                  value: isSelected,
-                  onChanged: (value) {
-                    setState(() {
-                      if (value!) {
-                        _selectedBarriers.add(barrier);
-                      } else {
-                        _selectedBarriers.remove(barrier);
-                      }
-                    });
-                  },
-                  activeColor: const Color(0xFF6366F1),
-                );
-              }).toList(),
+              children: [
+                ..._availableBarriers.map((barrier) {
+                  final isSelected = _selectedBarriers.contains(barrier);
+                  return CheckboxListTile(
+                    title: Text(barrier),
+                    value: isSelected,
+                    onChanged: (value) {
+                      setState(() {
+                        if (value!) _selectedBarriers.add(barrier);
+                        else _selectedBarriers.remove(barrier);
+                      });
+                    },
+                    activeColor: const Color(0xFF6366F1),
+                  );
+                }),
+                const SizedBox(height: 16),
+                Container(
+                  padding: const EdgeInsets.all(16),
+                  decoration: BoxDecoration(
+                    color: Colors.grey[50],
+                    borderRadius: BorderRadius.circular(12),
+                    border: Border.all(color: Colors.grey[300]!),
+                  ),
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      const Text('Diğer (Kendin Yaz)', style: TextStyle(fontWeight: FontWeight.bold)),
+                      const SizedBox(height: 8),
+                      TextField(
+                        controller: _otherBarrierController,
+                        decoration: InputDecoration(
+                          hintText: 'Örn: Odaklanma problemi',
+                          border: OutlineInputBorder(borderRadius: BorderRadius.circular(8)),
+                          contentPadding: const EdgeInsets.all(12),
+                        ),
+                      ),
+                    ],
+                  ),
+                ),
+              ],
             ),
           ),
           _buildNextButton(() {
-            if (_selectedBarriers.isEmpty) {
+            if (_selectedBarriers.isEmpty && _otherBarrierController.text.trim().isEmpty) {
               ScaffoldMessenger.of(context).showSnackBar(
-                const SnackBar(content: Text('En az bir engel seçmelisin!')),
+                const SnackBar(content: Text('En az bir engel seçmeli veya yazmalısın!')),
               );
               return;
+            }
+            if (_otherBarrierController.text.trim().isNotEmpty) {
+              _selectedBarriers.add(_otherBarrierController.text.trim());
             }
             _pageController.nextPage(duration: const Duration(milliseconds: 300), curve: Curves.easeInOut);
           }),
@@ -257,58 +303,95 @@ class _OnboardingFlowState extends State<OnboardingFlow> {
     );
   }
 
-  /// ADIM 4: Psikolojik Sözleşme
+  /// ADIM 4: Beyaz Kağıt Sözleşme
   Widget _buildStep4() {
     return Padding(
       padding: const EdgeInsets.all(24),
       child: Column(
         children: [
-          const Icon(Icons.handshake, size: 80, color: Color(0xFF6366F1)),
-          const SizedBox(height: 24),
-          const Text('📜 Psikolojik Taahhüt', style: TextStyle(fontSize: 28, fontWeight: FontWeight.bold)),
           const SizedBox(height: 40),
+          // Beyaz kağıt görünümü
           Container(
-            padding: const EdgeInsets.all(20),
+            padding: const EdgeInsets.all(32),
             decoration: BoxDecoration(
-              color: Colors.amber[50],
-              borderRadius: BorderRadius.circular(16),
+              color: Colors.white,
+              borderRadius: BorderRadius.circular(8),
+              boxShadow: [
+                BoxShadow(color: Colors.black.withOpacity(0.15), blurRadius: 20, offset: const Offset(0, 10)),
+              ],
             ),
             child: Column(
               children: [
-                _buildCommitmentItem('💪', 'Her gün en az 1 saat çalışacağım'),
-                _buildCommitmentItem('📱', 'Çalışırken telefonu uzak tutacağım'),
-                _buildCommitmentItem('🎯', 'Hedeflerimi takip edeceğim'),
-                _buildCommitmentItem('🔄', 'Düştüğümde tekrar kalkacağım'),
+                const Text(
+                  'PSİKOLOJİK SÖZLEŞME',
+                  style: TextStyle(
+                    fontSize: 14,
+                    letterSpacing: 2,
+                    fontWeight: FontWeight.w300,
+                    color: Colors.black87,
+                  ),
+                ),
+                const SizedBox(height: 32),
+                Text(
+                  'Ben $_studentName,',
+                  style: const TextStyle(
+                    fontSize: 18,
+                    fontFamily: 'Courier',
+                    height: 1.8,
+                    color: Colors.black87,
+                  ),
+                ),
+                const SizedBox(height: 16),
+                const Text(
+                  'bu sene bahanelerin arkasına sığınmayacağıma,\n\n'
+                  'düştüğümde kalkacağıma ve\n\n'
+                  'NETX ile potansiyelimi zorlayacağıma\n\n'
+                  'söz veriyorum.',
+                  textAlign: TextAlign.center,
+                  style: TextStyle(
+                    fontSize: 18,
+                    fontFamily: 'Courier',
+                    height: 1.8,
+                    color: Colors.black87,
+                  ),
+                ),
+                const SizedBox(height: 40),
+                Container(
+                  width: 200,
+                  height: 1,
+                  color: Colors.black87,
+                ),
+                const SizedBox(height: 8),
+                Text(
+                  '${DateTime.now().day}.${DateTime.now().month}.${DateTime.now().year}',
+                  style: TextStyle(
+                    fontSize: 12,
+                    fontFamily: 'Courier',
+                    color: Colors.grey[600],
+                  ),
+                ),
               ],
             ),
           ),
           const Spacer(),
-          const Text(
-            'Bu bir söz değil, kendine verdiğin bir taahhüt.',
-            style: TextStyle(fontStyle: FontStyle.italic, color: Colors.grey),
-            textAlign: TextAlign.center,
+          SizedBox(
+            width: double.infinity,
+            height: 56,
+            child: ElevatedButton(
+              onPressed: () => _pageController.nextPage(duration: const Duration(milliseconds: 300), curve: Curves.easeInOut),
+              style: ElevatedButton.styleFrom(
+                backgroundColor: Colors.black87,
+                shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(8)),
+              ),
+              child: const Text('İMZALA VE BAŞLA', style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold, color: Colors.white, letterSpacing: 1)),
+            ),
           ),
-          const SizedBox(height: 20),
-          _buildNextButton(() => _pageController.nextPage(duration: const Duration(milliseconds: 300), curve: Curves.easeInOut)),
         ],
       ),
     );
   }
 
-  Widget _buildCommitmentItem(String emoji, String text) {
-    return Padding(
-      padding: const EdgeInsets.symmetric(vertical: 8),
-      child: Row(
-        children: [
-          Text(emoji, style: const TextStyle(fontSize: 24)),
-          const SizedBox(width: 12),
-          Expanded(child: Text(text, style: const TextStyle(fontSize: 15))),
-        ],
-      ),
-    );
-  }
-
-  /// ADIM 5: Mini Tutorial
+  /// ADIM 5: Genişletilmiş Tutorial
   Widget _buildStep5() {
     return Padding(
       padding: const EdgeInsets.all(24),
@@ -317,14 +400,27 @@ class _OnboardingFlowState extends State<OnboardingFlow> {
           const Icon(Icons.rocket_launch, size: 80, color: Color(0xFF6366F1)),
           const SizedBox(height: 24),
           Text('Hazırsın, $_studentName! 🚀', style: const TextStyle(fontSize: 28, fontWeight: FontWeight.bold)),
-          const SizedBox(height: 40),
-          ...[
-            ('📚', 'Ana Sayfa', 'Tüm araçlarına buradan ulaş'),
-            ('📊', 'İstatistikler', 'İlerlemenİ grafiklerle gör'),
-            ('🎯', 'Hedefler', 'Ödül kazan, motivasyonunu koru'),
-            ('🤫', 'Gölge Odası', '100 kişi ile birlikte çalış'),
-          ].map((item) => _buildTutorialCard(item.$1, item.$2, item.$3)),
-          const Spacer(),
+          const SizedBox(height: 8),
+          const Text('Seni bekleyen sistemler:', style: TextStyle(fontSize: 14, color: Colors.grey)),
+          const SizedBox(height: 32),
+          Expanded(
+            child: ListView(
+              children: [
+                _buildTutorialCard('📚', 'Ana Sayfa', 'Tüm araçlarına tek yerden ulaş'),
+                _buildTutorialCard('📊', 'İstatistikler', 'Net performansını grafiklerle takip et'),
+                _buildTutorialCard('🎯', 'Hedef & Ödül', 'Çalış, kazan, ödüllendir'),
+                _buildTutorialCard('🤫', 'Sessiz Kütüphane', '100 kişiyle birlikte odaklan'),
+                _buildTutorialCard('🧬', 'Sınav İkizin', 'Seninle aynı seviyedeki rakibini bul'),
+                _buildTutorialCard('🕵️', 'NET Dedektifi', 'Hangi dersten kaç net yapmalısın?'),
+                _buildTutorialCard('🏆', 'NET Ligi', '10 kişilik liginde haftalık yarış'),
+                _buildTutorialCard('🔮', 'Kahin', 'Bu hafta hangi konuyu çalışmalısın?'),
+                _buildTutorialCard('⚡', 'Focus Modu', 'Pomodoroyla 25 dk konsantre ol'),
+                _buildTutorialCard('📱', 'Canlı Trivia', 'Her hafta sonu canlı bilgi yarışması'),
+                _buildTutorialCard('🧠', 'Psikolojik Destek', 'Sınav kaygısı için uzman danışman'),
+              ],
+            ),
+          ),
+          const SizedBox(height: 16),
           SizedBox(
             width: double.infinity,
             height: 56,
@@ -344,22 +440,22 @@ class _OnboardingFlowState extends State<OnboardingFlow> {
 
   Widget _buildTutorialCard(String emoji, String title, String subtitle) {
     return Container(
-      margin: const EdgeInsets.only(bottom: 16),
-      padding: const EdgeInsets.all(16),
+      margin: const EdgeInsets.only(bottom: 12),
+      padding: const EdgeInsets.all(14),
       decoration: BoxDecoration(
         color: Colors.grey[50],
         borderRadius: BorderRadius.circular(12),
       ),
       child: Row(
         children: [
-          Text(emoji, style: const TextStyle(fontSize: 32)),
-          const SizedBox(width: 16),
+          Text(emoji, style: const TextStyle(fontSize: 28)),
+          const SizedBox(width: 14),
           Expanded(
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
-                Text(title, style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 16)),
-                Text(subtitle, style: TextStyle(color: Colors.grey[600], fontSize: 13)),
+                Text(title, style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 15)),
+                Text(subtitle, style: TextStyle(color: Colors.grey[600], fontSize: 12)),
               ],
             ),
           ),
