@@ -5,6 +5,8 @@ class Ogrenci {
   int puan, girisSayisi, hedefPuan;
   String? atananOgretmenId;
   int gunlukSeri;
+  double ortalamaNet; // YENI
+  String okul; // YENI
   
   // Pro/Monetization fields
   bool isPro;
@@ -40,7 +42,10 @@ class Ogrenci {
     required this.ad,
     required this.sinif,
     this.puan = 0,
+
     this.girisSayisi = 0,
+    this.ortalamaNet = 0.0,
+    this.okul = "Okul Girilmedi",
     this.atananOgretmenId,
     this.fotoUrl = "",
     this.hedefUniversite = "Hedef Yok",
@@ -111,7 +116,10 @@ class Ogrenci {
         'ad': ad,
         'sinif': sinif,
         'puan': puan,
+
         'girisSayisi': girisSayisi,
+        'ortalamaNet': ortalamaNet,
+        'okul': okul,
         'hedefPuan': hedefPuan,
         'fotoUrl': fotoUrl,
         'hedefUniversite': hedefUniversite,
@@ -145,7 +153,10 @@ class Ogrenci {
         ad: json['ad'],
         sinif: json['sinif'],
         puan: json['puan'],
+
         girisSayisi: json['girisSayisi'],
+        ortalamaNet: (json['ortalamaNet'] ?? 0).toDouble(),
+        okul: json['okul'] ?? "Okul Girilmedi",
         hedefPuan: json['hedefPuan'],
         fotoUrl: json['fotoUrl'],
         hedefUniversite: json['hedefUniversite'],
