@@ -323,7 +323,7 @@ class _OnboardingFlowState extends State<OnboardingFlow> {
             child: Column(
               children: [
                 const Text(
-                  'PSİKOLOJİK SÖZLEŞME',
+                  'SÖZLEŞME',
                   style: TextStyle(
                     fontSize: 14,
                     letterSpacing: 2,
