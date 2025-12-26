@@ -29,6 +29,7 @@ import 'screens/counseling/counseling_packages_screen.dart'; // 🧠 Psikolojik 
 import 'screens/counseling/my_counseling_screen.dart'; // 💼 Aktif Paket
 import 'screens/counselor/counselor_application_screen.dart'; // 📝 Danışman Başvuru
 import 'screens/counselor/counselor_list_screen.dart'; // 👥 Danışman Listesi
+import 'screens/onboarding/onboarding_flow.dart'; // 🎉 Onboarding
 
 /// Ana Sayfa Widget - Öğrenci Dashboard
 /// Bottom Navigation Bar'ın "Ana Sayfa" sekmesi
@@ -548,10 +549,12 @@ class AraclarSekmesi extends StatelessWidget {
             _buildGridCard(context, "Psikolojik Destek", Icons.psychology, const CounselingPackagesScreen(), Color(0xFF6366F1)),
             _buildGridCard(context, "Paketim", Icons.card_membership, const MyCounselingScreen(), Color(0xFF8B5CF6)),
             // DANIŞMAN MARKETPLACE (Sadece aktif ise göster)
-            if (AppConfig.ENABLE_COUNSELOR_MARKETPLACE) ..[
+            if (AppConfig.ENABLE_COUNSELOR_MARKETPLACE) ...[
               _buildGridCard(context, "Uzman Danışmanlar", Icons.people, const CounselorListScreen(), Colors.teal.shade700),
               _buildGridCard(context, "Danışman Ol", Icons.work, const CounselorApplicationScreen(), Colors.purple.shade700),
             ],
+            // ONBOARDING TEST
+            _buildGridCard(context, "🎉 Onboarding Test", Icons.celebration, const OnboardingFlow(), Colors.pink.shade700),
           ]),
           
           const SizedBox(height: 100),
