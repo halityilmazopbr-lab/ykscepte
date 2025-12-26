@@ -24,6 +24,8 @@ import 'trivia/trivia.dart'; // 📱 Canlı Trivia Modülü
 import 'screens/library/silent_library_screen.dart'; // 🤫 Sessiz Kütüphane
 import 'screens/rewards/goal_reward_screen.dart'; // 🎯 Hedef & Ödül Sistemi
 import 'screens/rewards/reward_catalog_screen.dart'; // 🛒 Ödül Mağazası
+import 'screens/counseling/counseling_packages_screen.dart'; // 🧠 Psikolojik Destek
+import 'screens/counseling/my_counseling_screen.dart'; // 💼 Aktif Paket
 
 /// Ana Sayfa Widget - Öğrenci Dashboard
 /// Bottom Navigation Bar'ın "Ana Sayfa" sekmesi
@@ -540,6 +542,8 @@ class AraclarSekmesi extends StatelessWidget {
             _buildGridCard(context, "Sessiz Kütüphane", Icons.meeting_room, const SilentLibraryScreen(), Colors.indigo.shade800),
             _buildGridCard(context, "Hedeflerim", Icons.flag, const GoalRewardScreen(), Colors.green.shade700),
             _buildGridCard(context, "Ödül Mağazası", Icons.redeem, const RewardCatalogScreen(), Colors.orange.shade700),
+            _buildGridCard(context, "Psikolojik Destek", Icons.psychology, const CounselingPackagesScreen(), Color(0xFF6366F1)),
+            _buildGridCard(context, "Paketim", Icons.card_membership, const MyCounselingScreen(), Color(0xFF8B5CF6)),
           ]),
           
           const SizedBox(height: 100),
