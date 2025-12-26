@@ -23,7 +23,7 @@ dependencies:
   # Kurumsal Modül
   cloud_firestore: ^5.0.0
   firebase_storage: ^12.0.0
-  syncfusion_flutter_pdfviewer: ^26.2.0
+  syncfusion_flutter_pdfviewer: 28.1.33
   file_picker: ^10.3.8
   table_calendar: ^3.1.3
   qr_flutter: ^4.1.0
