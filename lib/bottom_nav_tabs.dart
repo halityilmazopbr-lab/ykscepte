@@ -21,6 +21,7 @@ import 'league/league.dart'; // 🏆 NET-X Lig Modülü
 import 'oracle/oracle.dart'; // 🔮 Kahin Modülü
 import 'focus/focus.dart'; // 🎯 Focus Modülü
 import 'trivia/trivia.dart'; // 📱 Canlı Trivia Modülü
+import 'screens/library/silent_library_screen.dart'; // 🤫 Sessiz Kütüphane
 
 /// Ana Sayfa Widget - Öğrenci Dashboard
 /// Bottom Navigation Bar'ın "Ana Sayfa" sekmesi
@@ -534,6 +535,7 @@ class AraclarSekmesi extends StatelessWidget {
             _buildGridCard(context, "Kronometre", Icons.timer, const KronometreEkrani(), Colors.lightBlue),
             _buildGridCard(context, "Rehberlik", Icons.psychology_alt, const EnvanterListesiEkrani(), Colors.teal),
             _buildGridCard(context, "Rozetlerim", Icons.emoji_events, RozetlerEkrani(ogrenci: ogrenci), Colors.yellow.shade700),
+            _buildGridCard(context, "Sessiz Kütüphane", Icons.meeting_room, const SilentLibraryScreen(), Colors.indigo.shade800),
           ]),
           
           const SizedBox(height: 100),
