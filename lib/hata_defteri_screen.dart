@@ -417,7 +417,7 @@ class _HDEState extends State<HataDefteriEkrani> with SingleTickerProviderStateM
       child: Column(
         mainAxisAlignment: MainAxisAlignment.center,
         children: [
-          // Silik logo
+          // Logo
           Opacity(
             opacity: 0.3,
             child: Image.asset(

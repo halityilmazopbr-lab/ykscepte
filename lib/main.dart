@@ -26,6 +26,7 @@ import 'user_provider.dart';
 import 'bottom_nav_tabs.dart';
 import 'teacher/teacher_main_screen.dart'; // 🔥 Yeni Öğretmen Modülü
 import 'firebase_options.dart'; // Firebase yapılandırması
+import 'services/cozum_gecmisi_service.dart'; // YENİ: Hybrid Filtering
 
 Future<void> main() async {
   WidgetsFlutterBinding.ensureInitialized();
@@ -40,6 +41,9 @@ Future<void> main() async {
   
   await VeriDeposu.init();
   await CacheService.init();
+  
+  // YENİ: Hive init (Hybrid Filtering için)
+  await CozumGecmisiService.init();
   
   runApp(const MainApp());
 }
@@ -387,14 +391,11 @@ class _AcilisEkraniState extends State<AcilisEkrani>
           child: Column(
             mainAxisAlignment: MainAxisAlignment.center,
             children: [
-              // Animasyonlu Logo
-              ScaleTransition(
-                scale: _pulseAnimation,
-                child: Image.asset(
-                  'assets/logo.png',
-                  height: 180,
-                  width: 180,
-                ),
+              // Logo
+              Image.asset(
+                'assets/logo.png',
+                height: 180,
+                width: 180,
               ),
               const SizedBox(height: 24),
               // Slogan
