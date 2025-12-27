@@ -118,8 +118,204 @@ class VeriDeposu {
         ad: "Elif Hoca",
         brans: "Edebiyat"),
   ];
-  static List<OkulDersi> okulNotlari = [
-    OkulDersi(ad: "Matematik", yazili1: 60),
+  static List<OkulDersi> okulNotlari = [];
+  
+  /// 🎓 TÜRKİYE LİSE MÜFREDATINDAKİ TÜM DERSLER
+  /// Öğrenci istediği dersi seçerek sınav notu girebilir
+  static const List<String> turkLiseDersleri = [
+    // === ZORUNLU ORTAK DERSLER ===
+    "Türk Dili ve Edebiyatı",
+    "Matematik",
+    "Fizik",
+    "Kimya",
+    "Biyoloji",
+    "Tarih",
+    "Coğrafya",
+    "Felsefe",
+    "Din Kültürü ve Ahlak Bilgisi",
+    "İngilizce",
+    "Almanca",
+    "Fransızca",
+    "Arapça",
+    "Beden Eğitimi",
+    "Görsel Sanatlar",
+    "Müzik",
+    "Sağlık Bilgisi",
+    "Trafik ve İlk Yardım",
+    "Bilgisayar Bilimi",
+    
+    // === 9. SINIF DERSLERİ ===
+    "Türk Dili ve Edebiyatı 9",
+    "Matematik 9",
+    "Fizik 9",
+    "Kimya 9",
+    "Biyoloji 9",
+    "Tarih 9",
+    "Coğrafya 9",
+    "İngilizce 9",
+    
+    // === 10. SINIF DERSLERİ ===
+    "Türk Dili ve Edebiyatı 10",
+    "Matematik 10",
+    "Fizik 10",
+    "Kimya 10",
+    "Biyoloji 10",
+    "Tarih 10",
+    "Coğrafya 10",
+    "İngilizce 10",
+    
+    // === 11. SINIF DERSLERİ ===
+    "Türk Dili ve Edebiyatı 11",
+    "Matematik 11",
+    "Fizik 11",
+    "Kimya 11",
+    "Biyoloji 11",
+    "Tarih 11",
+    "Coğrafya 11",
+    "İngilizce 11",
+    "Felsefe 11",
+    
+    // === 12. SINIF DERSLERİ ===
+    "Türk Dili ve Edebiyatı 12",
+    "Matematik 12",
+    "Fizik 12",
+    "Kimya 12",
+    "Biyoloji 12",
+    "Tarih 12",
+    "Coğrafya 12",
+    "İngilizce 12",
+    
+    // === SEÇMELİ DERSLER (SAYISAL) ===
+    "İleri Matematik",
+    "Geometri",
+    "Analitik Geometri",
+    "İleri Fizik",
+    "İleri Kimya",
+    "İleri Biyoloji",
+    "Astronomi ve Uzay Bilimleri",
+    
+    // === SEÇMELİ DERSLER (SÖZEL) ===
+    "Dil ve Anlatım",
+    "Türk Edebiyatı",
+    "Osmanlı Türkçesi",
+    "Çağdaş Türk ve Dünya Tarihi",
+    "T.C. İnkılap Tarihi ve Atatürkçülük",
+    "Demokrasi ve İnsan Hakları",
+    "Sosyoloji",
+    "Psikoloji",
+    "Mantık",
+    "Karşılaştırmalı Dinler Tarihi",
+    "Seçmeli Tarih",
+    "Seçmeli Coğrafya",
+    
+    // === SEÇMELİ DERSLER (EŞİT AĞIRLIK) ===
+    "Hukuk ve Adalet",
+    "Uluslararası İlişkiler",
+    "Ekonomi",
+    "Girişimcilik",
+    "Medya Okuryazarlığı",
+    
+    // === YABANCI DİLLER ===
+    "İngilizce (İkinci Dil)",
+    "Almanca (İkinci Dil)",
+    "Fransızca (İkinci Dil)",
+    "Arapça (İkinci Dil)",
+    "Rusça",
+    "İspanyolca",
+    "İtalyanca",
+    "Çince",
+    "Japonca",
+    "Korece",
+    
+    // === MESLEKİ VE TEKNİK LİSE DERSLERİ ===
+    "Bilişim Teknolojileri",
+    "Programlama Temelleri",
+    "Web Tasarımı",
+    "Veritabanı Yönetimi",
+    "Ağ Sistemleri",
+    "Siber Güvenlik",
+    "Grafik ve Animasyon",
+    "Elektrik-Elektronik",
+    "Makine Teknolojisi",
+    "Otomotiv Teknolojisi",
+    "İnşaat Teknolojisi",
+    "Mobilya ve İç Mekan Tasarımı",
+    "Gıda Teknolojisi",
+    "Tekstil Teknolojisi",
+    "Muhasebe ve Finansman",
+    "Pazarlama ve Perakende",
+    "Büro Yönetimi",
+    "Turizm ve Otelcilik",
+    "Aşçılık",
+    "Hemşirelik",
+    "Eczacılık Hizmetleri",
+    "Radyoloji",
+    "Laboratuvar Hizmetleri",
+    "Çocuk Gelişimi",
+    
+    // === GÜZEL SANATLAR LİSESİ DERSLERİ ===
+    "Temel Sanat Eğitimi",
+    "Resim",
+    "Heykel",
+    "Grafik Tasarım",
+    "Müzik Teorisi",
+    "Piyano",
+    "Keman",
+    "Bağlama",
+    "Ses Eğitimi",
+    "Türk Halk Müziği",
+    "Türk Sanat Müziği",
+    "Batı Müziği",
+    "Sahne Sanatları",
+    "Bale",
+    "Halk Oyunları",
+    "Drama",
+    
+    // === SPOR LİSESİ DERSLERİ ===
+    "Spor Bilimleri",
+    "Antrenörlük",
+    "Futbol",
+    "Basketbol",
+    "Voleybol",
+    "Yüzme",
+    "Atletizm",
+    "Jimnastik",
+    "Güreş",
+    "Tekvando",
+    "Judo",
+    "Okçuluk",
+    "Tenis",
+    
+    // === SOSYAL BİLİMLER LİSESİ DERSLERİ ===
+    "İleri Sosyoloji",
+    "İleri Psikoloji",
+    "İleri Felsefe",
+    "Araştırma Teknikleri",
+    "İletişim",
+    
+    // === FEN LİSESİ DERSLERİ ===
+    "Bilim Tarihi",
+    "Bilim Uygulamaları",
+    "Proje",
+    "Araştırma Projesi",
+    
+    // === ANADOLU İMAM HATİP LİSESİ DERSLERİ ===
+    "Kur'an-ı Kerim",
+    "Arapça (Dini)",
+    "Tefsir",
+    "Hadis",
+    "Fıkıh",
+    "Kelam",
+    "Siyer",
+    "İslam Tarihi",
+    "Hitabet ve Mesleki Uygulama",
+    
+    // === DİĞER DERSLER ===
+    "Rehberlik",
+    "Seçmeli Ders",
+    "Proje Dersi",
+    "Sosyal Etkinlik",
+    "Diğer",
   ];
   static List<Gorev> odevler = [
     Gorev(
