@@ -480,6 +480,7 @@ SADECE JSON dizisi döndür, başka hiçbir şey yazma.''';
       builder: (context, setCardState) {
         return FlipCard(
           direction: FlipDirection.HORIZONTAL,
+          side: CardSide.FRONT, // 🔒 Her zaman SORU önce gösterilsin
           onFlip: () => setCardState(() => _showHint = false), // Çevirince ipucu gizle
           front: _buildEnhancedFront(card, setCardState),
           back: _buildEnhancedBack(card),
