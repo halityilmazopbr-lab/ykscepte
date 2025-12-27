@@ -283,3 +283,94 @@ class TeacherContentModel {
     'createdAt': createdAt.toIso8601String(),
   };
 }
+
+// ═══════════════════════════════════════════════════════════════
+// ❓ SORU ÇÖZÜM MERKEZİ MODELLERİ
+// ═══════════════════════════════════════════════════════════════
+
+enum SolutionType { text, image, audio, hybrid }
+enum QuestionStatus { pending, solved, rejected }
+
+class TeacherSolutionModel {
+  final String text; // Metin çözümü
+  final String? imageUrl; // Fotoğraf çözümü
+  final String? audioUrl; // Sesli anlatım
+  final SolutionType type;
+  final DateTime solvedAt;
+
+  TeacherSolutionModel({
+    required this.text,
+    this.imageUrl,
+    this.audioUrl,
+    required this.type,
+    required this.solvedAt,
+  });
+
+  Map<String, dynamic> toJson() => {
+    'text': text,
+    'imageUrl': imageUrl,
+    'audioUrl': audioUrl,
+    'type': type.toString(),
+    'solvedAt': solvedAt.toIso8601String(),
+  };
+
+  factory TeacherSolutionModel.fromJson(Map<String, dynamic> json) => TeacherSolutionModel(
+    text: json['text'] ?? '',
+    imageUrl: json['imageUrl'],
+    audioUrl: json['audioUrl'],
+    type: SolutionType.values.firstWhere((e) => e.toString() == json['type'], orElse: () => SolutionType.text),
+    solvedAt: DateTime.parse(json['solvedAt']),
+  );
+}
+
+class StudentQuestionModel {
+  final String id;
+  final String studentId;
+  final String studentName;
+  final String teacherId; // Hedef öğretmen
+  final String lesson;
+  final String imageUrl; // Öğrenci soru fotosu
+  final String? note; // Öğrenci notu
+  final DateTime createdAt;
+  final QuestionStatus status;
+  final TeacherSolutionModel? solution;
+
+  StudentQuestionModel({
+    required this.id,
+    required this.studentId,
+    required this.studentName,
+    required this.teacherId,
+    required this.lesson,
+    required this.imageUrl,
+    this.note,
+    required this.createdAt,
+    this.status = QuestionStatus.pending,
+    this.solution,
+  });
+
+  Map<String, dynamic> toJson() => {
+    'id': id,
+    'studentId': studentId,
+    'studentName': studentName,
+    'teacherId': teacherId,
+    'lesson': lesson,
+    'imageUrl': imageUrl,
+    'note': note,
+    'createdAt': createdAt.toIso8601String(),
+    'status': status.toString(),
+    'solution': solution?.toJson(),
+  };
+
+  factory StudentQuestionModel.fromJson(Map<String, dynamic> json) => StudentQuestionModel(
+    id: json['id'],
+    studentId: json['studentId'],
+    studentName: json['studentName'],
+    teacherId: json['teacherId'],
+    lesson: json['lesson'],
+    imageUrl: json['imageUrl'],
+    note: json['note'],
+    createdAt: DateTime.parse(json['createdAt']),
+    status: QuestionStatus.values.firstWhere((e) => e.toString() == json['status'], orElse: () => QuestionStatus.pending),
+    solution: json['solution'] != null ? TeacherSolutionModel.fromJson(json['solution']) : null,
+  );
+}

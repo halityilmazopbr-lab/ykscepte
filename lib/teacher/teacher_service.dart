@@ -350,4 +350,50 @@ class TeacherService {
       return false; // Demo modunda olduğumuz için true dönebiliriz ama loglanması iyidir
     }
   }
+  // ═══════════════════════════════════════════════════════════════
+  // ❓ SORU ÇÖZÜM MERKEZİ
+  // ═══════════════════════════════════════════════════════════════
+
+  /// Bekleyen soruları getir (Demo)
+  static Future<List<StudentQuestionModel>> getPendingQuestions(String teacherId) async {
+    // Demo veriler
+    await Future.delayed(const Duration(milliseconds: 800)); // Loading simülasyonu
+    return [
+      StudentQuestionModel(
+        id: 'q1',
+        studentId: 'ogrenci1',
+        studentName: 'Ali Yılmaz',
+        teacherId: teacherId,
+        lesson: 'Matematik',
+        imageUrl: 'https://dummyimage.com/400x300/000/fff&text=Turev+Sorusu',
+        note: 'Hocam 3. adımda takıldım, detaylı anlatır mısınız?',
+        createdAt: DateTime.now().subtract(const Duration(hours: 2)),
+      ),
+      StudentQuestionModel(
+        id: 'q2',
+        studentId: 'ogrenci4',
+        studentName: 'Zeynep Arslan',
+        teacherId: teacherId,
+        lesson: 'Geometri',
+        imageUrl: 'https://dummyimage.com/400x300/000/fff&text=Ucgen+Sorusu',
+        note: 'Benzerlik kuramadım.',
+        createdAt: DateTime.now().subtract(const Duration(days: 1)),
+      ),
+    ];
+  }
+
+  /// Soruyu çöz (Demo)
+  static Future<bool> solveQuestion(String questionId, TeacherSolutionModel solution) async {
+    try {
+      await _db.collection('student_questions').doc(questionId).update({
+        'status': QuestionStatus.solved.toString(),
+        'solution': solution.toJson(),
+      });
+      debugPrint('✅ Soru çözüldü: $questionId (${solution.type})');
+      return true;
+    } catch (e) {
+      debugPrint('❌ Soru çözme hatası: $e');
+      return true; // Demo başarılı varsayalım
+    }
+  }
 }

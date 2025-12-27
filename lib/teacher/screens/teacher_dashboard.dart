@@ -3,6 +3,7 @@ import '../../models.dart';
 import '../teacher_service.dart';
 import '../models/teacher_models.dart';
 import 'teacher_reports_screen.dart';
+import 'teacher_question_center_screen.dart';
 
 /// 📊 Öğretmen Kokpit (Dashboard) - KPI'lar ve Günlük Özet
 class TeacherDashboard extends StatelessWidget {
@@ -152,12 +153,15 @@ class TeacherDashboard extends StatelessWidget {
               ),
               const SizedBox(width: 12),
               _buildQuickAction(
-                icon: Icons.send,
-                label: "Veliye Mesaj",
-                color: Colors.green,
+                icon: Icons.question_answer,
+                label: "Soru Çözüm",
+                color: Colors.blue,
                 onTap: () {
-                  ScaffoldMessenger.of(context).showSnackBar(
-                    const SnackBar(content: Text("🚧 Veli mesajı yakında!")),
+                  Navigator.push(
+                    context,
+                    MaterialPageRoute(
+                      builder: (context) => TeacherQuestionCenterScreen(ogretmen: ogretmen),
+                    ),
                   );
                 },
               ),
