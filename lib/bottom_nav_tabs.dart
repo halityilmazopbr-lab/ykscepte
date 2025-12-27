@@ -30,6 +30,10 @@ import 'screens/counseling/my_counseling_screen.dart'; // 💼 Aktif Paket
 import 'screens/counselor/counselor_application_screen.dart'; // 📝 Danışman Başvuru
 import 'screens/counselor/counselor_list_screen.dart'; // 👥 Danışman Listesi
 import 'screens/onboarding/onboarding_flow.dart'; // 🎉 Onboarding
+import 'widgets/arena_dashboard_card.dart'; // 🏆 ARENA Dashboard Kartı
+import 'screens/arena_challenge_page.dart'; // ARENA Sayfası
+import 'screens/arena_leaderboard_page.dart'; // ARENA Lider Tablosu
+import 'models/arena_challenge_model.dart'; // ARENA Modeli
 
 /// Ana Sayfa Widget - Öğrenci Dashboard
 /// Bottom Navigation Bar'ın "Ana Sayfa" sekmesi
@@ -43,6 +47,9 @@ class AnaSayfaSekmesi extends StatelessWidget {
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
+          // --- ARENA GLOBAL CHALLENGE (VİTRİN) ---
+          const ArenaDashboardCard(),
+          
           // --- KİŞİYE ÖZEL KARŞILAMA ---
           _buildKarsilamaKarti(context),
           
@@ -536,6 +543,7 @@ class AraclarSekmesi extends StatelessWidget {
             _buildGridCard(context, "Hata Defteri", Icons.menu_book, HataDefteriEkrani(ogrenciId: ogrenci.id), Colors.red),
             _buildGridCard(context, "Odak Modu", Icons.headphones, const OdakModuEkrani(), Colors.purple),
             _buildGridCard(context, "Flashcards", Icons.style, const FlashcardsEkrani(), Colors.pink),
+            _buildGridCard(context, "ARENA", Icons.local_fire_department, const Scaffold(body: Center(child: Text("Arena Dashboard üzerinden erişiniz"))), Colors.red.shade900),
             _buildGridCard(context, "Soru Üreteci", Icons.psychology, SoruUretecEkrani(ogrenci: ogrenci), Colors.deepOrange),
             _buildGridCard(context, "Program Sihirbazı", Icons.auto_awesome, const YeniProgramSihirbaziEkrani(), Colors.orange),
             _buildGridCard(context, "AI Asistan", Icons.chat, YapayZekaSohbetEkrani(ogrenci: ogrenci), Colors.cyan),
