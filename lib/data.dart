@@ -15,6 +15,7 @@ class VeriDeposu {
   static Map<String, bool> tamamlananKonular = {};
   static List<Rozet> tumRozetler = [];
   static List<HataDefteriSoru> hataDefteriListesi = [];
+  static List<Mesaj> mesajlar = []; // AI Sohbet için mesaj listesi
   static List<KonuTamamlama> akilliKonuTakibi = []; // Akademik Röntgen verileri
   
   // GÜNLÜK TAKİP SİSTEMİ

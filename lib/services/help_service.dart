@@ -81,7 +81,7 @@ class HelpService {
         .doc(requestId)
         .collection(solutionsCollection)
         .orderBy('isBestSolution', descending: true)
-        .orderBy('timestamp', ascending: true)
+        .orderBy('timestamp', descending: false)
         .snapshots();
   }
 

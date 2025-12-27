@@ -217,7 +217,7 @@ class ArenaService {
           throw Exception("Challenge bulunamadı");
         }
 
-        var kalanCan = challengeSnapshot.data()!['kalanCan'] as int? ?? 0;
+        var kalanCan = (challengeSnapshot.data() as Map<String, dynamic>?)?['kalanCan'] as int? ?? 0;
 
         if (dogruMu && kalanCan > 0) {
           transaction.update(challengeRef, {

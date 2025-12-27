@@ -58,19 +58,18 @@ class _ArenaChallengePageState extends State<ArenaChallengePage> {
     
     try {
       // Challenge'ın sorusunu getir
-      var soruDoc = await _soruService._db
-          .collection('havuz_sorulari')
-          .doc(widget.challenge.soruId)
-          .get();
+      var soru = await _soruService.getSoruById(widget.challenge.soruId);
 
-      if (soruDoc.exists) {
+      if (soru != null) {
         setState(() {
-          _soru = SoruModel.fromMap(soruDoc.data()!, soruDoc.id);
+          _soru = soru;
           _yukleniyor = false;
         });
         
         // Timer'ı otomatik başlat
         _timerBaslat();
+      } else {
+        throw Exception("Soru bulunamadı");
       }
     } catch (e) {
       setState(() => _yukleniyor = false);

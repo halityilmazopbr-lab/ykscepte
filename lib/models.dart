@@ -1,3 +1,5 @@
+import 'package:flutter/material.dart';
+
 class Ogrenci {
   String id, tcNo, sifre, ad, sinif, fotoUrl, hedefUniversite, hedefBolum;
   int puan, girisSayisi, hedefPuan;
@@ -73,6 +75,34 @@ class Ogrenci {
     this.onboardingBitti = false,
     this.sonGirisTarihi,
   });
+
+  // COMPUTED GETTERS: Seviye sistemi
+  /// XP'ye göre seviye hesaplama (her 1000 XP = 1 seviye)
+  int get seviye => (puan / 1000).floor() + 1;
+  
+  /// Seviyeye göre renk döndürme
+  Color get seviyeRenk {
+    if (seviye <= 5) return Colors.brown; // Bronz
+    if (seviye <= 10) return Colors.grey; // Gümüş
+    if (seviye <= 20) return Colors.amber; // Altın
+    if (seviye <= 35) return Colors.cyanAccent; // Elmas
+    return Colors.redAccent; // Efsane
+  }
+  
+  /// Seviyeye göre unvan döndürme
+  String get unvan {
+    if (seviye <= 2) return "Taze Aday";
+    if (seviye <= 5) return "Çırak";
+    if (seviye <= 10) return "Kalfa";
+    if (seviye <= 15) return "Usta";
+    if (seviye <= 20) return "Uzman";
+    if (seviye <= 30) return "Üstat";
+    if (seviye <= 40) return "Büyük Üstat";
+    return "YKS Efsanesi";
+  }
+  
+  /// Öğrenci kurumsal mı kontrolü (kurumKodu varsa kurumsal)
+  bool get isKurumsal => kurumKodu != null && kurumKodu!.isNotEmpty;
 
   Map<String, dynamic> toJson() => {
         'id': id,

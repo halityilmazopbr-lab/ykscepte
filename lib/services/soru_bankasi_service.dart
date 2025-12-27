@@ -115,6 +115,19 @@ class SoruBankasiService {
     }
   }
 
+  /// ID ile soru getirme (public method for external access)
+  /// Arena Challenge gibi yerlerden erişim için
+  Future<SoruModel?> getSoruById(String soruId) async {
+    try {
+      var doc = await _db.collection(collectionPath).doc(soruId).get();
+      if (!doc.exists) return null;
+      return SoruModel.fromMap(doc.data()!, doc.id);
+    } catch (e) {
+      debugPrint("❌ Soru ID ile getirilemedi: $e");
+      return null;
+    }
+  }
+
   /// ============================================================
   /// 2. AI İLE SORU ÜRETME VE KAYDETME (Private Helper)
   /// ============================================================

@@ -151,6 +151,49 @@ Sadece aşağıdaki JSON yapısını döndür. Yorum yapma.
 }
 ''';
   }
+
+  // Legacy: Program oluşturma promptu
+  static String programPrompt({
+    required String alan,
+    required String sinif,
+    required String hedef,
+    required int gunlukSaat,
+    required String zayifDers,
+    required bool okulVar,
+  }) => '''
+Sen bir YKS rehber öğretmenisin. Öğrenci için haftalık çalışma programı oluştur.
+
+ÖĞRENCİ BİLGİLERİ:
+- Sınıf: $sinif
+- Alan: $alan
+- Hedef: $hedef
+- Günlük Çalışma Saati: $gunlukSaat saat
+- Zayıf Ders: $zayifDers
+- Okul Devam Ediyor mu: ${okulVar ? "Evet" : "Hayır"}
+
+KURALLAR:
+1. 7 günlük program oluştur (Pazartesi-Pazar).
+2. Her gün için ders blokları belirle.
+3. Zayıf olan derse daha fazla zaman ayır.
+4. Pazar günü haftalık tekrar günü olsun.
+5. Her saat bloğu 45-60 dk olsun.
+6. Mola sürelerini dahil etme.
+
+JSON FORMATI:
+{
+  "program": [
+    {
+      "gun": "Pazartesi",
+      "bloklar": [
+        {"saat_araligi": "09:00 - 10:00", "ders": "Matematik", "konu": "Fonksiyonlar", "tur": "Konu Çalışması"},
+        {"saat_araligi": "10:00 - 11:00", "ders": "Türkçe", "konu": "Paragraf", "tur": "Soru Çözümü"}
+      ]
+    }
+  ]
+}
+
+SADECE JSON DÖNDÜR, başka açıklama yapma.
+''';
 }
 
 // 🔹 API AYARLARI

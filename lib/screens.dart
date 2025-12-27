@@ -749,6 +749,7 @@ class _MPSState extends State<ManuelProgramSihirbazi> {
       if (h % 4 == 0) {
         for (var gun in calismaGunleri) {
            program.add(Gorev(
+             id: const Uuid().v4(),
              hafta: h,
              gun: gun,
              saat: "${basla.hour}:00 - ${bitis.hour}:00",
@@ -763,7 +764,7 @@ class _MPSState extends State<ManuelProgramSihirbazi> {
       for (var gun in calismaGunleri) {
         // Pazar günleri haftalık tekrar (Eğer tatil değilse)
         if (gun == "Pazar" && !tatiller.contains("Pazar")) {
-             program.add(Gorev(hafta: h, gun: gun, saat: "Tüm Gün", ders: "HAFTALIK TEKRAR", konu: "Bu haftanın özeti", aciklama: "Notlarını oku."));
+             program.add(Gorev(id: const Uuid().v4(), hafta: h, gun: gun, saat: "Tüm Gün", ders: "HAFTALIK TEKRAR", konu: "Bu haftanın özeti", aciklama: "Notlarını oku."));
              continue;
         }
 
