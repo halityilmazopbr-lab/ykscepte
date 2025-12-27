@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'data.dart';
 import 'models.dart';
+import 'diamond/diamond_widgets.dart'; // 💎 Elmas Widget
 
 /// Öğrenci Profil Ekranı
 /// 4 Katmanlı Tasarım: Motivasyon, Akademik, İstatistik, Ayarlar
@@ -49,6 +50,16 @@ class _ProfilEkraniState extends State<ProfilEkrani> {
             expandedHeight: 200,
             pinned: true,
             backgroundColor: const Color(0xFF161B22),
+            // 💎 Elmas Badge - Sağ üst köşe
+            actions: [
+              Padding(
+                padding: const EdgeInsets.only(right: 12, top: 8),
+                child: DiamondBadge(
+                  ogrenciId: _ogrenci.id,
+                  ogrenciAdi: _ogrenci.ad,
+                ),
+              ),
+            ],
             flexibleSpace: FlexibleSpaceBar(
               background: Container(
                 decoration: BoxDecoration(
