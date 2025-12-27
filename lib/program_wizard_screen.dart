@@ -1,8 +1,11 @@
 import 'dart:convert';
 import 'package:flutter/material.dart';
+import 'package:uuid/uuid.dart';
+import 'package:uuid/uuid.dart';
 import 'data.dart';
 import 'models.dart';
 import 'gemini_service.dart';
+import 'akademik_rontgen_screen.dart'; // YENİ
 
 /// Program Sihirbazı - v4
 /// AYT dersleri, 36 haftalık uzun dönemli program, akıllı dağılım
@@ -574,9 +577,93 @@ class _YeniProgramSihirbaziEkraniState extends State<YeniProgramSihirbaziEkrani>
 
   void _nextStep() {
     if (_currentStep < 3) {
+      // 1. FAZ: AKADEMİK RÖNTGEN (Gatekeeper)
+      if (_currentStep == 0 && VeriDeposu.akilliKonuTakibi.isEmpty) {
+        _showGatekeeperDialog();
+        return;
+      }
       setState(() => _currentStep++);
     } else {
-      _createManualProgram();
+      if (_isAIMode) {
+        _generateAIProgram();
+      } else {
+        _createManualProgram();
+      }
+    }
+  }
+
+  void _showGatekeeperDialog() {
+    showDialog(
+      context: context,
+      builder: (c) => AlertDialog(
+        backgroundColor: const Color(0xFF161B22),
+        title: const Text("🧠 Akademik Röntgen Gerekli", style: TextStyle(color: Colors.white)),
+        content: const Text(
+          "AI Koç'un sana özel, verimli bir program hazırlayabilmesi için bitirdiğin konuları ve unutma düzeyini bilmesi gerekiyor.\n\nÖnce kısa bir Check-Up yapalım mı?",
+          style: TextStyle(color: Colors.grey),
+        ),
+        actions: [
+          TextButton(onPressed: () => Navigator.pop(c), child: const Text("Daha Sonra")),
+          ElevatedButton(
+            onPressed: () {
+              Navigator.pop(c);
+              Navigator.push(context, MaterialPageRoute(builder: (c) => const AkademikRontgenScreen()));
+            },
+            style: ElevatedButton.styleFrom(backgroundColor: Colors.purple),
+            child: const Text("Check-Up Başlat"),
+          ),
+        ],
+      ),
+    );
+  }
+
+  Future<void> _generateAIProgram() async {
+    setState(() => _isLoading = true);
+    
+    try {
+      // Ogrenci profilini güncelle (Kapasite ve Zayıf Dersler)
+      if (VeriDeposu.aktifOgrenci != null) {
+        VeriDeposu.aktifOgrenci!.dailyHours = 6; // Şimdilik default
+        VeriDeposu.aktifOgrenci!.weakSubjects = _zayifDersler;
+      }
+
+      final result = await GravityAI.akilliProgramOlustur(
+        ogrenci: VeriDeposu.aktifOgrenci!,
+        bitenKonular: VeriDeposu.akilliKonuTakibi,
+      );
+
+      if (result['haftalik_plan'] != null) {
+        List<ProgramSatiri> tempProgram = [];
+        int h = 1;
+        for (var gunData in result['haftalik_plan']) {
+          String gun = gunData['gun'] ?? "";
+          List<dynamic> bloklar = gunData['bloklar'] ?? [];
+          for (var blok in bloklar) {
+            tempProgram.add(ProgramSatiri(
+              hafta: h,
+              gun: gun,
+              saat: "09:00", // AI aralığı vermezse default
+              ders: blok['ders'] ?? "",
+              konu: blok['konu'] ?? "",
+              calisma: blok['tip'] ?? "Ders",
+              sure: blok['sure_dk'] ?? 45,
+            ));
+          }
+        }
+        setState(() {
+          _program = tempProgram;
+          // Strateji notunu SNACKBAR ile göster
+          ScaffoldMessenger.of(context).showSnackBar(SnackBar(
+            content: Text("📢 AI Koç Notu: ${result['strateji_notu']}"),
+            duration: const Duration(seconds: 5),
+            backgroundColor: Colors.purple,
+          ));
+        });
+      }
+    } catch (e) {
+      ScaffoldMessenger.of(context).showSnackBar(const SnackBar(content: Text("AI Program oluşturulamadı.")));
+    } finally {
+      setState(() => _isLoading = false);
     }
   }
 
@@ -794,6 +881,7 @@ class _YeniProgramSihirbaziEkraniState extends State<YeniProgramSihirbaziEkrani>
 
   void _saveProgram() {
     final gorevler = _program.map((s) => Gorev(
+      id: const Uuid().v4(),
       hafta: s.hafta, gun: s.gun, saat: s.saat, ders: s.ders, konu: s.konu,
       aciklama: "${s.calisma} (${s.sure} dk)", yapildi: false,
     )).toList();

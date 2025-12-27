@@ -4,6 +4,7 @@ import 'package:http/http.dart' as http;
 import 'package:google_mlkit_text_recognition/google_mlkit_text_recognition.dart';
 import 'package:image_picker/image_picker.dart';
 import 'package:flutter/foundation.dart';
+import 'package:uuid/uuid.dart';
 import 'models.dart';
 import 'cache_service.dart';
 
@@ -83,60 +84,73 @@ Zorluk: $zorluk
 Yukarıdaki formata KELİME KELİME sadık kalarak '$konu' hakkında $zorluk seviye soruyu üret:
 ''';
   
-  // Program oluşturma için - MASTER KOÇ PROMPTU
-  static String programPrompt({
-    required String alan,
-    required String sinif,
-    required String hedef,
-    required int gunlukSaat,
-    required String zayifDers,
-    required bool okulVar,
-  }) => '''
-SENİN ROLÜN:
-Sen "YKS Cepte" uygulamasının yapay zeka tabanlı, 20 yıllık deneyime sahip uzman Eğitim Koçusun. Adın "Cepte Koç".
-Görevin: Öğrencinin verdiği verilere dayanarak ona en verimli, gerçekçi ve kazanılabilir bir HAFTALIK DERS ÇALIŞMA PROGRAMI oluşturmaktır.
+  // 🔥 YKS AKILLI KOÇ: MASTER PROMPT (Ultimate Design)
+  static String masterCoachPrompt({
+    required Ogrenci ogrenci,
+    required List<KonuTamamlama> bitenKonular,
+    required int kalanGun,
+    required String strateji,
+  }) {
+    String inventory = bitenKonular.map((t) => "${t.ders}: ${t.konu} (${t.tarih.toIso8601String()})").join(", ");
+    
+    return '''
+### ROL VE KİMLİK ###
+Sen, YKS (TYT/AYT) sınav sistemine hakim, stratejik planlama yapan üst düzey bir eğitim koçusun. Görevin, öğrencinin akademik geçmişini ve kalan süresini analiz ederek, ona en yüksek net artışını sağlayacak haftalık "Yol Haritası"nı JSON formatında çizmektir.
 
-GİRDİ DEĞİŞKENLERİ:
-- Alan: $alan (Sayısal, EA, Sözel, Dil)
-- Sınıf: $sinif (11, 12 veya Mezun)
-- Hedef: $hedef
-- Günlük Müsaitlik Saati: $gunlukSaat saat
-- En Zayıf Ders: $zayifDers (Buna öncelik verilecek)
-- Okul Durumu: ${okulVar ? "Hafta içi okula gidiyor (08:00-16:00 boş bırak)" : "Mezun/Özel ders"}
+### ANALİZ VERİLERİ (GİRİŞ) ###
+- Öğrenci: ${ogrenci.ad}
+- Alan: ${ogrenci.alan}
+- Kalan Gün: $kalanGun
+- Günlük Çalışma Kapasitesi: ${ogrenci.dailyHours} Saat
+- Zayıf Dersler: ${ogrenci.weakSubjects.join(", ")}
+- STRATEJİ: $strateji
+- BİTEN KONULAR (ENVANTER): [$inventory]
 
-PEDAGOJİK KURALLAR (ALGORİTMA):
-1. SABAH RUTİNİ: Program her sabah (Pazar hariç) mutlaka "Paragraf (20 Soru)" ve "Problem (20 Soru)" ile başlamalıdır.
-2. ZAYIF DERS KURALI: "$zayifDers" diğer derslerden en az %30 daha fazla yer kaplamalıdır.
-3. SANDVİÇ TEKNİĞİ: Asla iki zor sayısal dersi (Mat-Fiz) arka arkaya koyma. Araya sözel veya mola koy.
-4. POMODORO: Dersleri "45 dk Ders + 10 dk Mola" şeklinde planla.
-5. SARMAL TEKRAR: Pazar gününü "Haftalık Genel Tekrar" ve "Deneme Analizi"ne ayır.
-6. GERÇEKÇİLİK: Günlük $gunlukSaat saat limitini asla aşma.
-7. ALAN DENGESİ:
-   - Sayısal: Mat, Geo, Fiz, Kim, Biyo ağırlıklı
-   - EA: Mat, Edebiyat, Tar, Coğ ağırlıklı
-   - Mezun: TYT ve AYT paralel
+### ÇALIŞMA PRENSİPLERİ (Düşünce Zinciri) ###
+1. **ENVANTER KONTROLÜ (Kritik):**
+   - "biten_konular" listesindeki konuları ASLA "Konu Çalışması" olarak planlama. Bu vakit kaybıdır.
+   - Bunun yerine, bu konuları unutmamak için aralara "30 dk Soru Çözümü/Tekrar" blokları (Sarmal Tekrar) serpiştir.
+   - Zamanı, öğrencinin "bilmediği" ve sınavda çok çıkan konulara ayır.
 
-ÇIKTI FORMATI (KESİNLİKLE UYULACAK):
-SADECE parse edilebilir SAF JSON döndür. Başka hiçbir metin yazma.
+2. **BİLİŞSEL YÜK DENGESİ:**
+   - Aynı güne iki ağır "Sayısal" dersi (Örn: AYT Matematik + AYT Fizik) yan yana koyma. Araya sözel veya biyoloji gibi daha hafif dersler koy.
+   - Zayıf olduğu dersleri (Örn: Fizik) tek blokta uzun süre vermek yerine, haftaya yayarak 40'ar dakikalık parçalar halinde ver (Pomodoro).
+
+3. **ÖN KOŞUL ZİNCİRİ:**
+   - Bir dersin temeli atılmadan ileri konusunu yazma. (Örn: "Hareket" bitmeden "Enerji" yazma).
+
+4. **SABAH RUTİNİ:**
+   - Her sabah (Pazar hariç) mutlaka "20 Paragraf + 20 Problem" ile başla.
+
+### ÇIKTI FORMATI (Strict JSON) ###
+Sadece aşağıdaki JSON yapısını döndür. Yorum yapma.
 
 {
-  "koc_notu": "Öğrenciyi motive eden 1-2 cümle",
-  "odak_konusu": "Bu haftanın ana teması",
-  "program": [
+  "strateji_notu": "Kalan süren az olduğu için Limit konusuna ağırlık verdim. Bitirdiğin 'Üslü Sayılar' için Salı gününe tekrar koydum.",
+  "haftalik_plan": [
     {
       "gun": "Pazartesi",
       "bloklar": [
         {
-          "saat_araligi": "09:00 - 09:50",
-          "ders": "Rutin",
-          "konu": "20 Paragraf + 20 Problem",
-          "tur": "Soru Çözümü"
+          "ders": "AYT Matematik",
+          "konu": "Logaritma",
+          "tip": "Konu Çalışması", 
+          "sure_dk": 50,
+          "oncelik": "Yüksek"
+        },
+        {
+          "ders": "TYT Türkçe",
+          "konu": "Paragraf",
+          "tip": "Rutin",
+          "sure_dk": 30,
+          "oncelik": "Orta"
         }
       ]
     }
   ]
 }
 ''';
+  }
 }
 
 // 🔹 API AYARLARI
@@ -292,64 +306,54 @@ class GravityAI {
   }
 
   // ═══════════════════════════════════════════════════════════════
-  // 🟡 5. AI PROGRAM OLUŞTURMA (Master Koç Sistemi)
+  // 🟡 5. AI AKILLI PROGRAM (Master Koç - Faz 3)
   // ═══════════════════════════════════════════════════════════════
-  /// Gelişmiş haftalık program oluşturma - Master Koç Sistemi
-  /// [hedef]: "İlk 10 Bin", "Tıp Fakültesi" gibi
-  /// [okulVar]: Hafta içi okula gidiyor mu?
-  static Future<Map<String, dynamic>> programOlusturV2({
-    required String sinif,
-    required String alan,
-    required String hedef,
-    required int gunlukSaat,
-    required String zayifDers,
-    bool okulVar = true,
+  
+  static Future<Map<String, dynamic>> akilliProgramOlustur({
+    required Ogrenci ogrenci,
+    required List<KonuTamamlama> bitenKonular,
   }) async {
-    // Cache key
-    final cacheKey = "programV2:$sinif-$alan-$hedef-$gunlukSaat-$zayifDers-$okulVar";
+    // 1. Kalan Gün Hesabı
+    final yksTarihi = DateTime(2026, 6, 20); // Örnek tarih
+    final kalanGun = yksTarihi.difference(DateTime.now()).inDays;
     
-    // Cache kontrolü
-    final cachedResponse = CacheService.get(cacheKey);
-    if (cachedResponse != null) {
-      try {
-        return jsonDecode(cachedResponse) as Map<String, dynamic>;
-      } catch (e) {
-        // Cache bozuksa devam et
-      }
-    }
+    // 2. Strateji Belirle (Faz 2)
+    String strateji = kalanGun < 100 
+        ? "KRİZ MODU: Sınava az kaldı. Detaylarda boğulma. Pareto Prensibi (80/20) uygula. En çok soru çıkan konulara odaklan. Konu anlatımını kıs, soru çözümünü artır." 
+        : "STANDART MOD: Derinlemesine öğrenme. Temel eksik bırakmadan, sarmal yapıda ilerle.";
 
-    // Master Koç promptunu oluştur
-    String prompt = _Prompts.programPrompt(
-      alan: alan,
-      sinif: sinif,
-      hedef: hedef,
-      gunlukSaat: gunlukSaat,
-      zayifDers: zayifDers,
-      okulVar: okulVar,
+    // 3. Prompt İnşa Et
+    final prompt = _Prompts.masterCoachPrompt(
+      ogrenci: ogrenci,
+      bitenKonular: bitenKonular,
+      kalanGun: kalanGun,
+      strateji: strateji,
     );
 
     try {
+      debugPrint("🤖 AI Koç Analiz Yapıyor...");
       String jsonStr = await generateText(prompt);
+      
+      // JSON Temizleme
       jsonStr = jsonStr.replaceAll("```json", "").replaceAll("```", "").trim();
       
-      // JSON'u parse et
-      Map<String, dynamic> result = jsonDecode(jsonStr);
+      final Map<String, dynamic> result = jsonDecode(jsonStr);
       
       // Cache'e kaydet
-      await CacheService.set(cacheKey, jsonEncode(result));
+      final cacheKey = "master_coach:${ogrenci.id}";
+      await CacheService.set(cacheKey, jsonStr);
       
       return result;
     } catch (e) {
-      debugPrint("Program Oluşturma Hatası: $e");
+      debugPrint("❌ AI Koç Hatası: $e");
       return {
-        "koc_notu": "Program oluşturulamadı, lütfen tekrar deneyin.",
-        "odak_konusu": "",
-        "program": []
+        "strateji_notu": "Bağlantı hatası oluştu, ama azmin hala burada! Tekrar deneyelim.",
+        "haftalik_plan": []
       };
     }
   }
 
-  /// Eski uyumluluk için - Gorev listesi döndürür
+  /// Eski uyumluluk için (Legacy)
   static Future<List<Gorev>> programOlustur(String sinif, String alan, String stil, int gunlukSaat, String zayifDers) async {
     // Cache key
     final cacheKey = "program:$sinif-$alan-$gunlukSaat-$zayifDers";
@@ -391,6 +395,7 @@ class GravityAI {
           
           for (var blok in bloklar) {
             gorevler.add(Gorev(
+              id: const Uuid().v4(),
               hafta: hafta,
               gun: gun,
               saat: blok['saat_araligi']?.toString().split(' - ').first ?? '09:00',

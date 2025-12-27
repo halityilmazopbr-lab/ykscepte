@@ -14,8 +14,8 @@ class VeriDeposu {
   static List<SoruCozumKaydi> soruCozumListesi = [];
   static Map<String, bool> tamamlananKonular = {};
   static List<Rozet> tumRozetler = [];
-  static List<Mesaj> mesajlar = [];
   static List<HataDefteriSoru> hataDefteriListesi = [];
+  static List<KonuTamamlama> akilliKonuTakibi = []; // Akademik Röntgen verileri
   
   // GÜNLÜK TAKİP SİSTEMİ
   static Map<String, Map<String, bool>> gunlukTakipDurumlari = {}; // "2024-12-25": {"09:00-Matematik": true}
@@ -122,6 +122,7 @@ class VeriDeposu {
   ];
   static List<Gorev> odevler = [
     Gorev(
+        id: "task_1",
         hafta: 1,
         gun: "Pazartesi",
         saat: "19:00",
@@ -565,6 +566,10 @@ class VeriDeposu {
       hataDefteriListesi =
           (list as List).map((e) => HataDefteriSoru.fromJson(e)).toList();
     }
+    if (_prefs.containsKey('akilliKonuTakibi')) {
+      var list = jsonDecode(_prefs.getString('akilliKonuTakibi')!);
+      akilliKonuTakibi = (list as List).map((e) => KonuTamamlama.fromJson(e)).toList();
+    }
   }
 
   // OTURUM YÖNETİMİ
@@ -579,6 +584,9 @@ class VeriDeposu {
   static Future<void> cikisYap() async {
     await _prefs.remove('aktifKullaniciId');
     await _prefs.remove('aktifKullaniciRol');
+    // Akıllı verileri de temizle (opsiyonel ama güvenli)
+    akilliKonuTakibi = [];
+    tamamlananKonular = {};
   }
 
   // Veri Kaydetme
@@ -598,6 +606,8 @@ class VeriDeposu {
         jsonEncode(hataDefteriListesi.map((e) => e.toJson()).toList()));
     // Günlük Takip
     await _prefs.setString('gunlukTakipDurumlari', jsonEncode(gunlukTakipDurumlari));
+    // Akıllı Koç verileri
+    await _prefs.setString('akilliKonuTakibi', jsonEncode(akilliKonuTakibi.map((e) => e.toJson()).toList()));
   }
 
   static void baslat() {

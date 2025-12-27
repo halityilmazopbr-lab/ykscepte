@@ -5,6 +5,7 @@ import 'dart:io';
 import 'dart:math';
 import 'package:image_picker/image_picker.dart';
 import 'package:fl_chart/fl_chart.dart';
+import 'package:uuid/uuid.dart';
 import 'models.dart';
 import 'data.dart';
 import 'gemini_service.dart';
@@ -771,6 +772,7 @@ class _MPSState extends State<ManuelProgramSihirbazi> {
 
           var k = tumKonular[konuSayaci];
           program.add(Gorev(
+            id: const Uuid().v4(),
             hafta: h,
             gun: gun,
             saat: "${basla.hour + s}:00",
@@ -2533,25 +2535,46 @@ class _GTEState extends State<GunlukTakipEkrani> {
     final gunler = ["Pazar", "Pazartesi", "Salı", "Çarşamba", "Perşembe", "Cuma", "Cumartesi"];
     final bugunAdi = gunler[bugun.weekday % 7];
     
-    // Kaydedilen programdan bugünün görevlerini filtrele
-    _bugunGorevler = VeriDeposu.kayitliProgram
-        .where((g) => g.gun.toLowerCase() == bugunAdi.toLowerCase())
-        .toList();
-    
-    // Eğer program boşsa varsayılan görevler
-    if (_bugunGorevler.isEmpty) {
-      _bugunGorevler = [
-        Gorev(hafta: 1, gun: bugunAdi, saat: "09:00", ders: "Rutin", konu: "20 Paragraf + 20 Problem"),
-        Gorev(hafta: 1, gun: bugunAdi, saat: "10:00", ders: "Matematik", konu: "Konu Çalışması"),
-        Gorev(hafta: 1, gun: bugunAdi, saat: "14:00", ders: "Fizik", konu: "Test Çözümü"),
-      ];
+    // Hafta hesaplama: Programın oluşturulma tarihinden bu yana kaç hafta geçti?
+    // Not: KayitliProgramGecmisi'nden son programın tarihini alabiliriz
+    DateTime programBaslangic = bugun;
+    if (VeriDeposu.programArsivi.isNotEmpty) {
+      programBaslangic = VeriDeposu.programArsivi.last.tarih;
     }
     
-    // Tamamlanma durumlarını yükle
+    // Kaçıncı haftadayız? (1-indisli)
+    int gecenGun = bugun.difference(programBaslangic).inDays;
+    int mevcutHafta = (gecenGun / 7).floor() + 1;
+    
+    // Kaydedilen programdan bugünün ve bu haftanın görevlerini filtrele
+    _bugunGorevler = VeriDeposu.kayitliProgram
+        .where((g) => 
+          g.gun.toLowerCase() == bugunAdi.toLowerCase() && 
+          g.hafta == mevcutHafta)
+        .toList();
+    
+    // Eğer program boşsa (Haftalık program bitmişse veya boşsa)
+    if (_bugunGorevler.isEmpty) {
+      // Sadece o günkü tüm haftaların görevlerini göster (Eski davranışa fallback)
+      _bugunGorevler = VeriDeposu.kayitliProgram
+          .where((g) => g.gun.toLowerCase() == bugunAdi.toLowerCase())
+          .toList();
+      
+      // Eğer hala boşsa defaultlar (yine ID ile)
+      if (_bugunGorevler.isEmpty) {
+        _bugunGorevler = [
+          Gorev(id: "def_1", hafta: 1, gun: bugunAdi, saat: "09:00", ders: "Rutin", konu: "20 Paragraf + 20 Problem"),
+          Gorev(id: "def_2", hafta: 1, gun: bugunAdi, saat: "10:00", ders: "Matematik", konu: "Konu Çalışması"),
+          Gorev(id: "def_3", hafta: 1, gun: bugunAdi, saat: "14:00", ders: "Fizik", konu: "Test Çözümü"),
+        ];
+      }
+    }
+    
+    // Tamamlanma durumlarını yükle (ID bazlı)
     final kayitliDurum = VeriDeposu.gunlukTakipDurumlari[_tarihKey(bugun)] ?? {};
+    _tamamlananlar.clear();
     for (var gorev in _bugunGorevler) {
-      final key = "${gorev.saat}-${gorev.ders}";
-      _tamamlananlar[key] = kayitliDurum[key] ?? false;
+      _tamamlananlar[gorev.id] = kayitliDurum[gorev.id] ?? false;
     }
   }
   
@@ -2696,7 +2719,7 @@ class _GTEState extends State<GunlukTakipEkrani> {
                     itemCount: _bugunGorevler.length,
                     itemBuilder: (context, index) {
                       final gorev = _bugunGorevler[index];
-                      final key = "${gorev.saat}-${gorev.ders}";
+                      final key = gorev.id; // Artık ID kullanıyoruz
                       final tamamlandi = _tamamlananlar[key] ?? false;
                       
                       return Container(

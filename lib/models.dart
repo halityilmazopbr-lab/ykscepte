@@ -1,12 +1,10 @@
-import 'package:flutter/material.dart';
-
 class Ogrenci {
   String id, tcNo, sifre, ad, sinif, fotoUrl, hedefUniversite, hedefBolum;
   int puan, girisSayisi, hedefPuan;
   String? atananOgretmenId;
   int gunlukSeri;
-  double ortalamaNet; // YENI
-  String okul; // YENI
+  double ortalamaNet;
+  String okul;
   
   // Pro/Monetization fields
   bool isPro;
@@ -14,26 +12,30 @@ class Ogrenci {
   DateTime? sonSoruTarihi;
   
   // YENİ: Profil Alanları
-  int avatarId; // 1-15 arası hazır avatar
-  String alan; // SAYISAL, EA, SOZEL, DIL
-  int sinifSeviyesi; // 9, 10, 11, 12, 0=Mezun
-  String akademikSeviye; // BASLANGIC, ORTA, ILERI
-  String? okulNo; // Kurumsal takip için
-  String? kurumKodu; // Hangi okula bağlı
+  int avatarId;
+  String alan;
+  int sinifSeviyesi;
+  String akademikSeviye;
+  String? okulNo;
+  String? kurumKodu;
   String? email;
   String? telefon;
   
+  // AKILLI KOÇ EKLEMELERİ
+  int dailyHours; 
+  List<String> weakSubjects;
+  
   // VELİ ERİŞİM
-  String veliErisimKodu; // 6 haneli erişim kodu
-  bool devamsizlikDurum; // true = derste, false = yok
+  String veliErisimKodu;
+  bool devamsizlikDurum;
   
   // 🎫 5 ALTIN BİLET - ONBOARDING SİSTEMİ
-  int programResetCount; // Toplam program sıfırlama sayısı
-  DateTime? sonProgramResetTarihi; // Son sıfırlama tarihi
-  bool onboardingBitti; // Acemilik dönemi bitti mi?
+  int programResetCount;
+  DateTime? sonProgramResetTarihi;
+  bool onboardingBitti;
   
   // 🎭 MASKOT SİSTEMİ
-  DateTime? sonGirisTarihi; // Tamagotchi modu için son giriş
+  DateTime? sonGirisTarihi;
 
   Ogrenci({
     required this.id,
@@ -42,7 +44,6 @@ class Ogrenci {
     required this.ad,
     required this.sinif,
     this.puan = 0,
-
     this.girisSayisi = 0,
     this.ortalamaNet = 0.0,
     this.okul = "Okul Girilmedi",
@@ -55,7 +56,6 @@ class Ogrenci {
     this.isPro = false,
     this.gunlukSoruHakki = 3,
     this.sonSoruTarihi,
-    // Yeni alanlar
     this.avatarId = 1,
     this.alan = "SAYISAL",
     this.sinifSeviyesi = 12,
@@ -64,50 +64,15 @@ class Ogrenci {
     this.kurumKodu,
     this.email,
     this.telefon,
-    // Veli erişim
+    this.dailyHours = 6,
+    this.weakSubjects = const [],
     this.veliErisimKodu = "",
     this.devamsizlikDurum = true,
-    // Onboarding
     this.programResetCount = 0,
     this.sonProgramResetTarihi,
     this.onboardingBitti = false,
-    // Maskot
     this.sonGirisTarihi,
   });
-  
-  // Unvan hesaplama (XP bazlı)
-  String get unvan {
-    if (puan >= 10000) return "YKS Efsanesi";
-    if (puan >= 5000) return "Üstat";
-    if (puan >= 2500) return "Usta";
-    if (puan >= 1000) return "Deneme Canavarı";
-    if (puan >= 500) return "Azimli";
-    if (puan >= 100) return "Meraklı";
-    return "Çaylak";
-  }
-  
-  // Seviye hesaplama
-  String get seviye {
-    if (puan >= 10000) return "Elmas";
-    if (puan >= 5000) return "Platin";
-    if (puan >= 2500) return "Altın";
-    if (puan >= 1000) return "Gümüş";
-    return "Bronz";
-  }
-  
-  // Seviye rengi
-  Color get seviyeRenk {
-    switch (seviye) {
-      case "Elmas": return Colors.cyanAccent;
-      case "Platin": return Colors.purple;
-      case "Altın": return Colors.amber;
-      case "Gümüş": return Colors.grey;
-      default: return Colors.brown;
-    }
-  }
-  
-  // Kurumsal öğrenci mi? (Bir kuruma/dershaneye bağlı)
-  bool get isKurumsal => kurumKodu != null && kurumKodu!.isNotEmpty;
 
   Map<String, dynamic> toJson() => {
         'id': id,
@@ -116,7 +81,6 @@ class Ogrenci {
         'ad': ad,
         'sinif': sinif,
         'puan': puan,
-
         'girisSayisi': girisSayisi,
         'ortalamaNet': ortalamaNet,
         'okul': okul,
@@ -128,7 +92,6 @@ class Ogrenci {
         'isPro': isPro,
         'gunlukSoruHakki': gunlukSoruHakki,
         'sonSoruTarihi': sonSoruTarihi?.toIso8601String(),
-        // Yeni alanlar
         'avatarId': avatarId,
         'alan': alan,
         'sinifSeviyesi': sinifSeviyesi,
@@ -137,10 +100,10 @@ class Ogrenci {
         'kurumKodu': kurumKodu,
         'email': email,
         'telefon': telefon,
-        // Veli
+        'dailyHours': dailyHours,
+        'weakSubjects': weakSubjects,
         'veliErisimKodu': veliErisimKodu,
         'devamsizlikDurum': devamsizlikDurum,
-        // Onboarding
         'programResetCount': programResetCount,
         'sonProgramResetTarihi': sonProgramResetTarihi?.toIso8601String(),
         'onboardingBitti': onboardingBitti,
@@ -153,7 +116,6 @@ class Ogrenci {
         ad: json['ad'],
         sinif: json['sinif'],
         puan: json['puan'],
-
         girisSayisi: json['girisSayisi'],
         ortalamaNet: (json['ortalamaNet'] ?? 0).toDouble(),
         okul: json['okul'] ?? "Okul Girilmedi",
@@ -165,7 +127,6 @@ class Ogrenci {
         isPro: json['isPro'] ?? false,
         gunlukSoruHakki: json['gunlukSoruHakki'] ?? 3,
         sonSoruTarihi: json['sonSoruTarihi'] != null ? DateTime.parse(json['sonSoruTarihi']) : null,
-        // Yeni alanlar
         avatarId: json['avatarId'] ?? 1,
         alan: json['alan'] ?? "SAYISAL",
         sinifSeviyesi: json['sinifSeviyesi'] ?? 12,
@@ -174,13 +135,42 @@ class Ogrenci {
         kurumKodu: json['kurumKodu'],
         email: json['email'],
         telefon: json['telefon'],
-        // Veli
+        dailyHours: json['dailyHours'] ?? 6,
+        weakSubjects: List<String>.from(json['weakSubjects'] ?? []),
         veliErisimKodu: json['veliErisimKodu'] ?? '',
         devamsizlikDurum: json['devamsizlikDurum'] ?? true,
-        // Onboarding
         programResetCount: json['programResetCount'] ?? 0,
         sonProgramResetTarihi: json['sonProgramResetTarihi'] != null ? DateTime.parse(json['sonProgramResetTarihi']) : null,
         onboardingBitti: json['onboardingBitti'] ?? false,
+      );
+}
+
+// AKADEMİK RÖNTGEN: Konu tamamlama detayları
+class KonuTamamlama {
+  String ders;
+  String konu;
+  DateTime tarih;
+  bool hatirlatmaGerekli; // Unutma Eğrisi Analizi için
+
+  KonuTamamlama({
+    required this.ders,
+    required this.konu,
+    required this.tarih,
+    this.hatirlatmaGerekli = false,
+  });
+
+  Map<String, dynamic> toJson() => {
+        'ders': ders,
+        'konu': konu,
+        'tarih': tarih.toIso8601String(),
+        'hatirlatmaGerekli': hatirlatmaGerekli,
+      };
+
+  factory KonuTamamlama.fromJson(Map<String, dynamic> json) => KonuTamamlama(
+        ders: json['ders'],
+        konu: json['konu'],
+        tarih: DateTime.parse(json['tarih']),
+        hatirlatmaGerekli: json['hatirlatmaGerekli'] ?? false,
       );
 }
 
@@ -198,11 +188,13 @@ class Ogretmen {
 }
 
 class Gorev {
+  String id; // Benzersiz ID
   int hafta;
   String gun, saat, ders, konu, aciklama;
   bool yapildi;
 
   Gorev({
+    required this.id,
     required this.hafta,
     required this.gun,
     required this.saat,
@@ -213,6 +205,7 @@ class Gorev {
   });
 
   Map<String, dynamic> toJson() => {
+        'id': id,
         'hafta': hafta,
         'gun': gun,
         'saat': saat,
@@ -223,6 +216,7 @@ class Gorev {
       };
 
   factory Gorev.fromJson(Map<String, dynamic> json) => Gorev(
+        id: json['id'] ?? "",
         hafta: json['hafta'],
         gun: json['gun'],
         saat: json['saat'],

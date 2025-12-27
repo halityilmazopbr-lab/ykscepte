@@ -141,3 +141,40 @@ Collection: arena_challenges/*/katilimcilar
 - Server timestamp ile zaman koruması
 - Transaction ile çift giriş engeli
 
+---
+
+## 🏛️ SORU MEYDANI - Social Learning Network
+
+### Collection: `help_requests`
+
+**Security Rules:**
+```javascript
+match /help_requests/{requestId} {
+  // Herkes okuyabilir
+  allow read: if true;
+  
+  // Soru sorma: Authenticated kullanıcı + AI Guardian geçmeli
+  allow create: if request.auth != null 
+                && request.resource.data.senderUserId == request.auth.uid;
+                
+  // Güncelleme: Sadece çözüm sayısını artırmak veya çözüldü işaretlemek için (Service Transaction)
+  allow update: if request.auth != null;
+
+  // Subcollection: Solutions
+  match /solutions/{solutionId} {
+    allow read: if true;
+    
+    // Çözüm gönderme: Kendi kimliğiyle
+    allow create: if request.auth != null 
+                  && request.resource.data.solverUserId == request.auth.uid;
+    
+    // Sadece soran kişi "En İyi Cevap" seçebilir
+    allow update: if request.auth != null 
+                  && get(/databases/$(database)/documents/help_requests/$(requestId)).data.senderUserId == request.auth.uid;
+  }
+}
+```
+
+**Anti-Harassment Policy:**
+- Mesajlar AI (Local/Cloud) tarafından taranır.
+- Raporlama (Report) sonrası 3 ihlalde **Device ID Ban** uygulanır.

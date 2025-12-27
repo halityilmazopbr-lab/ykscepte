@@ -34,6 +34,10 @@ import 'widgets/arena_dashboard_card.dart'; // 🏆 ARENA Dashboard Kartı
 import 'screens/arena_challenge_page.dart'; // ARENA Sayfası
 import 'screens/arena_leaderboard_page.dart'; // ARENA Lider Tablosu
 import 'models/arena_challenge_model.dart'; // ARENA Modeli
+import 'screens/help_square_screen.dart'; // 🏛️ SORU MEYDANI
+import 'screens/help_ask_screen.dart'; 
+import 'screens/help_detail_screen.dart';
+import 'akademik_rontgen_screen.dart'; // YENİ
 
 /// Ana Sayfa Widget - Öğrenci Dashboard
 /// Bottom Navigation Bar'ın "Ana Sayfa" sekmesi
@@ -52,6 +56,10 @@ class AnaSayfaSekmesi extends StatelessWidget {
           
           // --- KİŞİYE ÖZEL KARŞILAMA ---
           _buildKarsilamaKarti(context),
+          
+          // YENİ: Pazar Günü Geri Bildirim (Feedback Loop)
+          if (DateTime.now().weekday == DateTime.sunday)
+             _buildFeedbackBanner(context),
           
           const SizedBox(height: 10),
 
@@ -79,6 +87,7 @@ class AnaSayfaSekmesi extends StatelessWidget {
           // --- HIZLI ERİŞİM ---
           _buildSectionHeader("⚡ HIZLI ERİŞİM", "En çok kullandığın özellikler"),
           _buildHorizontalList([
+            _buildMenuCard(context, "Meydan", Icons.account_balance, const HelpSquareScreen(), Colors.indigo.shade700, Colors.indigoAccent),
             _buildMenuCard(context, "Dedektif", Icons.search, DetectiveMainScreen(ogrenciId: ogrenci.id), Colors.red.shade700, Colors.redAccent),
             _buildMenuCard(context, "Programım", Icons.schedule, const TumProgramEkrani(), Colors.blueAccent, Colors.lightBlueAccent),
             _buildMenuCard(context, "Deneme Ekle", Icons.add_chart, DenemeEkleEkrani(ogrenciId: ogrenci.id), Colors.green, Colors.lightGreenAccent),
@@ -423,6 +432,49 @@ class AnaSayfaSekmesi extends StatelessWidget {
       ),
     );
   }
+  Widget _buildFeedbackBanner(BuildContext context) {
+    return Container(
+      margin: const EdgeInsets.fromLTRB(16, 8, 16, 8),
+      padding: const EdgeInsets.all(16),
+      decoration: BoxDecoration(
+        color: Colors.green.withOpacity(0.1),
+        borderRadius: BorderRadius.circular(16),
+        border: Border.all(color: Colors.green.withOpacity(0.3)),
+      ),
+      child: Column(
+        children: [
+          Row(
+            children: [
+              const Icon(Icons.auto_awesome, color: Colors.green),
+              const SizedBox(width: 12),
+              Expanded(
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    const Text("Haftalık Değerlendirme Vakti!", 
+                      style: TextStyle(fontWeight: FontWeight.bold, color: Colors.white)),
+                    const Text("AI Koç'un programı senin için optimize etmesini ister misin?", 
+                      style: TextStyle(fontSize: 12, color: Colors.grey)),
+                  ],
+                ),
+              ),
+            ],
+          ),
+          const SizedBox(height: 12),
+          SizedBox(
+            width: double.infinity,
+            child: ElevatedButton(
+              onPressed: () {
+                ScaffoldMessenger.of(context).showSnackBar(const SnackBar(content: Text("Bu özellik yakında aktif olacak!")));
+              },
+              style: ElevatedButton.styleFrom(backgroundColor: Colors.green),
+              child: const Text("ANALİZE BAŞLA"),
+            ),
+          ),
+        ],
+      ),
+    );
+  }
 }
 
 /// Akademik Sekmesi - Ders takibi ve sınavlar
@@ -544,12 +596,14 @@ class AraclarSekmesi extends StatelessWidget {
             _buildGridCard(context, "Odak Modu", Icons.headphones, const OdakModuEkrani(), Colors.purple),
             _buildGridCard(context, "Flashcards", Icons.style, const FlashcardsEkrani(), Colors.pink),
             _buildGridCard(context, "ARENA", Icons.local_fire_department, const Scaffold(body: Center(child: Text("Arena Dashboard üzerinden erişiniz"))), Colors.red.shade900),
+            _buildGridCard(context, "Soru Meydanı", Icons.account_balance, const HelpSquareScreen(), Colors.indigo),
             _buildGridCard(context, "Soru Üreteci", Icons.psychology, SoruUretecEkrani(ogrenci: ogrenci), Colors.deepOrange),
             _buildGridCard(context, "Program Sihirbazı", Icons.auto_awesome, const YeniProgramSihirbaziEkrani(), Colors.orange),
             _buildGridCard(context, "AI Asistan", Icons.chat, YapayZekaSohbetEkrani(ogrenci: ogrenci), Colors.cyan),
             _buildGridCard(context, "Soru Çöz", Icons.camera_alt, SoruCozumEkrani(ogrenci: ogrenci), Colors.amber),
             _buildGridCard(context, "Kronometre", Icons.timer, const KronometreEkrani(), Colors.lightBlue),
             _buildGridCard(context, "Rehberlik", Icons.psychology_alt, const EnvanterListesiEkrani(), Colors.teal),
+            _buildGridCard(context, "Akademik Röntgen", Icons.biotech, const AkademikRontgenScreen(), Colors.cyan.shade700),
             _buildGridCard(context, "Rozetlerim", Icons.emoji_events, RozetlerEkrani(ogrenci: ogrenci), Colors.yellow.shade700),
             _buildGridCard(context, "Sessiz Kütüphane", Icons.meeting_room, const SilentLibraryScreen(), Colors.indigo.shade800),
             _buildGridCard(context, "Hedeflerim", Icons.flag, const GoalRewardScreen(), Colors.green.shade700),
