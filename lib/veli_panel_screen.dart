@@ -188,7 +188,7 @@ class _VeliPaneliState extends State<VeliPaneli> {
           const SizedBox(height: 12),
           Row(
             children: [
-              Expanded(child: _buildOzetKart('Seviye', widget.ogrenci.seviye, Icons.emoji_events, widget.ogrenci.seviyeRenk)),
+              Expanded(child: _buildOzetKart('Seviye', widget.ogrenci.seviye.toString(), Icons.emoji_events, widget.ogrenci.seviyeRenk)),
               const SizedBox(width: 12),
               Expanded(child: _buildOzetKart('Unvan', widget.ogrenci.unvan, Icons.military_tech, Colors.deepPurple)),
             ],
