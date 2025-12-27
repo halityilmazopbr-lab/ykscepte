@@ -574,6 +574,63 @@ class _AdminPanelScreenState extends State<AdminPanelScreen> with SingleTickerPr
           ),
           const SizedBox(height: 20),
           
+          // 🚩 SORU MODERASYON BÖLÜMÜ
+          Container(
+            padding: const EdgeInsets.all(16),
+            decoration: BoxDecoration(
+              color: Colors.orange.withOpacity(0.1),
+              borderRadius: BorderRadius.circular(12),
+              border: Border.all(color: Colors.orange.withOpacity(0.3)),
+            ),
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Row(
+                  children: [
+                    const Icon(Icons.flag, color: Colors.orange),
+                    const SizedBox(width: 8),
+                    const Text(
+                      "🔍 Soru İnceleme Kuyruğu",
+                      style: TextStyle(color: Colors.orange, fontWeight: FontWeight.bold, fontSize: 16),
+                    ),
+                    const Spacer(),
+                    Container(
+                      padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 4),
+                      decoration: BoxDecoration(
+                        color: Colors.red,
+                        borderRadius: BorderRadius.circular(12),
+                      ),
+                      child: const Text(
+                        "3 soru bekliyor",
+                        style: TextStyle(color: Colors.white, fontWeight: FontWeight.bold, fontSize: 12),
+                      ),
+                    ),
+                  ],
+                ),
+                const SizedBox(height: 8),
+                Text(
+                  "Olumsuz puan alan sorular burada incelemenizi bekliyor. 10 gün içinde incelenmezse otomatik silinir.",
+                  style: TextStyle(color: Colors.grey.shade400, fontSize: 12),
+                ),
+                const SizedBox(height: 12),
+                SizedBox(
+                  width: double.infinity,
+                  child: ElevatedButton.icon(
+                    icon: const Icon(Icons.visibility),
+                    label: const Text("İnceleme Kuyruğunu Aç"),
+                    style: ElevatedButton.styleFrom(
+                      backgroundColor: Colors.orange,
+                      padding: const EdgeInsets.all(14),
+                    ),
+                    onPressed: _showQuestionReviewDialog,
+                  ),
+                ),
+              ],
+            ),
+          ),
+          
+          const SizedBox(height: 20),
+          
           _buildActionCard(
             "🏆 Arena Yarışması Oluştur",
             "Yeni global challenge başlat",
@@ -614,6 +671,176 @@ class _AdminPanelScreenState extends State<AdminPanelScreen> with SingleTickerPr
             () => _showSnack("Anket yönetimi yakında!"),
           ),
         ],
+      ),
+    );
+  }
+  
+  void _showQuestionReviewDialog() {
+    // Demo veriler - gerçek uygulamada QuestionModerationService.getFlaggedQuestions() kullanılacak
+    final flaggedQuestions = [
+      {'id': 'q1', 'preview': 'Türev soru #124', 'negatives': 5, 'positives': 2, 'daysLeft': 3, 'reasons': ['Yanlış cevap', 'Anlaşılmaz']},
+      {'id': 'q2', 'preview': 'İntegral soru #89', 'negatives': 4, 'positives': 1, 'daysLeft': 7, 'reasons': ['Yazım hatası']},
+      {'id': 'q3', 'preview': 'Limit soru #56', 'negatives': 3, 'positives': 0, 'daysLeft': 9, 'reasons': ['Konu dışı', 'Yanlış cevap', 'Diğer']},
+    ];
+    
+    showDialog(
+      context: context,
+      builder: (context) => Dialog(
+        backgroundColor: const Color(0xFF161B22),
+        insetPadding: const EdgeInsets.all(16),
+        child: Container(
+          width: double.maxFinite,
+          constraints: const BoxConstraints(maxHeight: 500),
+          child: Column(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              // Header
+              Container(
+                padding: const EdgeInsets.all(16),
+                decoration: const BoxDecoration(
+                  color: Color(0xFF21262D),
+                  borderRadius: BorderRadius.vertical(top: Radius.circular(12)),
+                ),
+                child: Row(
+                  children: [
+                    const Icon(Icons.flag, color: Colors.orange),
+                    const SizedBox(width: 8),
+                    const Text(
+                      "İnceleme Bekleyen Sorular",
+                      style: TextStyle(color: Colors.white, fontWeight: FontWeight.bold, fontSize: 18),
+                    ),
+                    const Spacer(),
+                    IconButton(
+                      icon: const Icon(Icons.close, color: Colors.grey),
+                      onPressed: () => Navigator.pop(context),
+                    ),
+                  ],
+                ),
+              ),
+              
+              // List
+              Expanded(
+                child: ListView.builder(
+                  padding: const EdgeInsets.all(8),
+                  itemCount: flaggedQuestions.length,
+                  itemBuilder: (context, index) {
+                    final q = flaggedQuestions[index];
+                    final isUrgent = (q['daysLeft'] as int) <= 2;
+                    
+                    return Card(
+                      color: const Color(0xFF21262D),
+                      margin: const EdgeInsets.symmetric(vertical: 4),
+                      child: Padding(
+                        padding: const EdgeInsets.all(12),
+                        child: Column(
+                          crossAxisAlignment: CrossAxisAlignment.start,
+                          children: [
+                            // Header
+                            Row(
+                              children: [
+                                Expanded(
+                                  child: Text(
+                                    q['preview'] as String,
+                                    style: const TextStyle(color: Colors.white, fontWeight: FontWeight.bold),
+                                  ),
+                                ),
+                                if (isUrgent)
+                                  Container(
+                                    padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 2),
+                                    decoration: BoxDecoration(
+                                      color: Colors.red,
+                                      borderRadius: BorderRadius.circular(8),
+                                    ),
+                                    child: Text(
+                                      "⏰ ${q['daysLeft']} gün kaldı!",
+                                      style: const TextStyle(color: Colors.white, fontSize: 10, fontWeight: FontWeight.bold),
+                                    ),
+                                  )
+                                else
+                                  Text(
+                                    "${q['daysLeft']} gün kaldı",
+                                    style: TextStyle(color: Colors.grey.shade500, fontSize: 12),
+                                  ),
+                              ],
+                            ),
+                            const SizedBox(height: 8),
+                            
+                            // Puanlar
+                            Row(
+                              children: [
+                                Container(
+                                  padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
+                                  decoration: BoxDecoration(
+                                    color: Colors.green.withOpacity(0.2),
+                                    borderRadius: BorderRadius.circular(8),
+                                  ),
+                                  child: Text("👍 ${q['positives']}", style: const TextStyle(color: Colors.green)),
+                                ),
+                                const SizedBox(width: 8),
+                                Container(
+                                  padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
+                                  decoration: BoxDecoration(
+                                    color: Colors.red.withOpacity(0.2),
+                                    borderRadius: BorderRadius.circular(8),
+                                  ),
+                                  child: Text("👎 ${q['negatives']}", style: const TextStyle(color: Colors.red)),
+                                ),
+                              ],
+                            ),
+                            const SizedBox(height: 8),
+                            
+                            // Sebepler
+                            Wrap(
+                              spacing: 4,
+                              children: (q['reasons'] as List).map((r) => Chip(
+                                label: Text(r, style: const TextStyle(fontSize: 10)),
+                                backgroundColor: Colors.grey.shade800,
+                                padding: EdgeInsets.zero,
+                                materialTapTargetSize: MaterialTapTargetSize.shrinkWrap,
+                              )).toList(),
+                            ),
+                            const SizedBox(height: 12),
+                            
+                            // Actions
+                            Row(
+                              mainAxisAlignment: MainAxisAlignment.end,
+                              children: [
+                                TextButton.icon(
+                                  icon: const Icon(Icons.check, color: Colors.green, size: 18),
+                                  label: const Text("Onayla", style: TextStyle(color: Colors.green)),
+                                  onPressed: () {
+                                    Navigator.pop(context);
+                                    _showSnack("Soru onaylandı: ${q['preview']}");
+                                  },
+                                ),
+                                TextButton.icon(
+                                  icon: const Icon(Icons.refresh, color: Colors.blue, size: 18),
+                                  label: const Text("Sıfırla", style: TextStyle(color: Colors.blue)),
+                                  onPressed: () {
+                                    Navigator.pop(context);
+                                    _showSnack("Puanlar sıfırlandı: ${q['preview']}");
+                                  },
+                                ),
+                                TextButton.icon(
+                                  icon: const Icon(Icons.delete, color: Colors.red, size: 18),
+                                  label: const Text("Sil", style: TextStyle(color: Colors.red)),
+                                  onPressed: () {
+                                    Navigator.pop(context);
+                                    _showSnack("Soru silindi: ${q['preview']}");
+                                  },
+                                ),
+                              ],
+                            ),
+                          ],
+                        ),
+                      ),
+                    );
+                  },
+                ),
+              ),
+            ],
+          ),
+        ),
       ),
     );
   }
