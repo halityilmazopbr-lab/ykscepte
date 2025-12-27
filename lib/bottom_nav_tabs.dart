@@ -38,6 +38,7 @@ import 'screens/help_square_screen.dart'; // 🏛️ SORU MEYDANI
 import 'screens/help_ask_screen.dart'; 
 import 'screens/help_detail_screen.dart';
 import 'akademik_rontgen_screen.dart'; // YENİ
+import 'diamond/diamond_opportunities_widget.dart'; // 💎 Elmas Fırsatları
 
 /// Ana Sayfa Widget - Öğrenci Dashboard
 /// Bottom Navigation Bar'ın "Ana Sayfa" sekmesi
@@ -104,6 +105,16 @@ class AnaSayfaSekmesi extends StatelessWidget {
             _buildMenuCard(context, "Günlük Takip", Icons.today, const GunlukTakipEkrani(), Colors.teal, Colors.greenAccent),
             _buildMenuCard(context, "Rapor", Icons.leaderboard, RaporEkrani(ogrenci: ogrenci), Colors.indigo, Colors.indigoAccent),
           ]),
+          
+          // --- 💎 BUGÜN KAZANABİLECEĞİN ELMASLAR ---
+          Padding(
+            padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
+            child: DiamondOpportunitiesWidget(
+              ogrenciId: ogrenci.id,
+              ogrenciAdi: ogrenci.ad,
+              bekleyenOdevSayisi: 0, // TODO: Gerçek ödev sayısı ile değiştir
+            ),
+          ),
           
           // --- CANLI TRIVIA BANNER ---
           _buildTriviaBanner(context),
