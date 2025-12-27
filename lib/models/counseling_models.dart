@@ -16,6 +16,8 @@ class CounselingPackage {
   final bool includesParentMeeting;
   final bool includesEmergencySession;
   final List<String> features;
+  final int maxMembers;     // Maksimum öğrenci sınırı
+  final int currentMembers; // Mevcut kayıtlı öğrenci sayısı
 
   CounselingPackage({
     required this.id,
@@ -29,7 +31,15 @@ class CounselingPackage {
     this.includesParentMeeting = false,
     this.includesEmergencySession = false,
     required this.features,
+    required this.maxMembers,
+    this.currentMembers = 0,
   });
+
+  /// Kontenjan doldu mu?
+  bool get isFull => currentMembers >= maxMembers;
+  
+  /// Kalan kontenjan
+  int get remainingSlots => maxMembers - currentMembers;
 
   /// Öndeğer paketler
   static List<CounselingPackage> getDefaultPackages() {
@@ -43,7 +53,10 @@ class CounselingPackage {
         sessionDurationMinutes: 30,
         whatsappSupportLevel: '48 saat içinde yanıt',
         includesProgressReport: false,
+        maxMembers: 5, // ❗ 5 kişi sınırı
+        currentMembers: 3, // Demo: 3 kişi kayıtlı
         features: [
+          '👥 SADECE 5 KİŞİYE ÖZEL (Sınırlı Kontenjan)',
           'Ayda 4 × 30 dk seans',
           'WhatsApp destek (48 saat)',
           'Basit ilerleme takibi',
@@ -58,7 +71,10 @@ class CounselingPackage {
         sessionDurationMinutes: 30,
         whatsappSupportLevel: '24 saat içinde yanıt',
         includesProgressReport: true,
+        maxMembers: 4, // ❗ 4 kişi sınırı
+        currentMembers: 2, // Demo: 2 kişi kayıtlı
         features: [
+          '👥 SADECE 4 KİŞİYE ÖZEL (Sınırlı Kontenjan)',
           'Ayda 4 × 30 dk seans',
           'WhatsApp öncelikli (24 saat)',
           'Aylık detaylı ilerleme raporu',
@@ -76,6 +92,8 @@ class CounselingPackage {
         includesProgressReport: true,
         includesParentMeeting: true,
         includesEmergencySession: true,
+        maxMembers: 3, // ❗ 3 kişi sınırı
+        currentMembers: 2, // Demo: 2 kişi kayıtlı
         features: [
           '👑 SADECE 3 KİŞİYE ÖZEL (Sınırlı Kontenjan)',
           'Ayda 4 × 45 dk seans',

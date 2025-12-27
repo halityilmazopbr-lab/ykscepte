@@ -97,18 +97,38 @@ class CounselingPackagesScreen extends StatelessWidget {
       ),
       child: Column(
         children: [
+          // Standard Kontenjan Badge
+          if (package.type == CounselingPackageType.standard)
+            Container(
+              width: double.infinity,
+              padding: const EdgeInsets.symmetric(vertical: 8),
+              decoration: BoxDecoration(
+                color: package.isFull ? Colors.grey : const Color(0xFF10B981),
+                borderRadius: const BorderRadius.vertical(top: Radius.circular(18)),
+              ),
+              child: Text(
+                package.isFull 
+                    ? '❌ KONTENJAN DOLDU' 
+                    : '👥 Son ${package.remainingSlots} Kişilik Yer!',
+                textAlign: TextAlign.center,
+                style: const TextStyle(color: Colors.white, fontWeight: FontWeight.bold, fontSize: 12),
+              ),
+            ),
+          // Premium Kontenjan Badge
           if (isPopular)
             Container(
               width: double.infinity,
               padding: const EdgeInsets.symmetric(vertical: 8),
-              decoration: const BoxDecoration(
-                color: Color(0xFF6366F1),
-                borderRadius: BorderRadius.vertical(top: Radius.circular(18)),
+              decoration: BoxDecoration(
+                color: package.isFull ? Colors.grey : const Color(0xFF6366F1),
+                borderRadius: const BorderRadius.vertical(top: Radius.circular(18)),
               ),
-              child: const Text(
-                '⭐ EN POPÜLER',
+              child: Text(
+                package.isFull 
+                    ? '❌ KONTENJAN DOLDU' 
+                    : '⭐ EN POPÜLER - Son ${package.remainingSlots} Kişilik Yer!',
                 textAlign: TextAlign.center,
-                style: TextStyle(color: Colors.white, fontWeight: FontWeight.bold, fontSize: 12),
+                style: const TextStyle(color: Colors.white, fontWeight: FontWeight.bold, fontSize: 12),
               ),
             ),
           // VIP Özel Badge
@@ -116,14 +136,18 @@ class CounselingPackagesScreen extends StatelessWidget {
             Container(
               width: double.infinity,
               padding: const EdgeInsets.symmetric(vertical: 8),
-              decoration: const BoxDecoration(
-                gradient: LinearGradient(colors: [Color(0xFFFFD700), Color(0xFFFFA500)]),
-                borderRadius: BorderRadius.vertical(top: Radius.circular(18)),
+              decoration: BoxDecoration(
+                gradient: package.isFull 
+                    ? const LinearGradient(colors: [Colors.grey, Colors.grey])
+                    : const LinearGradient(colors: [Color(0xFFFFD700), Color(0xFFFFA500)]),
+                borderRadius: const BorderRadius.vertical(top: Radius.circular(18)),
               ),
-              child: const Text(
-                '👑 SADECE 3 KİŞİYE ÖZEL',
+              child: Text(
+                package.isFull 
+                    ? '❌ KONTENJAN DOLDU' 
+                    : '👑 Son ${package.remainingSlots} Kişilik VIP Yer!',
                 textAlign: TextAlign.center,
-                style: TextStyle(color: Colors.white, fontWeight: FontWeight.bold, fontSize: 12),
+                style: const TextStyle(color: Colors.white, fontWeight: FontWeight.bold, fontSize: 12),
               ),
             ),
           Padding(
@@ -168,16 +192,18 @@ class CounselingPackagesScreen extends StatelessWidget {
                   width: double.infinity,
                   height: 50,
                   child: ElevatedButton(
-                    onPressed: () {
+                    onPressed: package.isFull ? null : () {
                       _showPurchaseDialog(context, package);
                     },
                     style: ElevatedButton.styleFrom(
-                      backgroundColor: isPopular ? const Color(0xFF6366F1) : Colors.grey[800],
+                      backgroundColor: package.isFull 
+                          ? Colors.grey[400] 
+                          : (isPopular ? const Color(0xFF6366F1) : Colors.grey[800]),
                       shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
                     ),
-                    child: const Text(
-                      'SATIN AL',
-                      style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold, color: Colors.white),
+                    child: Text(
+                      package.isFull ? 'KONTENJAN DOLDU' : 'SATIN AL',
+                      style: const TextStyle(fontSize: 16, fontWeight: FontWeight.bold, color: Colors.white),
                     ),
                   ),
                 ),
