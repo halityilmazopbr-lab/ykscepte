@@ -85,7 +85,7 @@ class MainApp extends StatelessWidget {
   }
 }
 
-// --- GİRİŞ EKRANI ---
+// --- GİRİŞ EKRANI (YENİ MODERN TASARIM) ---
 class LoginPage extends StatefulWidget {
   const LoginPage({super.key});
   @override
@@ -105,13 +105,31 @@ class _LoginPageState extends State<LoginPage>
   final _kurumSifre = TextEditingController(text: "123456");
   
   late TabController _tc;
+  bool _obscurePassword = true;
+  bool _isLoading = false;
+  
   @override
   void initState() {
     super.initState();
     _tc = TabController(length: 5, vsync: this);
   }
+  
+  @override
+  void dispose() {
+    _tc.dispose();
+    _k.dispose();
+    _s.dispose();
+    _veliOgrenciId.dispose();
+    _veliErisimKodu.dispose();
+    _kurumId.dispose();
+    _kurumSifre.dispose();
+    super.dispose();
+  }
 
-  void _login() {
+  void _login() async {
+    setState(() => _isLoading = true);
+    await Future.delayed(const Duration(milliseconds: 500));
+    
     var user = VeriDeposu.girisKontrol(_k.text, _s.text);
     if (user != null) {
       if (user == "admin") {
@@ -133,11 +151,18 @@ class _LoginPageState extends State<LoginPage>
       }
     } else {
       ScaffoldMessenger.of(context)
-          .showSnackBar(const SnackBar(content: Text("Hatalı Giriş")));
+          .showSnackBar(const SnackBar(
+            content: Text("❌ Hatalı kullanıcı adı veya şifre"),
+            backgroundColor: Colors.red,
+          ));
     }
+    setState(() => _isLoading = false);
   }
 
-  void _veliGiris() {
+  void _veliGiris() async {
+    setState(() => _isLoading = true);
+    await Future.delayed(const Duration(milliseconds: 500));
+    
     var ogrenci = VeriDeposu.veliGirisKontrol(
       _veliOgrenciId.text, 
       _veliErisimKodu.text
@@ -150,12 +175,19 @@ class _LoginPageState extends State<LoginPage>
       );
     } else {
       ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(content: Text("Hatalı öğrenci ID veya erişim kodu")),
+        const SnackBar(
+          content: Text("❌ Hatalı öğrenci ID veya erişim kodu"),
+          backgroundColor: Colors.red,
+        ),
       );
     }
+    setState(() => _isLoading = false);
   }
 
-  void _kurumGiris() {
+  void _kurumGiris() async {
+    setState(() => _isLoading = true);
+    await Future.delayed(const Duration(milliseconds: 500));
+    
     var (yonetici, kurum) = VeriDeposu.kurumYoneticisiGirisKontrol(
       _kurumId.text, 
       _kurumSifre.text
@@ -169,148 +201,383 @@ class _LoginPageState extends State<LoginPage>
       );
     } else {
       ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(content: Text("Hatalı kurum ID veya şifre")),
+        const SnackBar(
+          content: Text("❌ Hatalı kurum ID veya şifre"),
+          backgroundColor: Colors.red,
+        ),
       );
+    }
+    setState(() => _isLoading = false);
+  }
+
+  // Rol renkleri
+  Color get _activeColor {
+    switch (_tc.index) {
+      case 0: return Colors.orange;      // Öğrenci
+      case 1: return Colors.purple;      // Öğretmen
+      case 2: return Colors.indigo;      // Kurum
+      case 3: return Colors.green;       // Veli
+      case 4: return Colors.red;         // Admin
+      default: return Colors.deepPurple;
     }
   }
 
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      body: Container(
-        decoration: BoxDecoration(
-            gradient: LinearGradient(
-                colors: [Colors.deepPurple.shade200, Colors.purple.shade400],
-                begin: Alignment.topLeft,
-                end: Alignment.bottomRight)),
-        child: Center(
-            child: SingleChildScrollView(
-                padding: const EdgeInsets.all(24),
-                child: Card(
-                    margin: const EdgeInsets.all(32),
-                    shape: RoundedRectangleBorder(
-                        borderRadius: BorderRadius.circular(16)),
-                    child: Padding(
+      backgroundColor: const Color(0xFF0D1117),
+      body: SafeArea(
+        child: SingleChildScrollView(
+          child: Padding(
+            padding: const EdgeInsets.all(24),
+            child: Column(
+              children: [
+                const SizedBox(height: 30),
+                
+                // ═══════════════════════════════════════════════════════
+                // LOGO VE BAŞLIK
+                // ═══════════════════════════════════════════════════════
+                Container(
+                  padding: const EdgeInsets.all(20),
+                  decoration: BoxDecoration(
+                    shape: BoxShape.circle,
+                    gradient: LinearGradient(
+                      colors: [Colors.deepPurple.shade400, Colors.purple.shade700],
+                    ),
+                    boxShadow: [
+                      BoxShadow(
+                        color: Colors.purple.withOpacity(0.3),
+                        blurRadius: 20,
+                        offset: const Offset(0, 10),
+                      ),
+                    ],
+                  ),
+                  child: Image.asset(
+                    'assets/logo.png',
+                    height: 80,
+                    width: 80,
+                  ),
+                ),
+                const SizedBox(height: 24),
+                
+                const Text(
+                  "YKS Cepte",
+                  style: TextStyle(
+                    color: Colors.white,
+                    fontSize: 32,
+                    fontWeight: FontWeight.bold,
+                    letterSpacing: 1.5,
+                  ),
+                ),
+                const SizedBox(height: 8),
+                Text(
+                  "Dijital Koçunuz",
+                  style: TextStyle(
+                    color: Colors.grey.shade400,
+                    fontSize: 16,
+                    letterSpacing: 1,
+                  ),
+                ),
+                const SizedBox(height: 40),
+                
+                // ═══════════════════════════════════════════════════════
+                // GİRİŞ KARTI
+                // ═══════════════════════════════════════════════════════
+                Container(
+                  decoration: BoxDecoration(
+                    color: const Color(0xFF161B22),
+                    borderRadius: BorderRadius.circular(24),
+                    border: Border.all(color: Colors.grey.shade800),
+                    boxShadow: [
+                      BoxShadow(
+                        color: Colors.black.withOpacity(0.3),
+                        blurRadius: 20,
+                        offset: const Offset(0, 10),
+                      ),
+                    ],
+                  ),
+                  child: Column(
+                    children: [
+                      // Tab Bar
+                      Container(
+                        decoration: BoxDecoration(
+                          color: const Color(0xFF21262D),
+                          borderRadius: const BorderRadius.vertical(top: Radius.circular(24)),
+                        ),
+                        child: TabBar(
+                          controller: _tc,
+                          onTap: (_) => setState(() {}),
+                          labelColor: _activeColor,
+                          unselectedLabelColor: Colors.grey.shade500,
+                          indicatorColor: _activeColor,
+                          indicatorWeight: 3,
+                          labelPadding: const EdgeInsets.symmetric(horizontal: 8),
+                          tabs: const [
+                            Tab(icon: Icon(Icons.school, size: 20), text: "Öğrenci"),
+                            Tab(icon: Icon(Icons.history_edu, size: 20), text: "Öğretmen"),
+                            Tab(icon: Icon(Icons.business, size: 20), text: "Kurum"),
+                            Tab(icon: Icon(Icons.family_restroom, size: 20), text: "Veli"),
+                            Tab(icon: Icon(Icons.admin_panel_settings, size: 20), text: "Admin"),
+                          ],
+                        ),
+                      ),
+                      
+                      // Form İçeriği
+                      Padding(
                         padding: const EdgeInsets.all(24),
-                        child:
-                          Column(mainAxisSize: MainAxisSize.min, children: [
-                          Image.asset(
-                            'assets/logo.png',
-                            height: 140,
-                            width: 140,
-                          ),
-                          const SizedBox(height: 20),
-                          TabBar(
-                              controller: _tc,
-                              labelColor: Colors.purple,
-                              unselectedLabelColor: Colors.grey,
-                              isScrollable: true,
-                              tabs: const [
-                                Tab(text: "Öğrenci"),
-                                Tab(text: "Öğretmen"),
-                                Tab(icon: Icon(Icons.business), text: "Kurum"),
-                                Tab(icon: Icon(Icons.family_restroom), text: "Veli"),
-                                Tab(text: "Admin"),
-                              ]),
-                          const SizedBox(height: 20),
-                          SizedBox(
-                            height: 180,
-                            child: TabBarView(
-                              controller: _tc,
-                              children: [
-                                _buildStandardLoginForm(),
-                                _buildStandardLoginForm(),
-                                _buildKurumLoginForm(),
-                                _buildVeliLoginForm(),
-                                _buildStandardLoginForm(),
-                              ],
-                            ),
-                          ),
-                        ]))))),
+                        child: AnimatedSwitcher(
+                          duration: const Duration(milliseconds: 300),
+                          child: _buildActiveForm(),
+                        ),
+                      ),
+                    ],
+                  ),
+                ),
+                
+                const SizedBox(height: 24),
+                
+                // Alt Bilgi
+                Text(
+                  "© 2024 YKS Cepte - Tüm Hakları Saklıdır",
+                  style: TextStyle(
+                    color: Colors.grey.shade600,
+                    fontSize: 12,
+                  ),
+                ),
+              ],
+            ),
+          ),
+        ),
       ),
     );
   }
-
-  Widget _buildStandardLoginForm() {
+  
+  Widget _buildActiveForm() {
+    switch (_tc.index) {
+      case 0: return _buildOgrenciForm();
+      case 1: return _buildOgretmenForm();
+      case 2: return _buildKurumForm();
+      case 3: return _buildVeliForm();
+      case 4: return _buildAdminForm();
+      default: return _buildOgrenciForm();
+    }
+  }
+  
+  Widget _buildOgrenciForm() {
     return Column(
+      key: const ValueKey('ogrenci'),
       children: [
-        TextField(
-            controller: _k,
-            decoration: const InputDecoration(
-                labelText: "Kullanıcı Adı",
-                border: OutlineInputBorder())),
-        const SizedBox(height: 10),
-        TextField(
-            controller: _s,
-            obscureText: true,
-            decoration: const InputDecoration(
-                labelText: "Şifre",
-                border: OutlineInputBorder())),
-        const SizedBox(height: 20),
-        SizedBox(
-            width: double.infinity,
-            child: ElevatedButton(
-                onPressed: _login,
-                child: const Text("GİRİŞ YAP"))),
+        _buildTextField(
+          controller: _k,
+          label: "Kullanıcı Adı / E-Posta",
+          icon: Icons.person,
+          color: Colors.orange,
+        ),
+        const SizedBox(height: 16),
+        _buildTextField(
+          controller: _s,
+          label: "Şifre",
+          icon: Icons.lock,
+          color: Colors.orange,
+          isPassword: true,
+        ),
+        const SizedBox(height: 24),
+        _buildLoginButton("GİRİŞ YAP", Colors.orange, _login),
+        const SizedBox(height: 16),
+        _buildInfoBox("Henüz hesabınız yok mu? Kayıt olmak için lütfen kurumunuza başvurun.", Colors.orange),
       ],
     );
   }
-
-  Widget _buildVeliLoginForm() {
+  
+  Widget _buildOgretmenForm() {
     return Column(
+      key: const ValueKey('ogretmen'),
       children: [
-        TextField(
-            controller: _veliOgrenciId,
-            decoration: const InputDecoration(
-                labelText: "Öğrenci ID / TC No",
-                prefixIcon: Icon(Icons.person),
-                border: OutlineInputBorder())),
-        const SizedBox(height: 10),
-        TextField(
-            controller: _veliErisimKodu,
-            obscureText: true,
-            decoration: const InputDecoration(
-                labelText: "Veli Erişim Kodu",
-                prefixIcon: Icon(Icons.vpn_key),
-                border: OutlineInputBorder())),
-        const SizedBox(height: 20),
-        SizedBox(
-            width: double.infinity,
-            child: ElevatedButton.icon(
-                onPressed: _veliGiris,
-                icon: const Icon(Icons.family_restroom),
-                style: ElevatedButton.styleFrom(backgroundColor: Colors.orange),
-                label: const Text("VELİ GİRİŞİ"))),
+        _buildTextField(
+          controller: _k,
+          label: "TC No / Kullanıcı Adı",
+          icon: Icons.badge,
+          color: Colors.purple,
+        ),
+        const SizedBox(height: 16),
+        _buildTextField(
+          controller: _s,
+          label: "Şifre",
+          icon: Icons.lock,
+          color: Colors.purple,
+          isPassword: true,
+        ),
+        const SizedBox(height: 24),
+        _buildLoginButton("ÖĞRETMEN GİRİŞİ", Colors.purple, _login),
+        const SizedBox(height: 16),
+        _buildInfoBox("Hesabınız kurum yöneticiniz tarafından oluşturulur.", Colors.purple),
       ],
     );
   }
-
-  Widget _buildKurumLoginForm() {
+  
+  Widget _buildKurumForm() {
     return Column(
+      key: const ValueKey('kurum'),
       children: [
-        TextField(
-            controller: _kurumId,
-            decoration: const InputDecoration(
-                labelText: "Kurum ID",
-                prefixIcon: Icon(Icons.business),
-                border: OutlineInputBorder())),
-        const SizedBox(height: 10),
-        TextField(
-            controller: _kurumSifre,
-            obscureText: true,
-            decoration: const InputDecoration(
-                labelText: "Şifre",
-                prefixIcon: Icon(Icons.lock),
-                border: OutlineInputBorder())),
-        const SizedBox(height: 20),
-        SizedBox(
-            width: double.infinity,
-            child: ElevatedButton.icon(
-                onPressed: _kurumGiris,
-                icon: const Icon(Icons.business),
-                style: ElevatedButton.styleFrom(backgroundColor: Colors.indigo),
-                label: const Text("KURUM GİRİŞİ", style: TextStyle(color: Colors.white)))),
+        _buildTextField(
+          controller: _kurumId,
+          label: "Kurum ID",
+          icon: Icons.business,
+          color: Colors.indigo,
+        ),
+        const SizedBox(height: 16),
+        _buildTextField(
+          controller: _kurumSifre,
+          label: "Yönetici Şifresi",
+          icon: Icons.lock,
+          color: Colors.indigo,
+          isPassword: true,
+        ),
+        const SizedBox(height: 24),
+        _buildLoginButton("KURUM GİRİŞİ", Colors.indigo, _kurumGiris),
       ],
+    );
+  }
+  
+  Widget _buildVeliForm() {
+    return Column(
+      key: const ValueKey('veli'),
+      children: [
+        _buildTextField(
+          controller: _veliOgrenciId,
+          label: "Öğrenci ID / TC No",
+          icon: Icons.person_search,
+          color: Colors.green,
+        ),
+        const SizedBox(height: 16),
+        _buildTextField(
+          controller: _veliErisimKodu,
+          label: "Veli Erişim Kodu",
+          icon: Icons.vpn_key,
+          color: Colors.green,
+          isPassword: true,
+        ),
+        const SizedBox(height: 24),
+        _buildLoginButton("VELİ GİRİŞİ", Colors.green, _veliGiris),
+        const SizedBox(height: 16),
+        _buildInfoBox("Erişim kodunu öğrencinizden veya kurumunuzdan talep edebilirsiniz.", Colors.green),
+      ],
+    );
+  }
+  
+  Widget _buildAdminForm() {
+    return Column(
+      key: const ValueKey('admin'),
+      children: [
+        _buildTextField(
+          controller: _k,
+          label: "Yönetici Kullanıcı Adı",
+          icon: Icons.admin_panel_settings,
+          color: Colors.red,
+        ),
+        const SizedBox(height: 16),
+        _buildTextField(
+          controller: _s,
+          label: "Şifre",
+          icon: Icons.lock,
+          color: Colors.red,
+          isPassword: true,
+        ),
+        const SizedBox(height: 24),
+        _buildLoginButton("ADMİN GİRİŞİ", Colors.red, _login),
+      ],
+    );
+  }
+  
+  Widget _buildTextField({
+    required TextEditingController controller,
+    required String label,
+    required IconData icon,
+    required Color color,
+    bool isPassword = false,
+  }) {
+    return TextField(
+      controller: controller,
+      obscureText: isPassword && _obscurePassword,
+      style: const TextStyle(color: Colors.white),
+      decoration: InputDecoration(
+        labelText: label,
+        labelStyle: TextStyle(color: Colors.grey.shade400),
+        prefixIcon: Icon(icon, color: color),
+        suffixIcon: isPassword
+            ? IconButton(
+                icon: Icon(
+                  _obscurePassword ? Icons.visibility_off : Icons.visibility,
+                  color: Colors.grey.shade500,
+                ),
+                onPressed: () => setState(() => _obscurePassword = !_obscurePassword),
+              )
+            : null,
+        filled: true,
+        fillColor: const Color(0xFF21262D),
+        border: OutlineInputBorder(
+          borderRadius: BorderRadius.circular(12),
+          borderSide: BorderSide.none,
+        ),
+        enabledBorder: OutlineInputBorder(
+          borderRadius: BorderRadius.circular(12),
+          borderSide: BorderSide(color: Colors.grey.shade700),
+        ),
+        focusedBorder: OutlineInputBorder(
+          borderRadius: BorderRadius.circular(12),
+          borderSide: BorderSide(color: color, width: 2),
+        ),
+      ),
+    );
+  }
+  
+  Widget _buildLoginButton(String text, Color color, VoidCallback onPressed) {
+    return SizedBox(
+      width: double.infinity,
+      height: 56,
+      child: ElevatedButton(
+        onPressed: _isLoading ? null : onPressed,
+        style: ElevatedButton.styleFrom(
+          backgroundColor: color,
+          foregroundColor: Colors.white,
+          shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(14)),
+          elevation: 5,
+          shadowColor: color.withOpacity(0.5),
+        ),
+        child: _isLoading
+            ? const SizedBox(
+                height: 24,
+                width: 24,
+                child: CircularProgressIndicator(color: Colors.white, strokeWidth: 2),
+              )
+            : Text(
+                text,
+                style: const TextStyle(fontSize: 16, fontWeight: FontWeight.bold, letterSpacing: 1),
+              ),
+      ),
+    );
+  }
+  
+  Widget _buildInfoBox(String text, Color color) {
+    return Container(
+      padding: const EdgeInsets.all(12),
+      decoration: BoxDecoration(
+        color: color.withOpacity(0.1),
+        borderRadius: BorderRadius.circular(10),
+        border: Border.all(color: color.withOpacity(0.3)),
+      ),
+      child: Row(
+        children: [
+          Icon(Icons.info_outline, color: color, size: 18),
+          const SizedBox(width: 10),
+          Expanded(
+            child: Text(
+              text,
+              style: TextStyle(color: Colors.grey.shade400, fontSize: 12),
+            ),
+          ),
+        ],
+      ),
     );
   }
 }
