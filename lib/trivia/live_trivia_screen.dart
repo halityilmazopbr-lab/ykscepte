@@ -9,6 +9,7 @@ import 'trivia_service.dart';
 import 'admin_trivia_panel.dart';
 import '../diamond/diamond_service.dart'; // 💎 Elmas Servisi
 import '../diamond/diamond_widgets.dart'; // 💎 Elmas Animasyonu
+import '../data.dart'; // 🔐 Rol kontrolü için
 
 class LiveTriviaScreen extends StatefulWidget {
   const LiveTriviaScreen({super.key});
@@ -183,38 +184,39 @@ class _LiveTriviaScreenState extends State<LiveTriviaScreen> with TickerProvider
 
           const SizedBox(height: 60),
 
-          // Admin Panel Butonu (Test için)
-          Container(
-            padding: const EdgeInsets.all(16),
-            margin: const EdgeInsets.symmetric(horizontal: 40),
-            decoration: BoxDecoration(
-              color: Colors.white.withValues(alpha: 0.05),
-              borderRadius: BorderRadius.circular(12),
-              border: Border.all(color: Colors.red.withValues(alpha: 0.3)),
-            ),
-            child: Column(
-              children: [
-                Text(
-                  "🔐 YÖNETİCİ ERİŞİMİ",
-                  style: TextStyle(color: Colors.grey[600], fontSize: 11),
-                ),
-                const SizedBox(height: 10),
-                TextButton.icon(
-                  onPressed: () {
-                    Navigator.push(
-                      context,
-                      MaterialPageRoute(builder: (context) => const AdminTriviaPanel()),
-                    );
-                  },
-                  icon: const Icon(Icons.admin_panel_settings, color: Colors.red, size: 18),
-                  label: const Text(
-                    "Admin Paneli",
-                    style: TextStyle(color: Colors.red),
+          // Admin Panel Butonu (Sadece admin için görünür)
+          if (VeriDeposu.aktifKullaniciRol == "Yönetici")
+            Container(
+              padding: const EdgeInsets.all(16),
+              margin: const EdgeInsets.symmetric(horizontal: 40),
+              decoration: BoxDecoration(
+                color: Colors.white.withValues(alpha: 0.05),
+                borderRadius: BorderRadius.circular(12),
+                border: Border.all(color: Colors.red.withValues(alpha: 0.3)),
+              ),
+              child: Column(
+                children: [
+                  Text(
+                    "🔐 YÖNETİCİ ERİŞİMİ",
+                    style: TextStyle(color: Colors.grey[600], fontSize: 11),
                   ),
-                ),
-              ],
+                  const SizedBox(height: 10),
+                  TextButton.icon(
+                    onPressed: () {
+                      Navigator.push(
+                        context,
+                        MaterialPageRoute(builder: (context) => const AdminTriviaPanel()),
+                      );
+                    },
+                    icon: const Icon(Icons.admin_panel_settings, color: Colors.red, size: 18),
+                    label: const Text(
+                      "Admin Paneli",
+                      style: TextStyle(color: Colors.red),
+                    ),
+                  ),
+                ],
+              ),
             ),
-          ),
 
           const SizedBox(height: 20),
 
