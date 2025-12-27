@@ -472,12 +472,12 @@ class _OnboardingFlowState extends State<OnboardingFlow> {
       padding: const EdgeInsets.all(14),
       decoration: BoxDecoration(
         gradient: LinearGradient(
-          colors: [color.withOpacity(0.15), color.withOpacity(0.05)],
+          colors: [color.withOpacity(0.35), color.withOpacity(0.15)],
           begin: Alignment.topLeft,
           end: Alignment.bottomRight,
         ),
         borderRadius: BorderRadius.circular(12),
-        border: Border.all(color: color.withOpacity(0.3), width: 1.5),
+        border: Border.all(color: color.withOpacity(0.6), width: 1.5),
       ),
       child: Row(
         children: [
