@@ -2,6 +2,9 @@ import 'package:flutter/material.dart';
 import '../../models.dart';
 import '../teacher_service.dart';
 import '../models/teacher_models.dart';
+import 'give_homework_screen.dart';
+import 'teacher_attendance_screen.dart';
+import 'teacher_content_upload_screen.dart';
 
 /// 🏫 Sınıflarım - Öğretmenin sorumlu olduğu sınıflar
 class MyClassesScreen extends StatelessWidget {
@@ -212,7 +215,12 @@ class MyClassesScreen extends StatelessWidget {
                         color: Colors.orange,
                         onTap: () {
                           Navigator.pop(context);
-                          // TODO: Ödev verme ekranına git
+                          Navigator.push(
+                            context,
+                            MaterialPageRoute(
+                              builder: (context) => GiveHomeworkScreen(ogretmen: ogretmen),
+                            ),
+                          );
                         },
                       ),
                       const SizedBox(width: 12),
@@ -222,18 +230,30 @@ class MyClassesScreen extends StatelessWidget {
                         color: Colors.teal,
                         onTap: () {
                           Navigator.pop(context);
-                          ScaffoldMessenger.of(context).showSnackBar(
-                            const SnackBar(content: Text("🚧 QR Yoklama yakında!")),
+                          Navigator.push(
+                            context,
+                            MaterialPageRoute(
+                              builder: (context) => TeacherAttendanceScreen(ogretmen: ogretmen),
+                            ),
                           );
                         },
                       ),
                       const SizedBox(width: 12),
                       _buildActionButton(
-                        icon: Icons.message,
-                        label: "Bildir",
-                        color: Colors.green,
+                        icon: Icons.upload_file,
+                        label: "İçerik",
+                        color: Colors.blue,
                         onTap: () {
                           Navigator.pop(context);
+                          Navigator.push(
+                            context,
+                            MaterialPageRoute(
+                              builder: (context) => TeacherContentUploadScreen(
+                                ogretmen: ogretmen,
+                                preSelectedClass: classInfo,
+                              ),
+                            ),
+                          );
                         },
                       ),
                     ],

@@ -335,4 +335,19 @@ class TeacherService {
         .where((o) => classInfo.studentIds.contains(o.id))
         .toList();
   }
+  // ═══════════════════════════════════════════════════════════════
+  // 📤 İÇERİK YÜKLEME (PDF/FOTO)
+  // ═══════════════════════════════════════════════════════════════
+  
+  static Future<bool> uploadContent(TeacherContentModel content) async {
+    try {
+      // Demo: Collection'a yaz
+      await _db.collection('teacher_contents').doc(content.id).set(content.toJson());
+      debugPrint('📤 İçerik yüklendi: ${content.title} (${content.type})');
+      return true;
+    } catch (e) {
+      debugPrint('❌ İçerik yükleme hatası: $e');
+      return false; // Demo modunda olduğumuz için true dönebiliriz ama loglanması iyidir
+    }
+  }
 }

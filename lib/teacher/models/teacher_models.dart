@@ -235,3 +235,51 @@ class LessonSchedule {
     this.room,
   });
 }
+
+// ═══════════════════════════════════════════════════════════════
+// 📚 ÖĞRETMEN İÇERİK MODELİ (PDF/FOTO)
+// ═══════════════════════════════════════════════════════════════
+enum ContentType { pdf, image }
+enum ContentCategory { quiz, trial, summary, question, other }
+
+class TeacherContentModel {
+  final String id;
+  final String title;
+  final String description;
+  final ContentType type;
+  final ContentCategory category;
+  final String fileUrl;
+  final String teacherId;
+  final String teacherName;
+  final String? classId; // Tüm sınıfa
+  final String? studentId; // Tek öğrenciye
+  final DateTime createdAt;
+
+  TeacherContentModel({
+    required this.id,
+    required this.title,
+    required this.description,
+    required this.type,
+    required this.category,
+    required this.fileUrl,
+    required this.teacherId,
+    required this.teacherName,
+    this.classId,
+    this.studentId,
+    required this.createdAt,
+  });
+
+  Map<String, dynamic> toJson() => {
+    'id': id,
+    'title': title,
+    'description': description,
+    'type': type.toString(),
+    'category': category.toString(),
+    'fileUrl': fileUrl,
+    'teacherId': teacherId,
+    'teacherName': teacherName,
+    'classId': classId,
+    'studentId': studentId,
+    'createdAt': createdAt.toIso8601String(),
+  };
+}
