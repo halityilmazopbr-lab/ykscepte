@@ -221,14 +221,55 @@ class _FlashcardsEkraniState extends State<FlashcardsEkrani> {
     
     setState(() => _isGenerating = true);
     
-    try {
-      final prompt = '''Sen bir YKS öğretmenisin. Konu: "$topic".
-Bana bilgi kartı (Flashcard) formatında 10 adet Soru-Cevap çifti oluştur.
-Çıktıyı SADECE şu JSON formatında ver, başka hiçbir şey yazma:
+    // 🎯 ÖSYM MASTER PROMPT
+    const masterPrompt = '''
+Sen, ÖSYM Soru Hazırlama Komitesi'nde 20 yıl görev yapmış, emekli bir profesör ve aynı zamanda öğrencilere ilham veren bir koçsun.
+
+🎯 GÖREVİN:
+Verilen konuda ÖSYM formatına uygun, öğrencinin aklında kalacak ve sınavda karşısına çıkma ihtimali yüksek olan bilgi kartları (flashcard) üret.
+
+📚 TEMEL KURALLAR:
+1. SADECE MEB Müfredatı ve ÖSYM çıkmış soru tarzına uygun ol.
+2. Wikipedia veya gereksiz ansiklopedik bilgilerden KAÇIN. Net ve öz ol.
+3. Tarihleri, formülleri, isimleri ve kavramları DOĞRU yaz. Hata YASAK.
+4. Her kartta pedagojik bir yaklaşım olsun: İpucu ile düşündür, Motivasyonla ödüllendir.
+
+📋 ZORUNLU JSON FORMATI (Başka format KABUL EDİLMEZ):
 [
-  {"front": "Soru 1", "back": "Cevap 1"},
-  {"front": "Soru 2", "back": "Cevap 2"}
-]''';
+  {
+    "question": "ÖSYM tarzı soru metni",
+    "answer": "Net ve doğru cevap",
+    "hint": "Cevabı bulamazsa yardımcı olacak ipucu (1 cümle)",
+    "motivation": "Öğrenciyi motive eden kısa not (1 cümle)",
+    "importance": "Her Yıl Çıkar | Sık Çıkar | Nadiren Çıkar"
+  }
+]
+
+🔥 ÖNEM DERECELERİ:
+- "Her Yıl Çıkar": Son 5 yılda en az 3 kez çıkmış konular
+- "Sık Çıkar": Son 5 yılda 1-2 kez çıkmış konular  
+- "Nadiren Çıkar": Müfredatta var ama seyrek sorulan konular
+
+💡 İPUCU YAZMA REHBERİ:
+- Doğrudan cevabı VERMEYECEKSİN.
+- Hafızada çağrışım yapacak bir anahtar ver.
+
+🚀 MOTİVASYON NOTU REHBERİ:
+- Kısa, samimi ve cesaretlendirici ol.
+
+⚠️ KRİTİK: JSON formatından ASLA çıkma. Soru sayısı tam 10 olsun.
+''';
+
+    try {
+      final prompt = '''$masterPrompt
+
+---
+
+KONU: "$topic"
+KART SAYISI: 10
+
+Yukarıdaki konuda 10 adet ÖSYM tarzı bilgi kartı oluştur.
+SADECE JSON dizisi döndür, başka hiçbir şey yazma.''';
 
       final response = await GravityAI.generateText(prompt);
       
@@ -240,9 +281,12 @@ Bana bilgi kartı (Flashcard) formatında 10 adet Soru-Cevap çifti oluştur.
         final List<dynamic> parsed = jsonDecode(jsonStr);
         
         final aiCards = parsed.map((item) => LeitnerCard(
-          id: "AI:$topic:${item['front']}",
-          front: item['front'],
-          back: item['back'],
+          id: "AI:$topic:${item['question'] ?? item['front']}",
+          front: item['question'] ?? item['front'] ?? '',
+          back: item['answer'] ?? item['back'] ?? '',
+          hint: item['hint'] ?? 'Bu konuyu tekrar gözden geçir.',
+          motivation: item['motivation'] ?? 'Her soru seni hedefe yaklaştırıyor!',
+          importance: item['importance'] ?? 'Sık Çıkar',
           box: 1,
         )).toList();
         
@@ -256,7 +300,10 @@ Bana bilgi kartı (Flashcard) formatında 10 adet Soru-Cevap çifti oluştur.
         Navigator.pop(context);
         
         ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(content: Text("✨ ${aiCards.length} kart oluşturuldu!"), backgroundColor: Colors.green),
+          SnackBar(
+            content: Text("✨ ${aiCards.length} ÖSYM tarzı kart oluşturuldu!"), 
+            backgroundColor: Colors.green,
+          ),
         );
       }
     } catch (e) {
@@ -425,28 +472,35 @@ Bana bilgi kartı (Flashcard) formatında 10 adet Soru-Cevap çifti oluştur.
     );
   }
 
+  // 🔔 İpucu gösterme durumu
+  bool _showHint = false;
+  
   Widget _buildFlipCard(LeitnerCard card) {
-    return FlipCard(
-      direction: FlipDirection.HORIZONTAL,
-      front: _buildCardFace(card.front, true, card.box),
-      back: _buildCardFace(card.back, false, card.box),
+    return StatefulBuilder(
+      builder: (context, setCardState) {
+        return FlipCard(
+          direction: FlipDirection.HORIZONTAL,
+          onFlip: () => setCardState(() => _showHint = false), // Çevirince ipucu gizle
+          front: _buildEnhancedFront(card, setCardState),
+          back: _buildEnhancedBack(card),
+        );
+      },
     );
   }
 
-  Widget _buildCardFace(String text, bool isFront, int box) {
+  /// 🎯 ÖN YÜZ - Soru + Önem Derecesi + İpucu Butonu
+  Widget _buildEnhancedFront(LeitnerCard card, StateSetter setCardState) {
     return Container(
       decoration: BoxDecoration(
         gradient: LinearGradient(
-          colors: isFront 
-              ? [Colors.purple.shade800, Colors.deepPurple.shade700]
-              : [Colors.green.shade700, Colors.teal.shade600],
+          colors: [Colors.purple.shade800, Colors.deepPurple.shade700],
           begin: Alignment.topLeft,
           end: Alignment.bottomRight,
         ),
         borderRadius: BorderRadius.circular(24),
         boxShadow: [
           BoxShadow(
-            color: (isFront ? Colors.purple : Colors.green).withAlpha(60),
+            color: Colors.purple.withAlpha(60),
             blurRadius: 20,
             offset: const Offset(0, 10),
           ),
@@ -454,64 +508,229 @@ Bana bilgi kartı (Flashcard) formatında 10 adet Soru-Cevap çifti oluştur.
       ),
       child: Stack(
         children: [
-          // Kutu göstergesi
+          // 🔥 ÖNEM DERECESİ BADGE (Sağ Üst)
           Positioned(
             top: 16,
             right: 16,
             child: Container(
               padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
               decoration: BoxDecoration(
-                color: Colors.white.withAlpha(30),
+                color: card.importanceColor.withAlpha(200),
                 borderRadius: BorderRadius.circular(20),
+                boxShadow: [
+                  BoxShadow(
+                    color: card.importanceColor.withAlpha(100),
+                    blurRadius: 8,
+                  ),
+                ],
               ),
               child: Row(
                 mainAxisSize: MainAxisSize.min,
                 children: [
-                  Icon(
-                    box == 1 ? Icons.looks_one : (box == 2 ? Icons.looks_two : Icons.looks_3),
-                    color: Colors.white70,
-                    size: 16,
-                  ),
+                  Text(card.importanceEmoji, style: const TextStyle(fontSize: 14)),
                   const SizedBox(width: 4),
                   Text(
-                    box == 1 ? "Günlük" : (box == 2 ? "3 Günlük" : "Haftalık"),
-                    style: const TextStyle(color: Colors.white70, fontSize: 10),
+                    card.importance,
+                    style: const TextStyle(color: Colors.white, fontSize: 10, fontWeight: FontWeight.bold),
                   ),
                 ],
               ),
             ),
           ),
           
-          // Ana içerik
+          // 📦 Kutu göstergesi (Sol Üst)
+          Positioned(
+            top: 16,
+            left: 16,
+            child: Container(
+              padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
+              decoration: BoxDecoration(
+                color: Colors.white.withAlpha(30),
+                borderRadius: BorderRadius.circular(12),
+              ),
+              child: Text(
+                card.box == 1 ? "📅 Günlük" : (card.box == 2 ? "📆 3 Günlük" : "🗓️ Haftalık"),
+                style: const TextStyle(color: Colors.white70, fontSize: 10),
+              ),
+            ),
+          ),
+          
+          // 🎯 ANA İÇERİK - Soru
           Center(
             child: Padding(
-              padding: const EdgeInsets.all(32),
+              padding: const EdgeInsets.fromLTRB(24, 60, 24, 80),
               child: Column(
                 mainAxisAlignment: MainAxisAlignment.center,
                 children: [
-                  Icon(
-                    isFront ? Icons.help_outline : Icons.lightbulb,
-                    color: Colors.white.withAlpha(100),
-                    size: 40,
+                  const Icon(Icons.help_outline, color: Colors.white30, size: 40),
+                  const SizedBox(height: 12),
+                  const Text(
+                    "SORU",
+                    style: TextStyle(color: Colors.white54, fontSize: 12, letterSpacing: 2),
                   ),
                   const SizedBox(height: 16),
-                  Text(
-                    isFront ? "SORU" : "CEVAP",
-                    style: TextStyle(
-                      color: Colors.white.withAlpha(150),
-                      fontSize: 12,
-                      letterSpacing: 2,
+                  Flexible(
+                    child: SingleChildScrollView(
+                      child: Text(
+                        card.front,
+                        textAlign: TextAlign.center,
+                        style: const TextStyle(
+                          color: Colors.white,
+                          fontSize: 20,
+                          fontWeight: FontWeight.bold,
+                          height: 1.4,
+                        ),
+                      ),
                     ),
                   ),
+                  
+                  // 💡 İPUCU ALANI
+                  if (_showHint) ...[
+                    const SizedBox(height: 20),
+                    Container(
+                      padding: const EdgeInsets.all(12),
+                      decoration: BoxDecoration(
+                        color: Colors.amber.withAlpha(40),
+                        borderRadius: BorderRadius.circular(12),
+                        border: Border.all(color: Colors.amber.withAlpha(80)),
+                      ),
+                      child: Row(
+                        children: [
+                          const Text("💡", style: TextStyle(fontSize: 18)),
+                          const SizedBox(width: 8),
+                          Expanded(
+                            child: Text(
+                              card.hint,
+                              style: const TextStyle(color: Colors.white, fontSize: 13, fontStyle: FontStyle.italic),
+                            ),
+                          ),
+                        ],
+                      ),
+                    ),
+                  ],
+                ],
+              ),
+            ),
+          ),
+          
+          // 🔘 ALT BUTONLAR
+          Positioned(
+            bottom: 16,
+            left: 0,
+            right: 0,
+            child: Row(
+              mainAxisAlignment: MainAxisAlignment.center,
+              children: [
+                // İpucu Butonu
+                GestureDetector(
+                  onTap: () => setCardState(() => _showHint = !_showHint),
+                  child: Container(
+                    padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
+                    decoration: BoxDecoration(
+                      color: _showHint ? Colors.amber : Colors.white.withAlpha(20),
+                      borderRadius: BorderRadius.circular(20),
+                    ),
+                    child: Row(
+                      mainAxisSize: MainAxisSize.min,
+                      children: [
+                        Icon(
+                          Icons.lightbulb_outline, 
+                          color: _showHint ? Colors.black : Colors.white70, 
+                          size: 16,
+                        ),
+                        const SizedBox(width: 6),
+                        Text(
+                          _showHint ? "İpucu Gizle" : "İpucu Al",
+                          style: TextStyle(
+                            color: _showHint ? Colors.black : Colors.white70, 
+                            fontSize: 12,
+                          ),
+                        ),
+                      ],
+                    ),
+                  ),
+                ),
+                const SizedBox(width: 12),
+                // Çevir İpucu
+                Container(
+                  padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
+                  decoration: BoxDecoration(
+                    color: Colors.white.withAlpha(20),
+                    borderRadius: BorderRadius.circular(20),
+                  ),
+                  child: const Text(
+                    "👆 Çevirmek için dokun",
+                    style: TextStyle(color: Colors.white54, fontSize: 11),
+                  ),
+                ),
+              ],
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+
+  /// ✅ ARKA YÜZ - Cevap + Motivasyon Notu
+  Widget _buildEnhancedBack(LeitnerCard card) {
+    return Container(
+      decoration: BoxDecoration(
+        gradient: LinearGradient(
+          colors: [Colors.green.shade700, Colors.teal.shade600],
+          begin: Alignment.topLeft,
+          end: Alignment.bottomRight,
+        ),
+        borderRadius: BorderRadius.circular(24),
+        boxShadow: [
+          BoxShadow(
+            color: Colors.green.withAlpha(60),
+            blurRadius: 20,
+            offset: const Offset(0, 10),
+          ),
+        ],
+      ),
+      child: Stack(
+        children: [
+          // ✅ Check Badge (Sağ Üst)
+          Positioned(
+            top: 16,
+            right: 16,
+            child: Container(
+              padding: const EdgeInsets.all(8),
+              decoration: BoxDecoration(
+                color: Colors.white.withAlpha(30),
+                shape: BoxShape.circle,
+              ),
+              child: const Icon(Icons.check, color: Colors.white, size: 20),
+            ),
+          ),
+          
+          // 🎯 ANA İÇERİK - Cevap
+          Center(
+            child: Padding(
+              padding: const EdgeInsets.fromLTRB(24, 50, 24, 100),
+              child: Column(
+                mainAxisAlignment: MainAxisAlignment.center,
+                children: [
+                  const Icon(Icons.lightbulb, color: Colors.white30, size: 40),
+                  const SizedBox(height: 12),
+                  const Text(
+                    "CEVAP",
+                    style: TextStyle(color: Colors.white54, fontSize: 12, letterSpacing: 2),
+                  ),
                   const SizedBox(height: 16),
-                  Text(
-                    text,
-                    textAlign: TextAlign.center,
-                    style: const TextStyle(
-                      color: Colors.white,
-                      fontSize: 22,
-                      fontWeight: FontWeight.bold,
-                      height: 1.4,
+                  Flexible(
+                    child: SingleChildScrollView(
+                      child: Text(
+                        card.back,
+                        textAlign: TextAlign.center,
+                        style: const TextStyle(
+                          color: Colors.white,
+                          fontSize: 22,
+                          fontWeight: FontWeight.bold,
+                          height: 1.4,
+                        ),
+                      ),
                     ),
                   ),
                 ],
@@ -519,18 +738,37 @@ Bana bilgi kartı (Flashcard) formatında 10 adet Soru-Cevap çifti oluştur.
             ),
           ),
           
-          // Swipe ipucu
-          if (isFront)
-            Positioned(
-              bottom: 20,
-              left: 0,
-              right: 0,
-              child: Text(
-                "Çevirmek için dokun",
-                textAlign: TextAlign.center,
-                style: TextStyle(color: Colors.white.withAlpha(100), fontSize: 12),
+          // 🚀 MOTİVASYON NOTU (Alt Şerit)
+          Positioned(
+            bottom: 0,
+            left: 0,
+            right: 0,
+            child: Container(
+              padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 14),
+              decoration: BoxDecoration(
+                gradient: LinearGradient(
+                  colors: [Colors.amber.shade600, Colors.orange.shade500],
+                ),
+                borderRadius: const BorderRadius.vertical(bottom: Radius.circular(24)),
+              ),
+              child: Row(
+                children: [
+                  const Text("🚀", style: TextStyle(fontSize: 18)),
+                  const SizedBox(width: 10),
+                  Expanded(
+                    child: Text(
+                      card.motivation,
+                      style: const TextStyle(
+                        color: Colors.white,
+                        fontSize: 12,
+                        fontWeight: FontWeight.w600,
+                      ),
+                    ),
+                  ),
+                ],
               ),
             ),
+          ),
         ],
       ),
     );
@@ -1571,14 +1809,53 @@ Bana bilgi kartı (Flashcard) formatında 10 adet Soru-Cevap çifti oluştur.
 }
 
 
-/// Leitner Kart Modeli
+/// Leitner Kart Modeli (Zenginleştirilmiş)
 class LeitnerCard {
   final String id;
-  final String front;
-  final String back;
+  final String front;           // Soru
+  final String back;            // Cevap
+  final String hint;            // İpucu
+  final String motivation;      // Motivasyon notu
+  final String importance;      // Önem derecesi
   final int box;
   
-  LeitnerCard({required this.id, required this.front, required this.back, this.box = 1});
+  LeitnerCard({
+    required this.id, 
+    required this.front, 
+    required this.back, 
+    this.hint = 'Bu konuyu tekrar gözden geçir.',
+    this.motivation = 'Her soru seni hedefe yaklaştırıyor!',
+    this.importance = 'Sık Çıkar',
+    this.box = 1,
+  });
+  
+  /// Önem derecesine göre emoji
+  String get importanceEmoji {
+    switch (importance) {
+      case 'Her Yıl Çıkar':
+        return '🔥';
+      case 'Sık Çıkar':
+        return '⭐';
+      case 'Nadiren Çıkar':
+        return '💡';
+      default:
+        return '📝';
+    }
+  }
+  
+  /// Önem derecesine göre renk
+  Color get importanceColor {
+    switch (importance) {
+      case 'Her Yıl Çıkar':
+        return const Color(0xFFFF6B6B);
+      case 'Sık Çıkar':
+        return const Color(0xFFFFD93D);
+      case 'Nadiren Çıkar':
+        return const Color(0xFF6BCB77);
+      default:
+        return const Color(0xFF4D96FF);
+    }
+  }
 }
 
 /// Leitner Veri Modeli (Kutu + Sonraki Tekrar)
