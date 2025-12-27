@@ -176,7 +176,7 @@ class _DetectiveInterrogationScreenState extends State<DetectiveInterrogationScr
                 ),
                 SizedBox(height: 4),
                 Text(
-                  '"Ajan, neden hata yaptın?"',
+                  '"Savaşçı, neden hata yaptın?"',
                   style: TextStyle(
                     color: Colors.white54,
                     fontSize: 12,
@@ -255,8 +255,8 @@ class _DetectiveInterrogationScreenState extends State<DetectiveInterrogationScr
             ),
             child: Text(
               soru.bosmu
-                  ? '"Ajan, bu soruyu neden boş bıraktın?"'
-                  : '"Ajan, bu soruyu neden kaçırdın?"',
+                  ? '"Savaşçı, bu soruyu neden boş bıraktın?"'
+                  : '"Savaşçı, bu soruyu neden kaçırdın?"',
               style: const TextStyle(
                 color: Colors.amber,
                 fontSize: 16,

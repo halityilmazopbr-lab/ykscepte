@@ -80,10 +80,17 @@ class LibraryService {
   void _emit() => _usersController.add(_fakeUsers);
 
   // MOCK DATA ÜRETİCİ
+  static const _studyNicknames = [
+    'Aslan Yürek', 'Kartal Göz', 'Kurt Tırnak', 'Tilki Zeka', 'Baykuş Bilge',
+    'Zeus Işık', 'Athena Ok', 'Şampiyon Ruh', 'Yıldız Avcı', 'Deha Beyni',
+    'Kitap Kurdu', 'Formül Ustası', 'Çözüm Avcısı', 'Net Toplayıcı', 'Test Ustası',
+    'Nebula Zihin', 'Meteor Hız', 'Galaksi Yolcu', 'YKS Kahramanı', 'TYT Efsanesi',
+  ];
+  
   List<LibraryUser> _generateFakeUsers() {
     return List.generate(20, (index) => LibraryUser(
       id: "$index",
-      name: "Ajan ${100 + index}",
+      name: _studyNicknames[index % _studyNicknames.length],
       avatarUrl: "",
       isSleeping: index % 5 == 0, // Her 5 kişiden 1'i uyuyor olsun
       subject: ["Matematik", "Fizik", "Tarih", "Kimya"][index % 4],

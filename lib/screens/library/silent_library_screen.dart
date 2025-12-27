@@ -54,7 +54,7 @@ class _SilentLibraryScreenState extends State<SilentLibraryScreen> with WidgetsB
               stream: _service.usersStream,
               builder: (context, snapshot) {
                 int count = snapshot.hasData ? snapshot.data!.length + 1420 : 1420; // +1420 hayali kullanıcı
-                return Text("$count Ajan Aktif", style: const TextStyle(color: Colors.greenAccent, fontSize: 10));
+                return Text("$count Çalışkan Aktif", style: const TextStyle(color: Colors.greenAccent, fontSize: 10));
               },
             )
           ],

@@ -210,7 +210,7 @@ class _LeagueScreenState extends State<LeagueScreen> with SingleTickerProviderSt
             children: [
               _buildStatusCard(
                 rank: myPlayer.rank,
-                title: 'AJAN DURUMU',
+                title: 'DURUMUN',
                 isPromoting: myPlayer.isPromoting,
                 isRelegating: myPlayer.isRelegating,
                 themeColor: Colors.cyan,
@@ -343,7 +343,7 @@ class _LeagueScreenState extends State<LeagueScreen> with SingleTickerProviderSt
       statusIcon = Icons.emoji_events;
       message = schoolName != null 
           ? 'Okulun şampiyonluğa koşuyor! 🏆'
-          : 'Zirvedesin ajan! 🔥';
+          : 'Şampiyonsun! Zirvedesin! 🔥';
     } else if (isRelegating) {
       statusColor = Colors.redAccent;
       statusIcon = Icons.warning_amber;
@@ -418,7 +418,7 @@ class _LeagueScreenState extends State<LeagueScreen> with SingleTickerProviderSt
           const SizedBox(width: 30, child: Text('#', style: TextStyle(color: Colors.grey, fontSize: 12))),
           Expanded(
             child: Text(
-              isClan ? 'OKUL' : 'AJAN & OKUL',
+              isClan ? 'OKUL' : 'OYUNCU & OKUL',
               style: const TextStyle(color: Colors.grey, fontSize: 12),
             ),
           ),

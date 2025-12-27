@@ -382,7 +382,7 @@ class _LiveTriviaScreenState extends State<LiveTriviaScreen> with TickerProvider
         ),
         const SizedBox(height: 10),
         Text(
-          "${data['userCount'] ?? 0} Ajan Hazır Bekliyor",
+          "${data['userCount'] ?? 0} Yarışmacı Hazır Bekliyor",
           style: const TextStyle(color: Colors.white70),
         ),
         const SizedBox(height: 10),

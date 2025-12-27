@@ -51,7 +51,7 @@ class LeaguePlayer {
 
   factory LeaguePlayer.fromJson(Map<String, dynamic> json) => LeaguePlayer(
     id: json['id'] ?? '',
-    name: json['name'] ?? 'Ajan',
+    name: json['name'] ?? 'Oyuncu',
     school: json['school'] ?? 'Bilinmeyen Okul',
     avatar: json['avatar'],
     xp: json['xp'] ?? 0,

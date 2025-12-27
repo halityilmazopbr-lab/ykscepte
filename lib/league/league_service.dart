@@ -28,24 +28,42 @@ class LeagueService {
   ];
 
   // ═══════════════════════════════════════════════════════════════
-  // 👤 AJAN İSİMLERİ
+  // 👤 OYUNCU TAKMA İSİMLERİ (Hibrit Mix)
   // ═══════════════════════════════════════════════════════════════
 
   final List<String> _agentNames = [
-    'Neon Kaplan', 'Siber Kurt', 'Gölge Şahin', 'Quantum Tilki',
-    'Kripto Aslan', 'Matrix Kartal', 'Volt Panter', 'Pulse Vaşak',
-    'Storm Atmaca', 'Neon Ayı', 'Laser Jaguar', 'Turbo Çakal',
-    'Flash Leopar', 'Dark Baykuş', 'Ice Dragon', 'Fire Phoenix',
-    'Thunder Cobra', 'Night Owl', 'Steel Wolf', 'Iron Eagle',
-    'Golden Hawk', 'Silver Fox', 'Bronze Lion', 'Diamond Bear',
-    'Plasma Tiger', 'Nova Falcon', 'Cyber Lynx', 'Shadow Raven',
-    'Ghost Panther', 'Stealth Viper',
+    // 🦁 Hayvan Temalı
+    'Aslan Yürek', 'Kartal Göz', 'Kurt Tırnak', 'Tilki Zeka', 'Baykuş Bilge',
+    'Kaplan Gücü', 'Şahin Hız', 'Ayı Kral', 'Panter Gölge', 'Vaşak Çevik',
+    
+    // ⚡ Mitolojik
+    'Zeus Yıldırım', 'Apollo Işık', 'Artemis Ok', 'Hera Kraliçe', 'Ares Savaş',
+    'Athena Bilge', 'Poseidon Dalga', 'Hermes Hızlı', 'Hades Gizem', 'Nike Zafer',
+    
+    // 👑 Ünvan Temalı
+    'Şampiyon Ruh', 'Yıldız Avcı', 'Deha Beyni', 'Hedef Vuran', 'Zirve Koşan',
+    'Altın Kalem', 'Elmas Zihin', 'Bronz Güç', 'Gümüş Ok', 'Platin Kalp',
+    
+    // 🎮 Eğlenceli
+    'Kitap Kurdu', 'Formül Ustası', 'Çözüm Avcısı', 'Net Toplayıcı', 'Puan Canavarı',
+    'Soru Delisi', 'Test Ustası', 'Sınav Savaşçısı', 'YKS Kahramanı', 'TYT Efsanesi',
+    
+    // 🌟 Kozmik
+    'Nebula Zihin', 'Galaksi Yolcu', 'Kuasar Işık', 'Meteor Hız', 'Yıldız Tozu',
+    'Güneş Savaşçı', 'Ay Prens', 'Mars Kızıl', 'Satürn Halka', 'Venüs Işıltı',
   ];
 
   final List<String> _avatars = [
-    '🐯', '🐺', '🦅', '🦊', '🦁', '🦅', '🐆', '🐱', '🦅', '🐻',
-    '🐆', '🦊', '🐆', '🦉', '🐉', '🦅', '🐍', '🦉', '🐺', '🦅',
-    '🦅', '🦊', '🦁', '🐻', '🐯', '🦅', '🐱', '🦅', '🐆', '🐍',
+    // Hayvan
+    '🦁', '🦅', '🐺', '🦊', '🦉', '🐯', '🦅', '🐻', '🐆', '🐱',
+    // Mitolojik
+    '⚡', '☀️', '🏹', '👑', '⚔️', '🦉', '🌊', '👟', '💀', '🏆',
+    // Ünvan
+    '🏅', '⭐', '🧠', '🎯', '🏔️', '✏️', '💎', '🥉', '🥈', '💜',
+    // Eğlenceli
+    '📚', '🧮', '🔍', '📊', '👾', '❓', '📝', '⚔️', '🦸', '🌟',
+    // Kozmik
+    '🌌', '🚀', '💫', '☄️', '✨', '☀️', '🌙', '🔴', '🪐', '💖',
   ];
 
   // ═══════════════════════════════════════════════════════════════

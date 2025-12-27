@@ -142,7 +142,7 @@ class FocusMenuScreen extends StatelessWidget {
                 ),
                 const SizedBox(height: 4),
                 Text(
-                  "Ders çalışma yöntemine uygun modu seç. Başladığın işi yarım bırakma Ajan!",
+                  "Ders çalışma yöntemine uygun modu seç. Başladığın işi yarım bırakma Şampiyon!",
                   style: TextStyle(color: Colors.grey[500], fontSize: 12),
                 ),
               ],

@@ -438,7 +438,7 @@ class _DetectiveReportScreenState extends State<DetectiveReportScreen> {
       case HataTuru.bilgiEksigi:
         return "📚 Temelde sorun var. Deneme çözmeyi bırak, eksik konuların video anlatımlarına dön. Flashcard çalış!";
       case HataTuru.sureYetmedi:
-        return "⏱️ Yavaşsın Ajan. Turlama taktiğini uygulamalısın. Zor sorularda takılıp kalma, atlayıp devam et!";
+        return "⏱️ Yavaşsın Savaşçı. Turlama taktiğini uygulamalısın. Zor sorularda takılıp kalma, atlayıp devam et!";
       case HataTuru.teredut:
         return "🎯 Özgüven sorunu yaşıyorsun. İki şık arasında kaldığında mantıklı eleme tekniklerini öğren!";
       default:
