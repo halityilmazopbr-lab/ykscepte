@@ -27,6 +27,7 @@ import 'bottom_nav_tabs.dart';
 import 'teacher/teacher_main_screen.dart'; // 🔥 Yeni Öğretmen Modülü
 import 'firebase_options.dart'; // Firebase yapılandırması
 import 'services/cozum_gecmisi_service.dart'; // YENİ: Hybrid Filtering
+import 'admin/admin_panel_screen.dart'; // 🔧 Yeni Admin Paneli
 
 Future<void> main() async {
   WidgetsFlutterBinding.ensureInitialized();
@@ -135,7 +136,7 @@ class _LoginPageState extends State<LoginPage>
       if (user == "admin") {
         VeriDeposu.girisKaydet("admin", "Yönetici");
         Navigator.pushReplacement(
-            context, MaterialPageRoute(builder: (c) => const YoneticiPaneli()));
+            context, MaterialPageRoute(builder: (c) => const AdminPanelScreen()));
       } else if (user is Ogrenci) {
         VeriDeposu.girisKaydet(user.id, "Öğrenci");
         Navigator.pushReplacement(
@@ -625,7 +626,7 @@ class _AcilisEkraniState extends State<AcilisEkrani>
     if (kayitliId != null && kayitliRol != null) {
       if (kayitliRol == "Yönetici") {
         Navigator.pushReplacement(
-            context, MaterialPageRoute(builder: (c) => const YoneticiPaneli()));
+            context, MaterialPageRoute(builder: (c) => const AdminPanelScreen()));
       } else if (kayitliRol == "Öğrenci") {
         var user = VeriDeposu.ogrenciler.firstWhere((e) => e.id == kayitliId,
             orElse: () => VeriDeposu.ogrenciler[0]);
