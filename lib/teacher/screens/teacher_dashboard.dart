@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import '../../models.dart';
 import '../teacher_service.dart';
 import '../models/teacher_models.dart';
+import 'teacher_reports_screen.dart';
 
 /// 📊 Öğretmen Kokpit (Dashboard) - KPI'lar ve Günlük Özet
 class TeacherDashboard extends StatelessWidget {
@@ -166,8 +167,11 @@ class TeacherDashboard extends StatelessWidget {
                 label: "Raporlar",
                 color: Colors.amber,
                 onTap: () {
-                  ScaffoldMessenger.of(context).showSnackBar(
-                    const SnackBar(content: Text("🚧 Raporlar yakında!")),
+                  Navigator.push(
+                    context,
+                    MaterialPageRoute(
+                      builder: (context) => TeacherReportsScreen(ogretmen: ogretmen),
+                    ),
                   );
                 },
               ),
